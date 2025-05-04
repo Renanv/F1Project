@@ -1,0 +1,48 @@
+app-title = F1 Project
+home = Home
+login = Login
+config = Settings
+register = Register
+logout = Logout
+
+welcome-message = Welcome!
+login-success = You are successfully logged in.
+logout = Logout
+login-prompt = Please log in to continue.
+login-title = Login
+username-label = Username
+password-label = Password
+login-button = Log In
+register-link = Don't have an account? Register here.
+login-success = Successfully logged in!
+login-failure = Login failed
+login-error = An error occurred during login
+
+register-title = Register
+confirm-password-label = Confirm Password
+register-button = Register
+login-link = Already have an account? Log in here.
+register-success = Registration successful! You can now log in.
+register-failure = Registration failed
+register-error = An error occurred during registration
+password-mismatch = Passwords do not match
+
+driver-rankings-title = Driver Rankings
+view-driver-rankings = View Driver Rankings
+driver-points = { $points }
+
+driver-name = Driver
+driver-number = #
+driver-table-points = Points
+driver-position = Position
+
+upload-race-data = Upload Race Data
+processing = Processing...
+upload-and-process = Upload and Process
+file-processed-success = File processed and points updated successfully.
+file-processing-error = Error processing file.
+select-file = Please select a file to upload.
+
+team-configurations-title = Team Configurations
+save-configurations-button = Save Configurations
+race-points-config-title = Race Points Configuration
