@@ -1,7 +1,9 @@
+const apiUrl = process.env.REACT_APP_API_BASE_URL;
+
 export const handleLogin = async (e, username, password, setMessage, onLogin, navigate) => {
   e.preventDefault();
   try {
-    const response = await fetch('http://localhost:5000/api/login', {
+    const response = await fetch(`${apiUrl}/api/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +34,7 @@ export const handleRegister = async (e, username, password, confirmPassword, set
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/register', {
+    const response = await fetch(`${apiUrl}/api/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

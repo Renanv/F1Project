@@ -9,6 +9,8 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
   setLoading(true);
   setMessage('');
 
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
+
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
@@ -19,7 +21,7 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
       const missingDrivers = [];
 
       // Fetch team configurations
-      const teamConfigsResponse = await axios.get('http://localhost:5000/api/team-configs');
+      const teamConfigsResponse = await axios.get(`${apiUrl}/api/team-configs`);
       const teamConfigs = teamConfigsResponse.data.reduce((acc, config) => {
         acc[config.team_name.toLowerCase()] = config.config_value;
         return acc;
@@ -110,7 +112,7 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
       }
 
       // Fetch all drivers from the database
-      const response = await axios.get('http://localhost:5000/api/drivers');
+      const response = await axios.get(`${apiUrl}/api/drivers`);
       const allDrivers = response.data;
 
       // Identify missing drivers
@@ -124,10 +126,10 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
       });
 
       // Send missing drivers to the server to log them
-      await axios.post('http://localhost:5000/api/log-missing-drivers', { missingDrivers });
+      await axios.post(`${apiUrl}/api/log-missing-drivers`, { missingDrivers });
 
       // Send updated data to the server
-      await axios.post('http://localhost:5000/api/update-driver-points', { drivers: updatedDrivers });
+      await axios.post(`${apiUrl}/api/update-driver-points`, { drivers: updatedDrivers });
 
       setMessage('file-processed-success');
       if (onSuccess) onSuccess(); // Call the success callback

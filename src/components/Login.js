@@ -10,12 +10,13 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/login', { username, password });
+      const response = await axios.post(`${apiUrl}/api/login`, { username, password });
       if (response.data.success) {
         onLogin(response.data.isAdmin);
         navigate('/');

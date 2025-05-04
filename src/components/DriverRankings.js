@@ -5,9 +5,10 @@ import FileUpload from './FileUpload';
 
 function DriverRankings({ isAdmin }) {
   const [drivers, setDrivers] = useState([]);
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
   const fetchDrivers = () => {
-    fetch('http://localhost:5000/api/drivers')
+    fetch(`${apiUrl}/api/drivers`)
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');

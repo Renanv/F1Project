@@ -7,6 +7,8 @@ const Config = () => {
   const [configs, setConfigs] = useState([]);
   const [racePoints, setRacePoints] = useState([]);
   const [loading, setLoading] = useState(false);
+  const apiUrl = process.env.REACT_APP_API_BASE_URL;  
+
 
   useEffect(() => {
     fetchConfigs();
@@ -15,7 +17,7 @@ const Config = () => {
 
   const fetchConfigs = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/team-configs');
+      const response = await axios.get(`${apiUrl}/api/team-configs`);
       setConfigs(response.data);
     } catch (error) {
       console.error('Error fetching configs:', error);
@@ -24,7 +26,7 @@ const Config = () => {
 
   const fetchRacePoints = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/race-points-config');
+      const response = await axios.get(`${apiUrl}/api/race-points-config`);
       setRacePoints(response.data);
     } catch (error) {
       console.error('Error fetching race points:', error);
@@ -47,13 +49,13 @@ const Config = () => {
     setLoading(true);
     try {
       for (const config of configs) {
-        await axios.post('http://localhost:5000/api/update-team-config', {
+        await axios.post(`${apiUrl}/api/update-team-config`, {
           teamName: config.team_name,
           configValue: config.config_value,
         });
       }
       for (const point of racePoints) {
-        await axios.post('http://localhost:5000/api/update-race-points-config', {
+        await axios.post(`${apiUrl}/api/update-race-points-config`, {
           position: point.position,
           points: point.points,
         });
