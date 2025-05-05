@@ -18,7 +18,6 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
 
       const driverNumbersInFile = data['classification-data'].map(driver => driver['participant-data']['race-number']);
       const updatedDrivers = [];
-      const missingDrivers = [];
 
       // Fetch team configurations
       const teamConfigsResponse = await axios.get(`${apiUrl}/api/team-configs`);
@@ -106,29 +105,13 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
         const teamMultiplier = teamConfigs[teamName] || 1;
         pointsAdjustment = (pointsAdjustment / 4) * teamMultiplier;
 
-        // Use pointsAdjustment as the final points
-        driver['final-classification']['points'] = pointsAdjustment;
+        // Store the calculated score adjustment in a new field
+        driver['calculatedScoreAdjustment'] = pointsAdjustment;
+        
         updatedDrivers.push(driver);
       }
 
-      // Fetch all drivers from the database
-      const response = await axios.get(`${apiUrl}/api/drivers`);
-      const allDrivers = response.data;
-
-      // Identify missing drivers
-      allDrivers.forEach(dbDriver => {
-        if (!driverNumbersInFile.includes(dbDriver.driver_number)) {
-          missingDrivers.push({
-            driver_number: dbDriver.driver_number,
-            points: dbDriver.points
-          });
-        }
-      });
-
-      // Send missing drivers to the server to log them
-      await axios.post(`${apiUrl}/api/log-missing-drivers`, { missingDrivers });
-
-      // Send updated data to the server
+      // Send updated data (containing original structure + calculatedScoreAdjustment) to the server
       await axios.post(`${apiUrl}/api/update-driver-points`, { drivers: updatedDrivers });
 
       setMessage('file-processed-success');

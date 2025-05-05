@@ -18,22 +18,13 @@ login-success = Login realizado com sucesso!
 login-failure = Falha no login
 login-error = Ocorreu um erro durante o login
 
-register-title = Cadastro
-confirm-password-label = Confirmar Senha
-register-button = Cadastrar
-login-link = Já tem uma conta? Faça login aqui.
-register-success = Registro realizado com sucesso! Você já pode fazer login.
-register-failure = Falha no registro
-register-error = Ocorreu um erro durante o registro
-password-mismatch = As senhas não coincidem
-
 driver-rankings-title = Classificação dos Pilotos
 view-driver-rankings = Ver Classificação dos Pilotos
 driver-points = { $points }
 
 driver-name = Piloto
 driver-number = Número
-driver-table-points = Pontos
+driver-table-score = LSF-Score
 driver-position = Classificação
 
 upload-race-data = Carregar Dados da Corrida
@@ -46,4 +37,32 @@ select-file = Por favor, selecione um arquivo para calcular os pontos.
 team-configurations-title = Configurações da Equipe
 save-configurations-button = Salvar Configurações
 race-points-config-title = Configuração de Pontos da Corrida
+
+toggle-locale-en = English
+
+# Adições da Página de Cadastro
+register-title = Cadastro
+confirm-password-label = Confirmar Senha
+register-button = Cadastrar
+login-link = Já tem uma conta? Faça login aqui.
+register-success = Registro realizado com sucesso! Você já pode fazer login.
+register-failure = Falha no registro
+register-error = Ocorreu um erro durante o registro
+password-mismatch = As senhas não coincidem
+usertag-label = Usertag (Gamer Tag)
+driver-number-label = Número do Piloto
+driver-number-taken-error = Número do piloto já está em uso.
+driver-number-available = Número do piloto está disponível!
+driver-number-checking = Verificando disponibilidade...
+driver-number-required = Número do piloto é obrigatório.
+usertag-required = Usertag é obrigatório.
+wait-driver-number-validation = Aguarde a conclusão da validação do número do piloto.
+fix-validation-errors = Por favor, corrija os erros antes de enviar.
+validation-check-failed = Não foi possível verificar o número do piloto. Tente novamente.
+
+# Exibição da Pontuação do Piloto
+driver-score-value = { $score } pts
+
+# Exibição dos Pontos do Piloto
+driver-table-points = Pontos
 
