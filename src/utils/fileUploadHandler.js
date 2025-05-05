@@ -131,10 +131,10 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
         const resultData = {
             driverNumber: driverNumber,
             raceId: raceId, 
-            livery: driver['participant-data']?.livery,
+            livery: driver['participant-data']?.['team-id'],
             qualification: gridPosition, // Use calculated gridPosition
             position: driver['final-classification']?.position,
-            fastest_lap: driver['lap-data']?.['best-lap-time-in-ms'], 
+            fastest_lap: driver['final-classification']?.['best-lap-time-str'], 
             resultStatus: finishedRace,
             // Individual Score Components for Logging
             score_penalties: score_penalties,

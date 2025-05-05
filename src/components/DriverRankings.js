@@ -61,6 +61,7 @@ function DriverRankings({ isAdmin }) {
               <TableCell><Localized id="driver-position" /></TableCell>
               <TableCell><Localized id="driver-name" /></TableCell>
               <TableCell><Localized id="driver-number" /></TableCell>
+              <TableCell><Localized id="driver-team" /></TableCell>
               <TableCell><Localized id="driver-table-score" /></TableCell>
               <TableCell><Localized id="driver-table-points" /></TableCell>
             </TableRow>
@@ -72,12 +73,14 @@ function DriverRankings({ isAdmin }) {
                   : (typeof driver.score === 'string' ? parseFloat(driver.score).toFixed(2) : '0.00');
               
               const actualPoints = driver.points !== null && driver.points !== undefined ? driver.points : 0;
+              const teamName = driver.team_name || 'N/A';
 
               return (
                 <TableRow key={driver.user_id || driver.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{driver.name}</TableCell>
                   <TableCell>{driver.driver_number}</TableCell>
+                  <TableCell>{teamName}</TableCell>
                   <TableCell>
                     <Localized id="driver-score-value" vars={{ score: formattedScore }}>
                       <span>{formattedScore} pts</span>

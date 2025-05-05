@@ -66,6 +66,9 @@ driver-score-value = { $score } pts
 # Exibição dos Pontos do Piloto
 driver-table-points = Pontos
 
+# Exibição da Equipe do Piloto
+driver-team = Equipe
+
 # Seção de Administração - Títulos e Links
 admin-championship-manager-title = Gerenciador de Campeonatos e Corridas
 admin-team-manager-title = Gerenciador de Equipes
@@ -135,4 +138,26 @@ admin-link-teams = Equipes
 admin-desc-teams = Crie/gerencie equipes e atribua usuários.
 admin-link-config = Configuração
 admin-desc-config = Ajuste as configurações e pontos da aplicação.
+
+# Gerenciador de Campeonatos - Modais Editar/Excluir
+admin-edit-championship-title = Editar Campeonato
+admin-delete-championship-title = Excluir Campeonato
+admin-delete-championship-confirm = Tem certeza que deseja excluir o campeonato "{ $champName }"? Isso também excluirá todas as corridas e resultados associados.
+admin-edit-race-title = Editar Corrida
+admin-delete-race-title = Excluir Corrida
+admin-delete-race-confirm = Tem certeza que deseja excluir a corrida "{ $raceTitle }"? Isso também excluirá todos os resultados registrados para esta corrida.
+admin-cancel-button = Cancelar
+admin-save-button = Salvar
+admin-delete-button = Excluir
+edit-championship-error = Erro ao atualizar campeonato.
+delete-championship-error = Erro ao excluir campeonato.
+edit-race-error = Erro ao atualizar corrida.
+delete-race-error = Erro ao excluir corrida.
+
+# Gerenciador de Equipes - Modais Editar/Excluir
+admin-edit-team-title = Editar Equipe
+admin-delete-team-title = Excluir Equipe
+admin-delete-team-confirm = Tem certeza que deseja excluir a equipe "{ $teamName }"? Quaisquer usuários atribuídos a esta equipe serão desatribuídos.
+edit-team-error = Erro ao atualizar equipe.
+delete-team-error = Erro ao excluir equipe.
 

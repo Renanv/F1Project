@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip } from '@mui/material';
+import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { Localized } from '@fluent/react';
 
 // --- Expected Backend Endpoints --- 
@@ -10,6 +12,8 @@ import { Localized } from '@fluent/react';
 // GET /api/championships - Returns [{ id, name }, ...] (to select context for assignment)
 // GET /api/championship-attendees?teamId=X&championshipId=Y - Returns attendees for a team in a champ (or fetch all and filter)
 // PUT /api/championship-attendees/:attendeeId - Expects { teamId: number | null } (to assign/unassign team)
+// PUT /api/teams/:id - Expects { name: string }
+// DELETE /api/teams/:id
 // -------------------------------------
 
 function TeamManager() {
@@ -30,6 +34,14 @@ function TeamManager() {
   const [loadingAttendees, setLoadingAttendees] = useState(false);
   const [assigningUserId, setAssigningUserId] = useState(null); // Track which user is being assigned/unassigned
   // --- End Assignment State ---
+
+  // --- State for Team Edit/Delete Modals ---
+  const [openEditTeamDialog, setOpenEditTeamDialog] = useState(false);
+  const [openDeleteTeamDialog, setOpenDeleteTeamDialog] = useState(false);
+  const [teamToEdit, setTeamToEdit] = useState(null); // { id, name }
+  const [teamToDelete, setTeamToDelete] = useState(null); // { id, name }
+  const [editedTeamName, setEditedTeamName] = useState('');
+  // --- End Team Modal State ---
 
   useEffect(() => {
     fetchTeams();
@@ -176,6 +188,58 @@ function TeamManager() {
   };
   // --- End Handlers ---
 
+  // --- Team Edit/Delete Modal Handlers ---
+  const handleOpenEditTeam = (team) => {
+      setTeamToEdit(team);
+      setEditedTeamName(team.name);
+      setOpenEditTeamDialog(true);
+  };
+
+  const handleCloseEditTeam = () => setOpenEditTeamDialog(false);
+
+  const handleOpenDeleteTeam = (team) => {
+      setTeamToDelete(team);
+      setOpenDeleteTeamDialog(true);
+  };
+
+  const handleCloseDeleteTeam = () => setOpenDeleteTeamDialog(false);
+  // --- End Team Modal Handlers ---
+
+  // --- Team Edit/Delete API Call Handlers ---
+  const handleConfirmEditTeam = async () => {
+      if (!teamToEdit || !editedTeamName) return;
+      setError(null);
+      try {
+          await axios.put(`${apiUrl}/api/teams/${teamToEdit.id}`, { name: editedTeamName });
+          handleCloseEditTeam();
+          fetchTeams(); // Refresh list
+          // Note: If edited team was selected, its name will update automatically in the disabled text field
+      } catch (err) { 
+          console.error("Error editing team:", err); 
+          setError(err.response?.data?.message || 'edit-team-error'); // Localized ID
+      }
+  };
+
+  const handleConfirmDeleteTeam = async () => {
+      if (!teamToDelete) return;
+      setError(null);
+      try {
+          // Consider backend implications: What happens to attendees assigned to this team?
+          // The schema uses ON DELETE SET NULL for team_id in championship_attendees.
+          await axios.delete(`${apiUrl}/api/teams/${teamToDelete.id}`);
+          handleCloseDeleteTeam();
+          fetchTeams(); // Refresh list
+          // If deleted team was selected, clear the selection
+          if (selectedTeamId === teamToDelete.id) {
+              setSelectedTeamId('');
+          }
+      } catch (err) { 
+          console.error("Error deleting team:", err); 
+          setError(err.response?.data?.message || 'delete-team-error'); // Localized ID
+      }
+  };
+  // --- End Team API Call Handlers ---
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -193,7 +257,22 @@ function TeamManager() {
             ) : (
               <List dense sx={{ maxHeight: 300, overflow: 'auto', mb: 2 }}>
                 {teams.map((team) => (
-                  <ListItem key={team.id} button selected={selectedTeamId === team.id} onClick={() => setSelectedTeamId(team.id)} >
+                  <ListItem 
+                    key={team.id} 
+                    button 
+                    selected={selectedTeamId === team.id} 
+                    onClick={() => setSelectedTeamId(team.id)}
+                    secondaryAction={
+                      <>
+                        <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleOpenDeleteTeam(team); }}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    }
+                  >
                     <ListItemText primary={team.name} />
                   </ListItem>
                 ))}
@@ -316,6 +395,44 @@ function TeamManager() {
            </Paper>
         </Grid>
       </Grid>
+
+      {/* --- Team Dialogs --- */}
+      {/* Edit Team */}
+      <Dialog open={openEditTeamDialog} onClose={handleCloseEditTeam}>
+          <DialogTitle><Localized id="admin-edit-team-title" /></DialogTitle>
+          <DialogContent>
+              <TextField
+                  autoFocus
+                  margin="dense"
+                  id="team-name"
+                  label={<Localized id="admin-new-team-label" />}
+                  type="text"
+                  fullWidth
+                  variant="standard"
+                  value={editedTeamName}
+                  onChange={(e) => setEditedTeamName(e.target.value)}
+              />
+          </DialogContent>
+          <DialogActions>
+              <Button onClick={handleCloseEditTeam}><Localized id="admin-cancel-button" /></Button>
+              <Button onClick={handleConfirmEditTeam}><Localized id="admin-save-button" /></Button>
+          </DialogActions>
+      </Dialog>
+
+      {/* Delete Team */}
+      <Dialog open={openDeleteTeamDialog} onClose={handleCloseDeleteTeam}>
+          <DialogTitle><Localized id="admin-delete-team-title" /></DialogTitle>
+          <DialogContent>
+              <DialogContentText>
+                  <Localized id="admin-delete-team-confirm" vars={{ teamName: teamToDelete?.name }} />
+              </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+              <Button onClick={handleCloseDeleteTeam}><Localized id="admin-cancel-button" /></Button>
+              <Button onClick={handleConfirmDeleteTeam} color="error"><Localized id="admin-delete-button" /></Button>
+          </DialogActions>
+      </Dialog>
+      {/* --- End Team Dialogs --- */}
     </Container>
   );
 }

@@ -66,6 +66,9 @@ driver-score-value = { $score } pts
 # Driver Points Display
 driver-table-points = Points
 
+# Driver Team Display
+driver-team = Team
+
 # Admin Section Titles & Links
 admin-championship-manager-title = Championship & Race Manager
 admin-team-manager-title = Team Manager
@@ -135,3 +138,25 @@ admin-link-teams = Teams
 admin-desc-teams = Create/manage teams and assign users.
 admin-link-config = Configuration
 admin-desc-config = Adjust application settings and points.
+
+# Championship Manager Edit/Delete Modals
+admin-edit-championship-title = Edit Championship
+admin-delete-championship-title = Delete Championship
+admin-delete-championship-confirm = Are you sure you want to delete the championship "{ $champName }"? This will also delete all associated races and results.
+admin-edit-race-title = Edit Race
+admin-delete-race-title = Delete Race
+admin-delete-race-confirm = Are you sure you want to delete the race "{ $raceTitle }"? This will also delete all results logged for this race.
+admin-cancel-button = Cancel
+admin-save-button = Save
+admin-delete-button = Delete
+edit-championship-error = Error updating championship.
+delete-championship-error = Error deleting championship.
+edit-race-error = Error updating race.
+delete-race-error = Error deleting race.
+
+# Team Manager Edit/Delete Modals
+admin-edit-team-title = Edit Team
+admin-delete-team-title = Delete Team
+admin-delete-team-confirm = Are you sure you want to delete the team "{ $teamName }"? Any users assigned to this team will be unassigned.
+edit-team-error = Error updating team.
+delete-team-error = Error deleting team.
