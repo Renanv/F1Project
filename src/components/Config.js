@@ -1,127 +1,214 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Slider, Box, Button, TextField } from '@mui/material';
+import {
+    Container, Typography, Button, Box, Alert, CircularProgress, Grid, Paper,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, List, ListItem, ListItemText, Avatar,
+    Slider
+} from '@mui/material';
 import { Localized } from '@fluent/react';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosInstance';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 const Config = () => {
-  const [configs, setConfigs] = useState([]);
+  const [teamConfigs, setTeamConfigs] = useState([]);
   const [racePoints, setRacePoints] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;  
-
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    fetchConfigs();
-    fetchRacePoints();
+    const fetchConfig = async () => {
+      setIsLoading(true);
+      setError('');
+      setSuccessMessage('');
+      try {
+        const [teamRes, pointsRes] = await Promise.all([
+          axiosInstance.get('/api/team-configs'),
+          axiosInstance.get('/api/race-points-config')
+        ]);
+        setTeamConfigs(teamRes.data);
+        setRacePoints(pointsRes.data);
+      } catch (err) {
+        console.error('Error fetching configurations:', err);
+        setError('fetch-config-error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchConfig();
   }, []);
 
-  const fetchConfigs = async () => {
-    try {
-      const response = await axios.get(`${apiUrl}/api/team-configs`);
-      setConfigs(response.data);
-    } catch (error) {
-      console.error('Error fetching configs:', error);
+  const handleTeamConfigChange = (teamName, newValue) => {
+    const value = parseFloat(newValue.toFixed(2));
+    setTeamConfigs(currentConfigs =>
+      currentConfigs.map(config =>
+        config.team_name === teamName ? { ...config, config_value: value } : config
+      )
+    );
+  };
+
+  const handleRacePointChange = (id, value) => {
+    const newValue = parseInt(value, 10);
+    if (isNaN(newValue) || newValue < 0) {
+        console.warn("Invalid number entered for race points");
+        return;
     }
-  };
-
-  const fetchRacePoints = async () => {
-    try {
-      const response = await axios.get(`${apiUrl}/api/race-points-config`);
-      setRacePoints(response.data);
-    } catch (error) {
-      console.error('Error fetching race points:', error);
-    }
-  };
-
-  const handleSliderChange = (teamName, newValue) => {
-    setConfigs(configs.map(config =>
-      config.team_name === teamName ? { ...config, config_value: newValue } : config
-    ));
-  };
-
-  const handlePointsChange = (position, newValue) => {
-    setRacePoints(racePoints.map(point =>
-      point.position === position ? { ...point, points: newValue } : point
-    ));
+    setRacePoints(currentPoints =>
+      currentPoints.map(point =>
+        point.id === id ? { ...point, points: newValue } : point
+      )
+    );
   };
 
   const handleSave = async () => {
-    setLoading(true);
+    setIsSaving(true);
+    setError('');
+    setSuccessMessage('');
     try {
-      for (const config of configs) {
-        await axios.post(`${apiUrl}/api/update-team-config`, {
-          teamName: config.team_name,
-          configValue: config.config_value,
-        });
+      const teamUpdatePromises = teamConfigs.map(config =>
+        axiosInstance.put(`/api/team-configs/${config.id}`, {
+          configValue: config.config_value
+        })
+      );
+      const pointsUpdatePromises = racePoints.map(point =>
+        axiosInstance.put(`/api/race-points-config/${point.id}`, {
+          points: point.points
+        })
+      );
+
+      const results = await Promise.allSettled([...teamUpdatePromises, ...pointsUpdatePromises]);
+
+      const failedUpdates = results.filter(result => result.status === 'rejected');
+      if (failedUpdates.length > 0) {
+          console.error('Some configuration updates failed:', failedUpdates);
+          throw new Error('save-config-partial-error');
       }
-      for (const point of racePoints) {
-        await axios.post(`${apiUrl}/api/update-race-points-config`, {
-          position: point.position,
-          points: point.points,
-        });
-      }
-      alert('Configurations updated successfully.');
-    } catch (error) {
-      console.error('Error updating configs:', error);
-      alert('Failed to update configurations.');
+
+      setSuccessMessage('save-config-success');
+    } catch (err) {
+      console.error('Error saving configurations:', err);
+      setError(err.message === 'save-config-partial-error' ? err.message : 'save-config-error');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
+  if (isLoading) {
+       return <Container maxWidth="sm" sx={{ mt: 4, textAlign: 'center' }}>
+           <CircularProgress />
+           <Typography sx={{ mt: 2 }}><Localized id="loading-config" /></Typography>
+       </Container>;
+   }
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSave}
-        disabled={loading}
-        sx={{ mb: 4 }}
-      >
-        <Localized id="save-configurations-button" />
-      </Button>
-      <Box sx={{ display: 'flex', gap: 4 }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" gutterBottom>
-            <Localized id="team-configurations-title" />
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {configs.map(config => (
-              <Box key={config.id} sx={{ display: 'flex', alignItems: 'center' }}>
-                <Typography sx={{ flex: 1, minWidth: '100px' }}>{config.team_name}</Typography>
-                <Slider
-                  value={config.config_value}
-                  min={0.8}
-                  max={1.5}
-                  step={0.01}
-                  onChange={(e, newValue) => handleSliderChange(config.team_name, newValue)}
-                  valueLabelDisplay="auto"
-                  sx={{ flex: 2 }}
-                />
-              </Box>
-            ))}
-          </Box>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
+                <SettingsIcon />
+            </Avatar>
+             <Typography component="h1" variant="h4">
+                <Localized id="admin-config-title" />
+            </Typography>
         </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" gutterBottom>
-            <Localized id="race-points-config-title" />
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            {racePoints.map(point => (
-              <Box key={point.id} sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                <Typography sx={{ flex: 1, minWidth: '40px', mr: 1 }}>{point.position}</Typography>
-                <TextField
-                  type="number"
-                  value={point.points}
-                  onChange={(e) => handlePointsChange(point.position, parseInt(e.target.value, 10))}
-                  sx={{ flex: 2, maxWidth: '50px' }}
-                  inputProps={{ style: { padding: '4px' } }}
-                />
-              </Box>
-            ))}
-          </Box>
+
+        {error && <Alert severity="error" sx={{ mb: 3 }}><Localized id={error} fallback={<Localized id='generic-error-fallback' />} /></Alert>}
+        {successMessage && <Alert severity="success" sx={{ mb: 3 }}><Localized id={successMessage} fallback={successMessage}/></Alert>}
+
+        <Grid container spacing={4} justifyContent="center">
+            <Grid item xs={12} md={6}>
+                <Paper elevation={2} sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        <Localized id="team-configurations-title" />
+                    </Typography>
+                    <Box sx={{ pl: 2, pr: 2 }}>
+                        {teamConfigs.map(config => (
+                             <Box key={config.id} sx={{ mb: 2 }}>
+                                <Typography gutterBottom>{config.team_name}</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Slider
+                                        value={Number(config.config_value) || 1}
+                                        min={0.8}
+                                        max={1.5}
+                                        step={0.01}
+                                        onChange={(e, newValue) => handleTeamConfigChange(config.team_name, newValue)}
+                                        valueLabelDisplay="auto"
+                                        sx={{ flexGrow: 1, mr: 2 }}
+                                        disabled={isSaving}
+                                    />
+                                    <Typography sx={{ minWidth: '40px', textAlign: 'right' }}>
+                                        {Number(config.config_value).toFixed(2)}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        ))}
+                    </Box>
+                </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+                 <Paper elevation={2} sx={{ p: 3 }}>
+                    <Typography variant="h6" gutterBottom>
+                        <Localized id="race-points-config-title" />
+                    </Typography>
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell><Localized id="driver-position" /></TableCell>
+                                    <TableCell align="right"><Localized id="driver-table-points" /></TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {racePoints.sort((a, b) => a.position - b.position).map(point => (
+                                    <TableRow key={point.id}>
+                                        <TableCell component="th" scope="row">
+                                            {point.position}
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <TextField
+                                                type="number"
+                                                value={point.points}
+                                                onChange={(e) => handleRacePointChange(point.id, e.target.value)}
+                                                size="small"
+                                                variant="outlined"
+                                                inputProps={{ min: 0 }}
+                                                sx={{ width: '80px' }}
+                                                disabled={isSaving}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Paper>
+            </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+             <Button 
+                variant="contained" 
+                onClick={handleSave} 
+                disabled={isLoading || isSaving}
+                size="large"
+                sx={{ position: 'relative' }}
+            >
+                 <Localized id="save-configurations-button" />
+                 {isSaving && (
+                     <CircularProgress
+                         size={24}
+                         sx={{
+                             position: 'absolute',
+                             top: '50%',
+                             left: '50%',
+                             marginTop: '-12px',
+                             marginLeft: '-12px',
+                         }}
+                     />
+                 )}
+            </Button>
         </Box>
-      </Box>
+
     </Container>
   );
 };

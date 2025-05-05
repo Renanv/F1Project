@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axiosInstance from './axiosInstance'; // Use standard axios
 
 export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, raceId) => {
   if (!file) {
@@ -14,8 +14,6 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
   setLoading(true);
   setMessage('');
 
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;
-
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
@@ -23,8 +21,8 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
 
       const driverRaceResults = [];
 
-      // Fetch team configurations
-      const teamConfigsResponse = await axios.get(`${apiUrl}/api/team-configs`);
+      // Fetch team configurations using standard axios
+      const teamConfigsResponse = await axiosInstance.get('/api/team-configs');
       const teamConfigs = teamConfigsResponse.data.reduce((acc, config) => {
         acc[config.team_name.toLowerCase()] = config.config_value;
         return acc;
@@ -151,13 +149,13 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
       }
 
       // Send the array of driver race results to the backend
-      await axios.post(`${apiUrl}/api/log-race-results`, { results: driverRaceResults });
+      await axiosInstance.post('/api/log-race-results', { results: driverRaceResults });
 
       setMessage('file-processed-success');
       if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Error processing file:', error.message || error);
-      setMessage('file-processing-error');
+      setMessage(error.response?.data?.message || 'file-processing-error');
     } finally {
       setLoading(false);
     }

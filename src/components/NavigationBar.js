@@ -5,22 +5,29 @@ import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import SportsScoreIcon from '@mui/icons-material/SportsScore';
 
 // Props expected: isLoggedIn, isAdmin, handleLogout, toggleLocale, activeLocale
 const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, activeLocale }) => {
   return (
     <AppBar position="static">
       <Toolbar>
+        <SportsScoreIcon sx={{ mr: 2 }} />
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          <Localized id="app-title" />
+          {/* Removed Localized app-title */}
         </Typography>
         <Button color="inherit" component={Link} to="/">
           <Localized id="home" />
         </Button>
         {isLoggedIn && (
-           <Button color="inherit" component={Link} to="/drivers">
-             <Localized id="driver-rankings-title" />
-           </Button>
+           <>
+             <Button color="inherit" component={Link} to="/drivers">
+               <Localized id="driver-rankings-title" />
+             </Button>
+             <Button color="inherit" component={Link} to="/account">
+               <Localized id="account-link" />
+             </Button>
+           </>
         )}
         {isLoggedIn && isAdmin && (
           <>

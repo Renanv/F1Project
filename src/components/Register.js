@@ -1,15 +1,17 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Localized } from '@fluent/react';
-import { Container, TextField, Button, Typography, Box, Alert } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
+import { Container, Typography, TextField, Button, Box, Alert, CircularProgress, Paper, Avatar, Grid, Link } from '@mui/material';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import axiosInstance from '../utils/axiosInstance';
 
 // Simple debounce function
 const debounce = (func, delay) => {
   let timeoutId;
-  return function(...args) {
+  return (...args) => {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
-      func.apply(this, args);
+      func.apply(null, args);
     }, delay);
   };
 };
@@ -19,214 +21,226 @@ function Register() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [usertag, setUsertag] = useState('');
-  const [driverNumber, setDriverNumber] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [driverNumberError, setDriverNumberError] = useState('');
+  const [driverNumberInput, setDriverNumberInput] = useState('');
   const [isCheckingDriverNumber, setIsCheckingDriverNumber] = useState(false);
-  const [driverNumberAvailable, setDriverNumberAvailable] = useState(false);
+  const [isDriverNumberAvailable, setIsDriverNumberAvailable] = useState(null); // null, true, or false
+  const [driverNumberError, setDriverNumberError] = useState(''); // Specific error for driver number field
+  const [isLoading, setIsLoading] = useState(false); // General loading state for submission
+  const [message, setMessage] = useState(''); // For general success/error messages
+  const [success, setSuccess] = useState(false); // To determine Alert severity
   const navigate = useNavigate();
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
-  // Debounced function to check driver number uniqueness
-  const checkDriverNumberUniqueness = useCallback(debounce(async (number) => {
-    setDriverNumberAvailable(false);
-    if (!number) {
-      setDriverNumberError('');
-      setIsCheckingDriverNumber(false);
+  // --- Driver Number Validation --- 
+  const validateDriverNumber = useCallback(async (number) => {
+    if (!number || !/^\d+$/.test(number)) {
+      setIsDriverNumberAvailable(null);
+      setDriverNumberError('invalid-driver-number-format');
       return;
     }
     setIsCheckingDriverNumber(true);
+    setIsDriverNumberAvailable(null);
     setDriverNumberError('');
     try {
-      const response = await fetch(`${apiUrl}/api/validate/driver-number/${number}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      if (!data.isAvailable) {
-        setDriverNumberError('driver-number-taken-error');
-      } else {
-        setDriverNumberAvailable(true);
+      // Use axiosInstance for consistency
+      const response = await axiosInstance.get(`/api/validate/driver-number/${number}`);
+      setIsDriverNumberAvailable(response.data.isAvailable);
+      if (!response.data.isAvailable) {
+        setDriverNumberError('driver-number-taken-error'); 
       }
     } catch (error) {
-      console.error("Validation check failed:", error);
-      setDriverNumberAvailable(false);
+      console.error("Driver number validation error:", error);
+      setIsDriverNumberAvailable(null); // Error state
+      setDriverNumberError('validation-check-failed');
     } finally {
       setIsCheckingDriverNumber(false);
     }
-  }, 500), [apiUrl]);
+  }, []);
+
+  const debouncedValidateDriverNumber = useCallback(debounce(validateDriverNumber, 500), [validateDriverNumber]);
 
   const handleDriverNumberChange = (event) => {
     const value = event.target.value;
-    setDriverNumberAvailable(false);
-    if (/^\d*$/.test(value)) {
-      setDriverNumber(value);
-      checkDriverNumberUniqueness(value);
+    setDriverNumberInput(value);
+    if (value) {
+      debouncedValidateDriverNumber(value);
+    } else {
+      // Clear status if input is empty
+      setIsDriverNumberAvailable(null);
+      setDriverNumberError('');
+      setIsCheckingDriverNumber(false);
     }
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setError('');
-    setSuccess('');
+  const getDriverNumberHelperText = () => {
+    if (isCheckingDriverNumber) return <Localized id="driver-number-checking" />;
+    if (driverNumberError) return <Localized id={driverNumberError} />; 
+    if (isDriverNumberAvailable === true) return <Localized id="driver-number-available" />;
+    return ""; // Default no text
+  };
 
+  const getDriverNumberColor = () => {
+     if (driverNumberError) return "error";
+     if (isDriverNumberAvailable === true) return "success";
+     return "primary"; // Default or while checking
+  };
+
+  // --- Form Submission --- 
+  const handleRegister = async (event) => {
+    event.preventDefault();
+    setMessage(''); // Clear previous messages
+    setSuccess(false);
+
+    // Basic client-side checks
     if (password !== confirmPassword) {
-      setError('password-mismatch');
+      setMessage('password-mismatch');
       return;
     }
-    if (driverNumberError || !driverNumber) {
-        setError(driverNumberError || 'driver-number-required');
+    if (!username || !usertag || !driverNumberInput || !password) {
+        setMessage('fill-all-fields'); // Add this key
         return;
     }
-     if (!usertag) {
-        setError('usertag-required');
-        return;
-    }
-    if (isCheckingDriverNumber) {
-        setError('wait-driver-number-validation');
-        return;
+    if (isCheckingDriverNumber || isDriverNumberAvailable === null || !isDriverNumberAvailable) {
+      setMessage('wait-driver-number-validation');
+      return;
     }
 
+    setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}/api/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, usertag, driverNumber }),
+      const response = await axiosInstance.post('/api/register', {
+        username,
+        password,
+        usertag,
+        driverNumber: driverNumberInput,
       });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'register-failure');
+
+      if (response.data.success) {
+        setMessage(response.data.message || 'register-success'); // Use success message from backend
+        setSuccess(true);
+        // Redirect after a delay
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        // Use error message from backend if available
+        setMessage(response.data.message || 'registration-failed'); 
       }
-      setSuccess('register-success');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (err) {
-      setError(err.message || 'register-error');
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Use error message from backend if available, otherwise generic
+      setMessage(error.response?.data?.message || 'registration-failed'); 
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Typography component="h1" variant="h5">
-          <Localized id="register-title" />
-        </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="username"
-            label={<Localized id="username-label" />}
-            name="username"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="usertag"
-            label={<Localized id="usertag-label" />}
-            name="usertag"
-            autoComplete="off"
-            value={usertag}
-            onChange={(e) => setUsertag(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            id="driverNumber"
-            label={<Localized id="driver-number-label" />}
-            name="driverNumber"
-            type="text"
-            inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-            value={driverNumber}
-            onChange={handleDriverNumberChange}
-            error={!!driverNumberError || (error === 'driver-number-required' && !driverNumber)}
-            helperText={
-                isCheckingDriverNumber ? <Localized id="driver-number-checking" /> :
-                driverNumberError ? <Localized id={driverNumberError} /> :
-                (error === 'driver-number-required' && !driverNumber) ? <Localized id='driver-number-required' /> :
-                driverNumberAvailable && !!driverNumber ? <Localized id='driver-number-available' /> :
-                ''
-            }
-            sx={{
-              ...(driverNumberAvailable && !driverNumberError && !isCheckingDriverNumber && !!driverNumber && {
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: 'success.main' },
-                  '&:hover fieldset': { borderColor: 'success.dark' },
-                  '&.Mui-focused fieldset': { borderColor: 'success.main' },
-                },
-              }),
-            }}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="password"
-            label={<Localized id="password-label" />}
-            type="password"
-            id="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <TextField
-            margin="normal"
-            required
-            fullWidth
-            name="confirmPassword"
-            label={<Localized id="confirm-password-label" />}
-            type="password"
-            id="confirmPassword"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            error={error === 'password-mismatch'}
-            helperText={error === 'password-mismatch' ? <Localized id={error} /> : ''}
-          />
-          {error && !driverNumberError && error !== 'password-mismatch' && error !== 'driver-number-required' && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              <Localized id={error} />
-            </Alert>
-          )}
-          {error === 'password-mismatch' && (
-             <Alert severity="error" sx={{ mt: 2 }}>
-               <Localized id={error} />
-             </Alert>
-           )}
-          {success && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              <Localized id={success} />
-            </Alert>
-          )}
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={isCheckingDriverNumber}
-          >
-            <Localized id="register-button" />
-          </Button>
-          <Link to="/login" variant="body2">
-            <Localized id="login-link" />
-          </Link>
-        </Box>
-      </Box>
+    <Container component="main" maxWidth="xs" sx={{ mt: 8, mb: 4 }}>
+       <Paper elevation={3} sx={{ padding: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+                <PersonAddAlt1Icon />
+            </Avatar>
+            <Typography component="h1" variant="h5">
+                <Localized id="register-title" />
+            </Typography>
+            <Box component="form" onSubmit={handleRegister} noValidate sx={{ mt: 3, width: '100%' }}>
+                <Grid container spacing={2}>
+                    {/* General Message Area */} 
+                    {message && (
+                        <Grid item xs={12}>
+                            <Alert severity={success ? "success" : "error"} sx={{ width: '100%' }}>
+                                <Localized id={message} fallback={message} />
+                            </Alert>
+                        </Grid>
+                    )}
+
+                    {/* Form Fields */} 
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            id="username"
+                            label={<Localized id="username-label" />}
+                            name="username"
+                            autoComplete="username"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            autoFocus
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                         <TextField
+                            required
+                            fullWidth
+                            id="usertag"
+                            label={<Localized id="usertag-label" />}
+                            name="usertag"
+                            autoComplete="nickname"
+                            value={usertag}
+                            onChange={(e) => setUsertag(e.target.value)}
+                         />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            id="driverNumber"
+                            label={<Localized id="driver-number-label" />}
+                            name="driverNumber"
+                            type="number" // Use number type
+                            inputProps={{ min: 0 }} // Basic validation
+                            value={driverNumberInput}
+                            onChange={handleDriverNumberChange}
+                            error={!!driverNumberError}
+                            helperText={getDriverNumberHelperText()} // Use the helper function
+                            color={getDriverNumberColor()} // Dynamic color
+                            InputLabelProps={{ shrink: true }} // Keep label floated
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            name="password"
+                            label={<Localized id="password-label" />}
+                            type="password"
+                            id="password"
+                            autoComplete="new-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            required
+                            fullWidth
+                            name="confirmPassword"
+                            label={<Localized id="confirm-password-label" />}
+                            type="password"
+                            id="confirmPassword"
+                            autoComplete="new-password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            error={!success && password !== confirmPassword && confirmPassword !== ''} // Show error if passwords don't match
+                        />
+                    </Grid>
+                </Grid>
+                <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    sx={{ mt: 3, mb: 2 }}
+                    disabled={isLoading || isCheckingDriverNumber || isDriverNumberAvailable !== true} // Disable if loading, checking, or number not available
+                >
+                    {isLoading ? <CircularProgress size={24} /> : <Localized id="register-button" />}
+                </Button>
+                <Grid container justifyContent="flex-end">
+                    <Grid item>
+                         {/* Use MUI Link styled as RouterLink */}
+                        <Link component={RouterLink} to="/login" variant="body2">
+                             <Localized id="login-link" />
+                        </Link>
+                    </Grid>
+                </Grid>
+            </Box>
+       </Paper>
     </Container>
   );
 }

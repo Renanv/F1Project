@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LocalizationProvider, ReactLocalization, Localized } from '@fluent/react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { jwtDecode } from 'jwt-decode';
+import axiosInstance from './utils/axiosInstance';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
 import Config from './components/Config';
 import DriverRankings from './components/DriverRankings';
+import AccountPage from './components/AccountPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavigationBar from './components/NavigationBar';
 import AdminRoute from './components/admin/AdminRoute';
@@ -18,54 +21,69 @@ import { bundles } from './i18n';
 
 function App() {
   const [activeLocale, setActiveLocale] = useState('pt');
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
-  });
-  const [isAdmin, setIsAdmin] = useState(() => {
-    return localStorage.getItem('isAdmin') === 'true';
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   const l10n = useMemo(() => {
     return new ReactLocalization(bundles.filter(bundle => bundle.locales.includes(activeLocale)));
   }, [activeLocale]);
 
-  useEffect(() => {
-    // WARNING: Storing auth status/roles in localStorage is insecure for production.
-    // Always verify on the server-side for sensitive actions.
-    localStorage.setItem('isLoggedIn', isLoggedIn);
-    localStorage.setItem('isAdmin', isAdmin);
-  }, [isLoggedIn, isAdmin]);
+  const checkAuthStatus = useCallback(() => {
+    const token = localStorage.getItem('authToken');
+    setIsLoadingAuth(true);
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        if (decodedToken.exp < currentTime) {
+          console.log("Token expired");
+          localStorage.removeItem('authToken');
+          setIsLoggedIn(false);
+          setIsAdmin(false);
+        } else {
+          setIsLoggedIn(true);
+          setIsAdmin(!!decodedToken.isAdmin);
+        }
+      } catch (error) {
+        console.error("Invalid token:", error);
+        localStorage.removeItem('authToken');
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+      }
+    } else {
+      setIsLoggedIn(false);
+      setIsAdmin(false);
+    }
+    setIsLoadingAuth(false);
+  }, []);
 
-  // Effect to sync auth state from localStorage changes in other tabs
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
   useEffect(() => {
     const handleStorageChange = (event) => {
-      if (event.key === 'isLoggedIn') {
-        setIsLoggedIn(event.newValue === 'true');
-      }
-      if (event.key === 'isAdmin') {
-        setIsAdmin(event.newValue === 'true');
+      if (event.key === 'authToken') {
+        checkAuthStatus();
       }
     };
-
     window.addEventListener('storage', handleStorageChange);
-
-    // Cleanup listener on component unmount
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [checkAuthStatus]);
 
   const toggleLocale = () => {
     const newLocale = activeLocale === 'en' ? 'pt' : 'en';
     setActiveLocale(newLocale);
   };
 
-  const handleLogin = (isAdmin) => {
-    setIsLoggedIn(true);
-    setIsAdmin(isAdmin);
-  };
-
   const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('userId');
     setIsLoggedIn(false);
     setIsAdmin(false);
   };
@@ -75,6 +93,16 @@ function App() {
       mode: 'dark',
     },
   });
+
+  // Callback for Login component
+  const handleLoginSuccess = () => {
+    console.log('Login success callback triggered. Re-checking auth status...');
+    checkAuthStatus(); // Immediately update state after token is set
+  };
+
+  if (isLoadingAuth) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Loading Authentication...</div>;
+  }
 
   return (
     <ThemeProvider theme={darkTheme}>
@@ -89,11 +117,12 @@ function App() {
             activeLocale={activeLocale}
           />
           <Routes>
-            <Route path="/" element={<Home isLoggedIn={isLoggedIn} />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} />} />
+            <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute isLoggedIn={isLoggedIn} />}>
               <Route path="/drivers" element={<DriverRankings isAdmin={isAdmin} />} />
+              <Route path="/account" element={<AccountPage />} />
             </Route>
             <Route element={<AdminRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin} />}>
               <Route path="/admin" element={<AdminPanel />} />

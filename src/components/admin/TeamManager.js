@@ -1,48 +1,58 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+// Use axiosInstance
+import axiosInstance from '../../utils/axiosInstance';
+// import axios from 'axios';
+import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Avatar, ListItemSecondaryAction, ListItemIcon } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
+import GroupIcon from '@mui/icons-material/Group'; // For title
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'; // Assign icon
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Unassign icon
 import { Localized } from '@fluent/react';
 
-// --- Expected Backend Endpoints --- 
-// GET /api/teams - Returns [{ id, name }, ...]
-// POST /api/teams - Expects { name: string }, Returns { id, name }
-// GET /api/users - Returns [{ id, username, usertag, driver_number }, ...] (for assignment)
-// GET /api/championships - Returns [{ id, name }, ...] (to select context for assignment)
-// GET /api/championship-attendees?teamId=X&championshipId=Y - Returns attendees for a team in a champ (or fetch all and filter)
-// PUT /api/championship-attendees/:attendeeId - Expects { teamId: number | null } (to assign/unassign team)
-// PUT /api/teams/:id - Expects { name: string }
-// DELETE /api/teams/:id
+// --- Expected Backend Endpoints (use axiosInstance for all) --- 
+// GET /api/teams
+// POST /api/teams
+// GET /api/users
+// GET /api/championships
+// GET /api/championship-attendees?championshipId=Y (No need for teamId? Fetch all for champ)
+// PUT /api/championships/:champId/attendees/:userId/team - Expects { teamId: number | null } 
+// PUT /api/teams/:id 
+// DELETE /api/teams/:id 
 // -------------------------------------
 
 function TeamManager() {
+  // --- Base State ---
   const [teams, setTeams] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
-  const [loadingTeams, setLoadingTeams] = useState(false);
-  const [error, setError] = useState(null);
-  const apiUrl = process.env.REACT_APP_API_BASE_URL;
-
-  // --- State for Assignment ---
   const [championships, setChampionships] = useState([]);
-  const [users, setUsers] = useState([]); // All users with id, usertag, driver_number
-  const [attendees, setAttendees] = useState([]); // Attendee list for selected champ { id, user_id, team_id, ... }
+  const [users, setUsers] = useState([]); 
+  const [attendees, setAttendees] = useState([]); 
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
-  const [selectedTeamId, setSelectedTeamId] = useState(''); // Team selected from the left list
+  const [selectedTeamId, setSelectedTeamId] = useState(''); 
+
+  // --- Loading State ---
+  const [loadingTeams, setLoadingTeams] = useState(false);
   const [loadingChampionships, setLoadingChampionships] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingAttendees, setLoadingAttendees] = useState(false);
-  const [assigningUserId, setAssigningUserId] = useState(null); // Track which user is being assigned/unassigned
-  // --- End Assignment State ---
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [assigningUserId, setAssigningUserId] = useState(null); // For assign/unassign loading
+  const [isEditingTeam, setIsEditingTeam] = useState(false);
+  const [isDeletingTeam, setIsDeletingTeam] = useState(false);
 
-  // --- State for Team Edit/Delete Modals ---
+  // --- Feedback State ---
+  const [error, setError] = useState(null);
+
+  // --- Modal State ---
   const [openEditTeamDialog, setOpenEditTeamDialog] = useState(false);
   const [openDeleteTeamDialog, setOpenDeleteTeamDialog] = useState(false);
-  const [teamToEdit, setTeamToEdit] = useState(null); // { id, name }
-  const [teamToDelete, setTeamToDelete] = useState(null); // { id, name }
+  const [teamToEdit, setTeamToEdit] = useState(null); 
+  const [teamToDelete, setTeamToDelete] = useState(null); 
   const [editedTeamName, setEditedTeamName] = useState('');
-  // --- End Team Modal State ---
 
+  // --- Initial Data Fetching ---
   useEffect(() => {
     fetchTeams();
     fetchChampionships();
@@ -54,385 +64,347 @@ function TeamManager() {
       fetchAttendees(selectedChampionshipId);
     } else {
       setAttendees([]);
+      setSelectedTeamId(''); // Reset team if championship changes
     }
   }, [selectedChampionshipId]);
 
+  // --- API Fetch Functions ---
   const fetchTeams = async () => {
-    setLoadingTeams(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${apiUrl}/api/teams`);
-      setTeams(response.data);
-    } catch (err) {
-      console.error("Error fetching teams:", err);
-      setError('fetch-teams-error'); // Localized ID
-    } finally {
-      setLoadingTeams(false);
-    }
+    setLoadingTeams(true); setError(null);
+    try { const res = await axiosInstance.get('/api/teams'); setTeams(res.data); }
+    catch (err) { console.error("Error fetching teams:", err); setError('fetch-teams-error'); }
+    finally { setLoadingTeams(false); }
   };
 
+   const fetchChampionships = async () => {
+    setLoadingChampionships(true); setError(null);
+    try { const res = await axiosInstance.get('/api/championships'); setChampionships(res.data); }
+    catch (err) { console.error("Error fetching champs:", err); setError('fetch-championships-error'); }
+    finally { setLoadingChampionships(false); }
+  };
+
+   const fetchUsers = async () => {
+    setLoadingUsers(true); setError(null);
+    try { const res = await axiosInstance.get('/api/users'); setUsers(res.data); }
+    catch (err) { console.error("Error fetching users:", err); setError('fetch-users-error'); }
+    finally { setLoadingUsers(false); }
+  };
+
+   const fetchAttendees = async (champId) => {
+    setLoadingAttendees(true); setError(null);
+    try { const res = await axiosInstance.get(`/api/championship-attendees?championshipId=${champId}`); setAttendees(res.data); }
+    catch (err) { console.error("Error fetching attendees:", err); setError('fetch-attendees-error'); }
+    finally { setLoadingAttendees(false); }
+  };
+
+  // --- Create/Edit/Delete Handlers ---
   const handleCreateTeam = async (e) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault(); setError(null);
+    if (!newTeamName) return;
+    setIsCreatingTeam(true);
     try {
-      await axios.post(`${apiUrl}/api/teams`, { name: newTeamName });
+      await axiosInstance.post('/api/teams', { name: newTeamName });
       setNewTeamName('');
-      fetchTeams(); // Refresh list
-    } catch (err) {
-      console.error("Error creating team:", err);
-      setError(err.response?.data?.message || 'create-team-error'); // Localized ID
-    }
-  };
-
-  // --- Fetch Functions for Assignment ---
-  const fetchChampionships = async () => {
-    setLoadingChampionships(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${apiUrl}/api/championships`);
-      setChampionships(response.data);
-    } catch (err) {
-      console.error("Error fetching championships:", err);
-      setError('fetch-championships-error');
+      fetchTeams(); 
+    } catch (err) { 
+      console.error("Error creating team:", err); 
+      setError(err.response?.data?.message || 'create-team-error');
     } finally {
-      setLoadingChampionships(false);
+      setIsCreatingTeam(false);
     }
   };
 
-  const fetchUsers = async () => {
-    setLoadingUsers(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${apiUrl}/api/users`);
-      setUsers(response.data);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-      setError('fetch-users-error'); // New localization ID
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
-
-  const fetchAttendees = async (champId) => {
-    setLoadingAttendees(true);
-    setError(null);
-    try {
-      const response = await axios.get(`${apiUrl}/api/championship-attendees?championshipId=${champId}`);
-      setAttendees(response.data);
-    } catch (err) {
-      console.error("Error fetching attendees:", err);
-      setError('fetch-attendees-error'); // New localization ID
-    } finally {
-      setLoadingAttendees(false);
-    }
-  };
-  // --- End Fetch Functions ---
-
-  // --- Memoized calculations for assigned/available users ---
-  const { assignedUsers, availableUsers } = useMemo(() => {
-    if (!selectedTeamId || !selectedChampionshipId || users.length === 0) {
-      return { assignedUsers: [], availableUsers: [] }; // Return empty if no context
-    }
-
-    const assignedUserIds = new Set(
-      attendees
-        .filter(att => att.team_id === selectedTeamId) // Filter attendees for the selected team
-        .map(att => att.user_id) // Get their user IDs
-    );
-
-    const assigned = users.filter(user => assignedUserIds.has(user.id));
-    // Available = All users NOT in ANY team for THIS championship
-    const allAssignedUserIdsInChamp = new Set(attendees.map(att => att.user_id));
-    const available = users.filter(user => !allAssignedUserIdsInChamp.has(user.id));
-
-    return { assignedUsers: assigned, availableUsers: available };
-  }, [selectedTeamId, selectedChampionshipId, users, attendees]);
-  // --- End Memoized calculations ---
-  
-  // --- Handlers for Assignment ---
   const handleAssignUser = async (userId) => {
       if (!selectedChampionshipId || !selectedTeamId) return; 
-      
-      setAssigningUserId(userId); 
-      setError(null);
+      setAssigningUserId(userId); setError(null);
       try {
-          await axios.put(`${apiUrl}/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, {
-              teamId: selectedTeamId 
-          });
-          fetchAttendees(selectedChampionshipId); 
-      } catch (err) {
-          console.error(`Error assigning user ${userId} to team ${selectedTeamId}:`, err);
-          setError(err.response?.data?.message || 'error-assigning-user');
-      } finally {
-          setAssigningUserId(null); 
-      }
+          await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: selectedTeamId });
+          fetchAttendees(selectedChampionshipId);
+      } catch (err) { console.error("Assign error:", err); setError(err.response?.data?.message || 'error-assigning-user'); }
+      finally { setAssigningUserId(null); }
   };
 
   const handleUnassignUser = async (userId) => {
-       if (!selectedChampionshipId || !selectedTeamId) return; // Safety check
-       setAssigningUserId(userId); // Set loading state for this user
-       setError(null);
+       if (!selectedChampionshipId || !selectedTeamId) return;
+       setAssigningUserId(userId); setError(null);
        try {
-           // Find the attendee record and set team_id to null
-           await axios.put(`${apiUrl}/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, {
-              teamId: null // Set teamId to null to unassign
-           });
-           // Refresh attendees list to update UI
-           fetchAttendees(selectedChampionshipId); 
-       } catch (err) {
-          console.error(`Error unassigning user ${userId} from team ${selectedTeamId}:`, err);
-          setError(err.response?.data?.message || 'Error unassigning user.'); // Localize later
-       } finally {
-          setAssigningUserId(null); // Clear loading state for this user
-       }
+           await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: null });
+           fetchAttendees(selectedChampionshipId);
+       } catch (err) { console.error("Unassign error:", err); setError(err.response?.data?.message || 'error-unassigning-user'); }
+       finally { setAssigningUserId(null); }
   };
-  // --- End Handlers ---
 
-  // --- Team Edit/Delete Modal Handlers ---
   const handleOpenEditTeam = (team) => {
-      setTeamToEdit(team);
-      setEditedTeamName(team.name);
-      setOpenEditTeamDialog(true);
+      setTeamToEdit(team); setEditedTeamName(team.name); setOpenEditTeamDialog(true);
   };
-
   const handleCloseEditTeam = () => setOpenEditTeamDialog(false);
-
   const handleOpenDeleteTeam = (team) => {
-      setTeamToDelete(team);
-      setOpenDeleteTeamDialog(true);
+      setTeamToDelete(team); setOpenDeleteTeamDialog(true);
   };
-
   const handleCloseDeleteTeam = () => setOpenDeleteTeamDialog(false);
-  // --- End Team Modal Handlers ---
 
-  // --- Team Edit/Delete API Call Handlers ---
   const handleConfirmEditTeam = async () => {
       if (!teamToEdit || !editedTeamName) return;
-      setError(null);
+      setError(null); setIsEditingTeam(true);
       try {
-          await axios.put(`${apiUrl}/api/teams/${teamToEdit.id}`, { name: editedTeamName });
-          handleCloseEditTeam();
-          fetchTeams(); // Refresh list
-          // Note: If edited team was selected, its name will update automatically in the disabled text field
-      } catch (err) { 
-          console.error("Error editing team:", err); 
-          setError(err.response?.data?.message || 'edit-team-error'); // Localized ID
-      }
+          await axiosInstance.put(`/api/teams/${teamToEdit.id}`, { name: editedTeamName });
+          handleCloseEditTeam(); fetchTeams();
+      } catch (err) { console.error("Edit team error:", err); setError(err.response?.data?.message || 'edit-team-error'); }
+      finally { setIsEditingTeam(false); }
   };
 
   const handleConfirmDeleteTeam = async () => {
       if (!teamToDelete) return;
-      setError(null);
+      setError(null); setIsDeletingTeam(true);
       try {
-          // Consider backend implications: What happens to attendees assigned to this team?
-          // The schema uses ON DELETE SET NULL for team_id in championship_attendees.
-          await axios.delete(`${apiUrl}/api/teams/${teamToDelete.id}`);
-          handleCloseDeleteTeam();
-          fetchTeams(); // Refresh list
-          // If deleted team was selected, clear the selection
-          if (selectedTeamId === teamToDelete.id) {
-              setSelectedTeamId('');
-          }
-      } catch (err) { 
-          console.error("Error deleting team:", err); 
-          setError(err.response?.data?.message || 'delete-team-error'); // Localized ID
-      }
+          await axiosInstance.delete(`/api/teams/${teamToDelete.id}`);
+          handleCloseDeleteTeam(); fetchTeams();
+          if (selectedTeamId === teamToDelete.id) setSelectedTeamId('');
+      } catch (err) { console.error("Delete team error:", err); setError(err.response?.data?.message || 'delete-team-error'); }
+      finally { setIsDeletingTeam(false); }
   };
-  // --- End Team API Call Handlers ---
+
+  // --- Memoized calculations for user lists ---
+  const { assignedUsers, availableUsers } = useMemo(() => {
+      if (!selectedChampionshipId || users.length === 0) {
+          // If no championship selected, all users are potentially "available" in a general sense
+          // but we should probably show nothing or a prompt. Let's return empty for now.
+          return { assignedUsers: [], availableUsers: [] };
+      }
+      const attendeeMap = new Map(attendees.map(att => [att.user_id, att.team_id]));
+      
+      let assigned = [];
+      let available = [];
+
+      users.forEach(user => {
+          const userTeamId = attendeeMap.get(user.id);
+          if (selectedTeamId && userTeamId === selectedTeamId) {
+              assigned.push(user);
+          } else if (!attendeeMap.has(user.id)) {
+              // User is not an attendee of this championship at all
+              available.push(user);
+          }
+          // Users assigned to *other* teams in this championship are neither available nor assigned to the *selected* team.
+      });
+
+      return { assignedUsers: assigned, availableUsers: available };
+  }, [selectedChampionshipId, selectedTeamId, users, attendees]);
+
+  // Helper to render user list items
+  const renderUserListItem = (user, actionType) => (
+     <ListItem key={user.id} divider>
+         <ListItemText primary={user.username} secondary={`#${user.driver_number} (${user.usertag})`} />
+         <ListItemSecondaryAction>
+             <IconButton 
+                 edge="end" 
+                 onClick={() => actionType === 'assign' ? handleAssignUser(user.id) : handleUnassignUser(user.id)}
+                 disabled={assigningUserId === user.id}
+                 size="small"
+             >
+                 {assigningUserId === user.id ? <CircularProgress size={20} /> : 
+                    actionType === 'assign' ? <ArrowForwardIcon color="success" /> : <ArrowBackIcon color="warning" />
+                 }
+            </IconButton>
+         </ListItemSecondaryAction>
+     </ListItem>
+  );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        <Localized id="admin-team-manager-title" />
-      </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}><Localized id={error} /></Alert>}
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
+                <GroupIcon />
+            </Avatar>
+            <Typography component="h1" variant="h4">
+                <Localized id="admin-team-manager-title" />
+            </Typography>
+        </Box>
 
-      <Grid container spacing={4}>
-        {/* Team List and Creation */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6"><Localized id="admin-teams-heading" /></Typography>
-            {loadingTeams ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
-            ) : (
-              <List dense sx={{ maxHeight: 300, overflow: 'auto', mb: 2 }}>
-                {teams.map((team) => (
-                  <ListItem 
-                    key={team.id} 
-                    button 
-                    selected={selectedTeamId === team.id} 
-                    onClick={() => setSelectedTeamId(team.id)}
-                    secondaryAction={
-                      <>
-                        <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }}>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleOpenDeleteTeam(team); }}>
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </>
-                    }
-                  >
-                    <ListItemText primary={team.name} />
-                  </ListItem>
-                ))}
-                {teams.length === 0 && !loadingTeams && (
-                   <ListItem><ListItemText primary={<Localized id="admin-no-teams" />} /></ListItem>
-                 )}
-              </List>
-            )}
-            <Typography variant="subtitle1"><Localized id="admin-add-team-subheading" /></Typography>
-            <Box component="form" onSubmit={handleCreateTeam} sx={{ mt: 1 }}>
-              <TextField
-                label={<Localized id="admin-new-team-label" />}
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                fullWidth
-                required
-                size="small"
-                sx={{ mb: 1 }}
-              />
-              <Button type="submit" variant="contained" size="small">
-                <Localized id="admin-create-team-button" />
-              </Button>
-            </Box>
-          </Paper>
-        </Grid>
+        {/* Use localized generic fallback */} 
+        {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}><Localized id={error} fallback={<Localized id='generic-error-fallback' />} /></Alert>}
 
-        {/* User Assignment Section */}
-        <Grid item xs={12} md={8}>
-           <Paper sx={{ p: 2 }}>
-             <Typography variant="h6"><Localized id="admin-assign-users-heading" /></Typography>
-             
-             {/* Selection Controls */}
-             <Box sx={{ display: 'flex', gap: 2, mb: 3, mt: 2 }}>
-               <FormControl fullWidth size="small">
-                 <InputLabel id="champ-select-label"><Localized id="admin-select-championship-label" /></InputLabel>
-                 <Select
-                   labelId="champ-select-label"
-                   value={selectedChampionshipId}
-                   label={<Localized id="admin-select-championship-label" />}
-                   onChange={(e) => setSelectedChampionshipId(e.target.value)}
-                   disabled={loadingChampionships}
-                 >
-                   <MenuItem value=""><em><Localized id="admin-select-championship-placeholder"/></em></MenuItem>
-                   {championships.map(c => <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>)}
-                 </Select>
-               </FormControl>
-                <TextField 
-                    label="Selected Team" 
-                    value={teams.find(t => t.id === selectedTeamId)?.name || 'No Team Selected'} 
-                    disabled 
-                    fullWidth 
-                    size="small" 
-                /> 
-             </Box>
-
-             {/* Only show assignment lists if championship and team are selected */}
-             {selectedChampionshipId && selectedTeamId ? (
-                <Grid container spacing={2}>
-                    {/* Available Users List */}
-                    <Grid item xs={6}>
-                        <Typography variant="subtitle1"><Localized id="admin-available-users-subheading" /></Typography>
-                        {loadingUsers || loadingAttendees ? <CircularProgress size={20} /> : (
-                            <List dense sx={{ height: 250, overflow: 'auto', border: '1px solid lightgray', p:1, mt: 1 }}>
-                                {availableUsers.length === 0 && (
-                                    <ListItem><ListItemText primary={<Localized id="admin-no-available-users" />}/></ListItem>
-                                )}
-                                {availableUsers.map(user => (
-                                    <ListItem
-                                        key={user.id}
-                                        secondaryAction={
-                                            <Button 
-                                                size="small" 
-                                                onClick={() => handleAssignUser(user.id)}
-                                                disabled={assigningUserId === user.id} 
-                                            >
-                                                {assigningUserId === user.id ? <CircularProgress size={16}/> : <Localized id="admin-assign-button"/>}
-                                            </Button>
-                                        }
-                                        disablePadding
-                                    >
-                                        <ListItemText primary={user.usertag} secondary={`#${user.driver_number} (${user.username})`} sx={{m:0}} />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        )}
-                    </Grid>
-                    {/* Assigned Users List */}
-                    <Grid item xs={6}>
-                        <Typography variant="subtitle1"><Localized id="admin-assigned-users-subheading" vars={{ teamName: teams.find(t => t.id === selectedTeamId)?.name }} /></Typography>
-                        {loadingAttendees ? <CircularProgress size={20} /> : (
-                            <List dense sx={{ height: 250, overflow: 'auto', border: '1px solid lightgray', p:1, mt: 1 }}>
-                                 {assignedUsers.length === 0 && (
-                                    <ListItem><ListItemText primary={<Localized id="admin-no-assigned-users" />}/></ListItem>
-                                )}
-                                {assignedUsers.map(user => (
+        <Grid container spacing={4}>
+             {/* Teams Column */} 
+            <Grid item xs={12} md={4}>
+                {/* Teams List */} 
+                <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+                    <Typography variant="h6" gutterBottom><Localized id="admin-teams-heading" /></Typography>
+                    {loadingTeams ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
+                    ) : (
+                        <List dense sx={{ maxHeight: 300, overflow: 'auto' }}>
+                            {teams.map((team, index) => (
+                                <React.Fragment key={team.id}>
                                     <ListItem 
-                                        key={user.id} 
+                                        button 
+                                        selected={selectedTeamId === team.id}
+                                        onClick={() => setSelectedTeamId(team.id)}
                                         secondaryAction={
-                                            <Button 
-                                                size="small" 
-                                                color="secondary" 
-                                                onClick={() => handleUnassignUser(user.id)}
-                                                disabled={assigningUserId === user.id}
-                                            >
-                                                {assigningUserId === user.id ? <CircularProgress size={16}/> : <Localized id="admin-unassign-button"/>}
-                                            </Button>
+                                            <>
+                                                <IconButton edge="end" aria-label="edit" onClick={(e) => { e.stopPropagation(); handleOpenEditTeam(team); }} size="small">
+                                                    <EditIcon fontSize="inherit"/>
+                                                </IconButton>
+                                                <IconButton edge="end" aria-label="delete" onClick={(e) => { e.stopPropagation(); handleOpenDeleteTeam(team); }} size="small">
+                                                    <DeleteIcon fontSize="inherit"/>
+                                                </IconButton>
+                                            </>
                                         }
-                                        disablePadding
                                     >
-                                        <ListItemText primary={user.usertag} secondary={`#${user.driver_number} (${user.username})`} sx={{m:0}} />
+                                        <ListItemText primary={team.name} />
                                     </ListItem>
+                                    {index < teams.length - 1 && <Divider component="li" />}
+                                </React.Fragment>
+                            ))}
+                            {teams.length === 0 && !loadingTeams && (
+                                <ListItem><ListItemText primary={<Localized id="admin-no-teams" />} /></ListItem>
+                            )}
+                        </List>
+                    )}
+                </Paper>
+                {/* Add Team Form */} 
+                 <Paper elevation={2} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom><Localized id="admin-add-team-subheading" /></Typography>
+                    <Box component="form" onSubmit={handleCreateTeam} sx={{ mt: 1 }}>
+                         <TextField
+                            label={<Localized id="admin-new-team-label" />}
+                            value={newTeamName}
+                            onChange={(e) => setNewTeamName(e.target.value)}
+                            fullWidth
+                            required
+                            size="small"
+                            margin="dense"
+                            disabled={isCreatingTeam}
+                        />
+                         <Button 
+                            type="submit" 
+                            variant="contained" 
+                            startIcon={isCreatingTeam ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
+                            sx={{ mt: 2 }}
+                            disabled={isCreatingTeam || !newTeamName}
+                            fullWidth
+                        >
+                            <Localized id="admin-create-team-button" />
+                        </Button>
+                    </Box>
+                 </Paper>
+            </Grid>
+
+            {/* Assignment Column */} 
+            <Grid item xs={12} md={8}>
+                <Paper elevation={2} sx={{ p: 3 }}>
+                     <Typography variant="h6" gutterBottom><Localized id="admin-assign-users-heading" /></Typography>
+                    
+                     {/* Selectors */} 
+                     <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                        <FormControl fullWidth sx={{ flex: 1 }} disabled={loadingChampionships || loadingAttendees}>
+                            <InputLabel id="champ-select-label"><Localized id="admin-select-championship-label"/></InputLabel>
+                            <Select
+                                labelId="champ-select-label"
+                                value={selectedChampionshipId}
+                                label={<Localized id="admin-select-championship-label"/>}
+                                onChange={(e) => setSelectedChampionshipId(e.target.value)}
+                                size="small"
+                            >
+                                <MenuItem value="">
+                                    <em><Localized id="admin-select-championship-placeholder"/></em>
+                                </MenuItem>
+                                {championships.map((champ) => (
+                                <MenuItem key={champ.id} value={champ.id}>{champ.name}</MenuItem>
                                 ))}
-                            </List>
-                        )}
-                    </Grid>
-                </Grid>
-             ) : (
-                 <Typography variant="body2"><Localized id="admin-select-champ-team-prompt" /></Typography>
-             )}
-           </Paper>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            label={<Localized id="selected-team-label" />}
+                            value={teams.find(t => t.id === selectedTeamId)?.name || ''}
+                            fullWidth
+                            sx={{ flex: 1 }}
+                            disabled
+                            size="small"
+                            InputLabelProps={{ shrink: true }}
+                        />
+                     </Box>
+
+                     {/* User Lists */} 
+                     {(loadingUsers || loadingAttendees) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>} 
+                     
+                     {!loadingUsers && !loadingAttendees && !selectedChampionshipId && (
+                        <Typography color="text.secondary" sx={{mt: 2}}><Localized id="select-champ-placeholder"/></Typography> 
+                     )}
+
+                     {!loadingUsers && !loadingAttendees && selectedChampionshipId && !selectedTeamId && (
+                        <Typography color="text.secondary" sx={{mt: 2}}><Localized id="admin-select-team-prompt"/></Typography> /* New Key */
+                     )}
+
+                     {!loadingUsers && !loadingAttendees && selectedChampionshipId && selectedTeamId && (
+                         <Grid container spacing={3}>
+                            {/* Available Users */} 
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="subtitle1"><Localized id="admin-available-users-subheading" /></Typography>
+                                <List dense sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, mt: 1 }}>
+                                    {availableUsers.length === 0 
+                                        ? <ListItem><ListItemText primary={<Localized id="admin-no-available-users"/>} /></ListItem>
+                                        : availableUsers.map(user => renderUserListItem(user, 'assign'))
+                                    }
+                                </List>
+                            </Grid>
+                             {/* Assigned Users */} 
+                            <Grid item xs={12} sm={6}>
+                                <Typography variant="subtitle1">
+                                    <Localized id="admin-assigned-users-subheading" vars={{ teamName: teams.find(t => t.id === selectedTeamId)?.name || '' }}/>
+                                </Typography>
+                                 <List dense sx={{ maxHeight: 300, overflow: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1, mt: 1 }}>
+                                    {assignedUsers.length === 0 
+                                        ? <ListItem><ListItemText primary={<Localized id="admin-no-assigned-users"/>} /></ListItem>
+                                        : assignedUsers.map(user => renderUserListItem(user, 'unassign'))
+                                    }
+                                </List>
+                            </Grid>
+                         </Grid>
+                     )}
+                </Paper>
+            </Grid>
         </Grid>
-      </Grid>
 
-      {/* --- Team Dialogs --- */}
-      {/* Edit Team */}
-      <Dialog open={openEditTeamDialog} onClose={handleCloseEditTeam}>
-          <DialogTitle><Localized id="admin-edit-team-title" /></DialogTitle>
-          <DialogContent>
-              <TextField
-                  autoFocus
-                  margin="dense"
-                  id="team-name"
-                  label={<Localized id="admin-new-team-label" />}
-                  type="text"
-                  fullWidth
-                  variant="standard"
-                  value={editedTeamName}
-                  onChange={(e) => setEditedTeamName(e.target.value)}
-              />
-          </DialogContent>
-          <DialogActions>
-              <Button onClick={handleCloseEditTeam}><Localized id="admin-cancel-button" /></Button>
-              <Button onClick={handleConfirmEditTeam}><Localized id="admin-save-button" /></Button>
-          </DialogActions>
-      </Dialog>
+       {/* Edit Team Dialog */}
+        <Dialog open={openEditTeamDialog} onClose={handleCloseEditTeam}>
+            <DialogTitle><Localized id="admin-edit-team-title"/></DialogTitle>
+            <DialogContent>
+                <TextField
+                    autoFocus
+                    margin="dense"
+                    id="name"
+                    label={<Localized id="admin-new-team-label"/>}
+                    type="text"
+                    fullWidth
+                    variant="standard"
+                    value={editedTeamName}
+                    onChange={(e) => setEditedTeamName(e.target.value)}
+                />
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2}}> {/* Padding */} 
+                <Button onClick={handleCloseEditTeam}><Localized id="admin-cancel-button"/></Button>
+                <Button onClick={handleConfirmEditTeam} variant="contained" disabled={isEditingTeam}>
+                     {isEditingTeam ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-save-button"/>}
+                </Button>
+            </DialogActions>
+        </Dialog>
 
-      {/* Delete Team */}
-      <Dialog open={openDeleteTeamDialog} onClose={handleCloseDeleteTeam}>
-          <DialogTitle><Localized id="admin-delete-team-title" /></DialogTitle>
-          <DialogContent>
-              <DialogContentText>
-                  <Localized id="admin-delete-team-confirm" vars={{ teamName: teamToDelete?.name }} />
-              </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-              <Button onClick={handleCloseDeleteTeam}><Localized id="admin-cancel-button" /></Button>
-              <Button onClick={handleConfirmDeleteTeam} color="error"><Localized id="admin-delete-button" /></Button>
-          </DialogActions>
-      </Dialog>
-      {/* --- End Team Dialogs --- */}
+      {/* Delete Team Dialog */}
+        <Dialog open={openDeleteTeamDialog} onClose={handleCloseDeleteTeam}>
+            <DialogTitle><Localized id="admin-delete-team-title"/></DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    <Localized id="admin-delete-team-confirm" vars={{ teamName: teamToDelete?.name || '' }}/>
+                </DialogContentText>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2}}> {/* Padding */} 
+                <Button onClick={handleCloseDeleteTeam}><Localized id="admin-cancel-button"/></Button>
+                <Button onClick={handleConfirmDeleteTeam} color="error" variant="contained" disabled={isDeletingTeam}>
+                    {isDeletingTeam ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-delete-button"/>}
+                </Button>
+            </DialogActions>
+        </Dialog>
+
     </Container>
   );
 }
