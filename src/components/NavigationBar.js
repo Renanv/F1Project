@@ -17,13 +17,20 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
         <Button color="inherit" component={Link} to="/">
           <Localized id="home" />
         </Button>
+        {isLoggedIn && (
+           <Button color="inherit" component={Link} to="/drivers">
+             <Localized id="driver-rankings-title" />
+           </Button>
+        )}
         {isLoggedIn && isAdmin && (
-          <Button color="inherit" component={Link} to="/config">
-            <Localized id="config" />
-          </Button>
+          <>
+            <Button color="inherit" component={Link} to="/admin">
+              <Localized id="admin-panel-link" />
+            </Button>
+          </>
         )}
         {!isLoggedIn && (
-          <> {/* Use Fragment for multiple elements */}
+          <>
             <Button color="inherit" component={Link} to="/login">
               <Localized id="login" />
             </Button>

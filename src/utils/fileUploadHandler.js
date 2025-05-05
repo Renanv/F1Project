@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) => {
+export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, raceId) => {
   if (!file) {
     setMessage('select-file');
+    return;
+  }
+
+  if (!raceId) {
+    setMessage('select-race-error');
     return;
   }
 
@@ -16,8 +21,7 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
     try {
       const data = JSON.parse(e.target.result);
 
-      const driverNumbersInFile = data['classification-data'].map(driver => driver['participant-data']['race-number']);
-      const updatedDrivers = [];
+      const driverRaceResults = [];
 
       // Fetch team configurations
       const teamConfigsResponse = await axios.get(`${apiUrl}/api/team-configs`);
@@ -26,11 +30,9 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
         return acc;
       }, {});
 
-      // Access the overtakes data within overtakes.records
+      // Overtakes calculation
       const overtakes = Array.isArray(data['overtakes']?.['records']) ? data['overtakes']['records'] : [];
-
-      const overtakingCounts = {};
-
+      const overtakingCounts = {}; // Counts for ALL drivers in overtake records
       overtakes.forEach(overtake => {
         const overtakingDriver = overtake['overtaking-driver-name']?.trim().toLowerCase();
         if (overtakingDriver) {
@@ -38,84 +40,121 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess) 
         }
       });
 
-      // Determine the maximum number of overtakes by any driver
-      const maxOvertakes = Math.max(...Object.values(overtakingCounts));
+      // --- Refine maxOvertakes calculation ---
+      // Get driver names (lowercase) from the classification data we are processing
+      const classificationDriverNames = new Set(
+        data['classification-data'].map(d => d['driver-name']?.trim().toLowerCase()).filter(Boolean)
+      );
 
+      // Filter the counts to only include drivers present in classification-data
+      const relevantOvertakeCounts = Object.entries(overtakingCounts)
+        .filter(([driverName, count]) => classificationDriverNames.has(driverName))
+        .map(([driverName, count]) => count); // Get just the counts
+      // Determine the maximum number of overtakes AMONG RELEVANT drivers
+      const maxOvertakes = relevantOvertakeCounts.length > 0 ? Math.max(...relevantOvertakeCounts) : 0; // Use 0 if no relevant counts
+      // --- End refine maxOvertakes ---
       const totalLaps = data['session-info']['total-laps'];
 
       for (const driver of data['classification-data']) {
-        let pointsAdjustment = 0;
+        // --- Calculate individual score components --- 
+        let score_penalties = 0;
+        let score_grid_position = 0;
+        let score_delta_leader = 0; // This will hold the final value based on rules
+        let score_overtakes = 0;
+        let score_laps_completed_log = 0; // For logging only
+        let score_finish_status_log = 0; // For logging only
+        
         const driverName = driver['driver-name']?.trim().toLowerCase();
-        const teamName = driver['participant-data']['team-id']?.toLowerCase();
+        const teamName = driver['participant-data']['team-id']?.toLowerCase(); 
+        const driverNumber = driver['participant-data']['race-number']; 
 
-        // Calculate penalties-time adjustment
+        // --- Penalties Score ---
         const penalties = driver['final-classification']['penalties-time'];
-        if (penalties > 3 && penalties <= 6) pointsAdjustment -= 2;
-        else if (penalties > 6 && penalties <= 9) pointsAdjustment -= 3;
-        else if (penalties > 9) pointsAdjustment -= 5;
-        else if (penalties > 0 && penalties <= 3) pointsAdjustment -= 1;
+        if (penalties > 3 && penalties <= 6) score_penalties = -2;
+        else if (penalties > 6 && penalties <= 9) score_penalties = -3;
+        else if (penalties > 9) score_penalties = -5;
+        else if (penalties > 0 && penalties <= 3) score_penalties = -1;
 
-        // Calculate grid-position adjustment
+        // --- Grid Position Score ---
         const gridPosition = driver['final-classification']['grid-position'];
-        if (gridPosition === 1 || gridPosition === 2) pointsAdjustment += 5;
-        else if (gridPosition === 3 || gridPosition === 4) pointsAdjustment += 4;
-        else if (gridPosition === 5 || gridPosition === 6) pointsAdjustment += 3;
-        else if (gridPosition === 7 || gridPosition === 8) pointsAdjustment += 2; 
-        else if (gridPosition === 9 || gridPosition === 10) pointsAdjustment += 1;
-        else if (gridPosition === 11 || gridPosition === 12) pointsAdjustment += 0;
-        else if (gridPosition === 13 || gridPosition === 14) pointsAdjustment += 0;
-        else if (gridPosition === 15 || gridPosition === 16) pointsAdjustment -= 1;
-        else if (gridPosition === 17 || gridPosition === 18) pointsAdjustment -= 2;
-        else if (gridPosition === 19 || gridPosition === 20) pointsAdjustment -= 3;
+        if (gridPosition === 1 || gridPosition === 2) score_grid_position = 5;
+        else if (gridPosition === 3 || gridPosition === 4) score_grid_position = 4;
+        else if (gridPosition === 5 || gridPosition === 6) score_grid_position = 3;
+        else if (gridPosition === 7 || gridPosition === 8) score_grid_position = 2;
+        else if (gridPosition === 9 || gridPosition === 10) score_grid_position = 1;
+        else if (gridPosition === 15 || gridPosition === 16) score_grid_position = -1;
+        else if (gridPosition === 17 || gridPosition === 18) score_grid_position = -2;
+        else if (gridPosition === 19 || gridPosition === 20) score_grid_position = -3;
 
-        // Calculate delta-to-race-leader-in-ms adjustment
-        const deltaToLeader = driver['lap-data']['delta-to-race-leader-in-ms'];
-        if (deltaToLeader >= 0 && deltaToLeader <= 3000) pointsAdjustment += 5;
-        else if (deltaToLeader > 3000 && deltaToLeader <= 5000) pointsAdjustment += 4;
-        else if (deltaToLeader > 5000 && deltaToLeader <= 7000) pointsAdjustment += 3;
-        else if (deltaToLeader > 7000 && deltaToLeader <= 10000) pointsAdjustment += 2;
-        else if (deltaToLeader > 10000 && deltaToLeader <= 15000) pointsAdjustment += 1;
-        else if (deltaToLeader > 15000) pointsAdjustment += 0;
+        // --- Delta/Lapped/DNF Score (Hierarchical) ---
+        const deltaToLeader = driver['lap-data']?.['delta-to-race-leader-in-ms'];
+        const lapsCompleted = driver['final-classification']?.['num-laps'];
+        const finishedRace = driver['final-classification']?.['result-status'];
 
-        // Check if the driver has been lapped
-        const lapsCompleted = driver['final-classification']['num-laps'];
-        if (lapsCompleted < totalLaps) {
-          pointsAdjustment -= 2;
-        }
-
-        const finishedRace = driver['final-classification']['result-status'];
         if (finishedRace !== 'FINISHED') {
-          pointsAdjustment -= 3;
+            score_delta_leader = -3; // DNF rule overrides others
+            score_finish_status_log = -3; // Log the DNF penalty separately
+        } else if (lapsCompleted < totalLaps) {
+            score_delta_leader = -2; // Lapped rule overrides time delta
+            score_laps_completed_log = -2; // Log the lapped penalty separately
+        } else {
+            // Only apply time delta if finished on lead lap
+            if (deltaToLeader >= 0 && deltaToLeader <= 3000) score_delta_leader = 5;
+            else if (deltaToLeader > 3000 && deltaToLeader <= 5000) score_delta_leader = 4;
+            else if (deltaToLeader > 5000 && deltaToLeader <= 7000) score_delta_leader = 3;
+            else if (deltaToLeader > 7000 && deltaToLeader <= 10000) score_delta_leader = 2;
+            else if (deltaToLeader > 10000 && deltaToLeader <= 15000) score_delta_leader = 1;
+            // else score_delta_leader remains 0 (for > 15000 or undefined deltaToLeader)
         }
+        // --- End Delta/Lapped/DNF Score ---
 
-        // Calculate overtakes adjustment based on percentage
+        // --- Overtakes Score ---
         const overtakingCount = overtakingCounts[driverName] || 0;
-        const overtakePercentage = (overtakingCount / maxOvertakes) * 100;
-
-        if (overtakePercentage === 100) pointsAdjustment += 5;
-        else if (overtakePercentage >= 96) pointsAdjustment += 4;
-        else if (overtakePercentage >= 85) pointsAdjustment += 3;
-        else if (overtakePercentage >= 70) pointsAdjustment += 2;
-        else if (overtakePercentage >= 51) pointsAdjustment += 1;
-        else if (overtakePercentage >= 30) pointsAdjustment += 0;
-        else if (overtakePercentage >= 20) pointsAdjustment -= 1;
-        else pointsAdjustment -= 2;
-
+        const overtakePercentage = maxOvertakes > 0 ? (overtakingCount / maxOvertakes) * 100 : 0;
+        if (overtakePercentage === 100) score_overtakes = 5;
+        else if (overtakePercentage >= 96) score_overtakes = 4;
+        else if (overtakePercentage >= 85) score_overtakes = 3;
+        else if (overtakePercentage >= 70) score_overtakes = 2;
+        else if (overtakePercentage >= 51) score_overtakes = 1;
+        else if (overtakePercentage >= 20) score_overtakes = -1;
+        else score_overtakes = -2;
+        
+        // --- Calculate total score adjustment FOR THIS RACE ---
+        // Uses the final determined score_delta_leader, excludes separate log values
+        const raceScoreAdjustment = score_penalties + score_grid_position + score_delta_leader + score_overtakes;
+        
         // Apply team multiplier
         const teamMultiplier = teamConfigs[teamName] || 1;
-        pointsAdjustment = (pointsAdjustment / 4) * teamMultiplier;
+        const finalRaceScore = (raceScoreAdjustment / 4) * teamMultiplier;
 
-        // Store the calculated score adjustment in a new field
-        driver['calculatedScoreAdjustment'] = pointsAdjustment;
-        
-        updatedDrivers.push(driver);
+        // --- Prepare data object for this driver for the backend --- 
+        const resultData = {
+            driverNumber: driverNumber,
+            raceId: raceId, 
+            livery: driver['participant-data']?.livery,
+            qualification: gridPosition, // Use calculated gridPosition
+            position: driver['final-classification']?.position,
+            fastest_lap: driver['lap-data']?.['best-lap-time-in-ms'], 
+            resultStatus: finishedRace,
+            // Individual Score Components for Logging
+            score_penalties: score_penalties,
+            score_grid_position: score_grid_position,
+            score_delta_leader: score_delta_leader, // Log the final combined value
+            score_overtakes: score_overtakes,
+            score_laps_completed: score_laps_completed_log, // Use the specific log value
+            score_finish_status: score_finish_status_log,  // Use the specific log value
+            // Send the final calculated score adjustment for THIS RACE
+            finalRaceScore: finalRaceScore 
+        };
+
+        driverRaceResults.push(resultData);
       }
 
-      // Send updated data (containing original structure + calculatedScoreAdjustment) to the server
-      await axios.post(`${apiUrl}/api/update-driver-points`, { drivers: updatedDrivers });
+      // Send the array of driver race results to the backend
+      await axios.post(`${apiUrl}/api/log-race-results`, { results: driverRaceResults });
 
       setMessage('file-processed-success');
-      if (onSuccess) onSuccess(); // Call the success callback
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error('Error processing file:', error.message || error);
       setMessage('file-processing-error');

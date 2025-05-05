@@ -65,3 +65,73 @@ driver-score-value = { $score } pts
 
 # Driver Points Display
 driver-table-points = Points
+
+# Admin Section Titles & Links
+admin-championship-manager-title = Championship & Race Manager
+admin-team-manager-title = Team Manager
+admin-championships-link = Manage Championships
+admin-teams-link = Manage Teams
+
+# Race Selection for Upload
+select-race-label = Race
+select-race-placeholder = Select Race for Upload...
+select-race-error = Please select a race before uploading.
+
+# Championship Manager
+fetch-championships-error = Error fetching championships.
+fetch-races-error = Error fetching races for the selected championship.
+create-championship-error = Error creating championship.
+create-race-error = Error creating race.
+admin-championships-heading = Championships
+admin-add-championship-subheading = Add New Championship
+admin-new-championship-label = Championship Name
+admin-create-championship-button = Create Championship
+admin-no-championships = No championships found.
+admin-races-heading = Races for { $champName }
+admin-race-date-label = Date: { $raceDate }
+admin-no-races = No races found for this championship.
+admin-add-race-subheading = Add New Race
+admin-new-race-title-label = Race Title
+admin-new-race-date-label = Race Date
+admin-add-race-button = Add Race to { $champName }
+admin-select-championship-prompt = Select a championship to view and add races.
+
+# Team Manager
+fetch-teams-error = Error fetching teams.
+create-team-error = Error creating team.
+admin-teams-heading = Teams
+admin-no-teams = No teams found.
+admin-add-team-subheading = Add New Team
+admin-new-team-label = Team Name
+admin-create-team-button = Create Team
+admin-assign-users-heading = Assign Users to Team
+admin-assign-users-placeholder = User assignment functionality will be added here (requires selecting championship and team).
+
+# Team Manager - Assignment Section
+fetch-users-error = Error fetching users.
+fetch-attendees-error = Error fetching championship attendees.
+admin-select-championship-label = Championship
+admin-select-championship-placeholder = Select Championship...
+admin-available-users-subheading = Available Users (Not in this Championship)
+admin-assigned-users-subheading = Users Assigned to { $teamName }
+admin-no-available-users = No users available to assign.
+admin-no-assigned-users = No users assigned to this team in this championship.
+admin-select-champ-team-prompt = Select a championship and team to manage assignments.
+
+# Team Manager - Assignment Buttons/Errors
+admin-assign-button = Assign
+admin-unassign-button = Unassign
+error-assigning-user = Error assigning user.
+error-unassigning-user = Error unassigning user.
+
+# Team Manager - Assignment Autocomplete
+
+# Admin Panel
+admin-panel-title = Admin Panel
+admin-panel-link = Admin Panel
+admin-link-championships = Championships
+admin-desc-championships = Create/manage championships and races.
+admin-link-teams = Teams
+admin-desc-teams = Create/manage teams and assign users.
+admin-link-config = Configuration
+admin-desc-config = Adjust application settings and points.

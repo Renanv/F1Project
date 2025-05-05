@@ -3,7 +3,7 @@ import { Localized } from '@fluent/react';
 import { Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import { handleFileUpload } from '../utils/fileUploadHandler';
 
-const FileUpload = ({ onSuccess }) => {
+const FileUpload = ({ onSuccess, selectedRaceId, isAdmin }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -36,8 +36,8 @@ const FileUpload = ({ onSuccess }) => {
       <Button
         variant="contained"
         color="primary"
-        onClick={() => handleFileUpload(file, setMessage, setLoading, onSuccess)}
-        disabled={loading || !file}
+        onClick={() => handleFileUpload(file, setMessage, setLoading, onSuccess, selectedRaceId)}
+        disabled={loading || !file || !selectedRaceId}
         startIcon={loading && <CircularProgress size={20} />}
       >
         <Localized id={loading ? "processing" : "upload-and-process"} />

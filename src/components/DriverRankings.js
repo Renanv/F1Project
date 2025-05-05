@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Localized } from '@fluent/react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert } from '@mui/material';
+import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box } from '@mui/material';
 import FileUpload from './FileUpload';
+import axios from 'axios';
 
 function DriverRankings({ isAdmin }) {
   const [drivers, setDrivers] = useState([]);
@@ -9,30 +10,37 @@ function DriverRankings({ isAdmin }) {
   const [error, setError] = useState(null);
   const apiUrl = process.env.REACT_APP_API_BASE_URL;
 
-  const fetchDrivers = () => {
+  const [racesList, setRacesList] = useState([]);
+  const [selectedRaceId, setSelectedRaceId] = useState('');
+  const [loadingRaces, setLoadingRaces] = useState(false);
+
+  const fetchData = async () => {
     setIsLoading(true);
+    setLoadingRaces(true);
     setError(null);
-    fetch(`${apiUrl}/api/drivers`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        setDrivers(data);
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching drivers:', error);
-        setError(error.message);
-        setIsLoading(false);
-      });
+    try {
+      const driversResponse = await axios.get(`${apiUrl}/api/drivers`);
+      setDrivers(driversResponse.data);
+      
+      const racesListResponse = await axios.get(`${apiUrl}/api/races/list`);
+      setRacesList(racesListResponse.data);
+
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Error fetching driver rankings or race list.');
+    } finally {
+      setIsLoading(false);
+      setLoadingRaces(false);
+    }
   };
 
   useEffect(() => {
-    fetchDrivers();
+    fetchData();
   }, []);
+
+  const handleRaceChange = (event) => {
+    setSelectedRaceId(event.target.value);
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -86,7 +94,7 @@ function DriverRankings({ isAdmin }) {
   }
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h2" component="h2" gutterBottom>
         <Localized id="driver-rankings-title" />
       </Typography>
@@ -94,9 +102,36 @@ function DriverRankings({ isAdmin }) {
         <Grid item xs={12} md={8}>
           {renderContent()}
         </Grid>
-        <Grid item xs={12} md={4}>
-          {isAdmin && <FileUpload onSuccess={fetchDrivers} />}
-        </Grid>
+        {isAdmin && (
+          <Grid item xs={12} md={4}>
+            <Box sx={{ mb: 3 }}>
+               <FormControl fullWidth disabled={loadingRaces}>
+                 <InputLabel id="race-select-label"><Localized id="select-race-label"/></InputLabel>
+                 <Select
+                   labelId="race-select-label"
+                   id="race-select"
+                   value={selectedRaceId}
+                   label={<Localized id="select-race-label"/>}
+                   onChange={handleRaceChange}
+                 >
+                   <MenuItem value="">
+                     <em><Localized id="select-race-placeholder"/></em>
+                   </MenuItem>
+                   {racesList.map((race) => (
+                     <MenuItem key={race.id} value={race.id}>
+                       {race.name}
+                     </MenuItem>
+                   ))}
+                 </Select>
+               </FormControl>
+             </Box>
+            <FileUpload 
+                onSuccess={fetchData}
+                selectedRaceId={selectedRaceId}
+                isAdmin={isAdmin}
+            />
+          </Grid>
+        )}
       </Grid>
     </Container>
   );

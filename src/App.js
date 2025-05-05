@@ -10,6 +10,10 @@ import Config from './components/Config';
 import DriverRankings from './components/DriverRankings';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavigationBar from './components/NavigationBar';
+import AdminRoute from './components/admin/AdminRoute';
+import ChampionshipManager from './components/admin/ChampionshipManager';
+import TeamManager from './components/admin/TeamManager';
+import AdminPanel from './components/admin/AdminPanel';
 import { bundles } from './i18n';
 
 function App() {
@@ -89,8 +93,13 @@ function App() {
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute isLoggedIn={isLoggedIn} />}>
-              <Route path="/config" element={<Config />} />
               <Route path="/drivers" element={<DriverRankings isAdmin={isAdmin} />} />
+            </Route>
+            <Route element={<AdminRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin} />}>
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/admin/championships" element={<ChampionshipManager />} />
+              <Route path="/admin/teams" element={<TeamManager />} />
+              <Route path="/config" element={<Config />} />
             </Route>
           </Routes>
         </Router>
