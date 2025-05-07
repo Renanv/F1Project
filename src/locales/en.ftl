@@ -205,3 +205,6 @@ admin-select-team-prompt = Please select a team to manage assignments.
 generic-error-fallback = An unexpected error occurred. Please try again.
 race-date-not-set = Date not set
 selected-team-label = Selected Team
+
+# PWA / Install
+install-app-button = Install App

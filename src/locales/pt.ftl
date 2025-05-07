@@ -208,3 +208,6 @@ generic-error-fallback = Ocorreu um erro inesperado. Tente novamente.
 race-date-not-set = Data não definida
 selected-team-label = Equipe Selecionada
 
+# PWA / Instalação
+install-app-button = Instalar App
+
