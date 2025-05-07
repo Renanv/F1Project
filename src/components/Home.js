@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Localized } from '@fluent/react';
-import { Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box } from '@mui/material';
+import {
+  Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, Divider, FormControl, InputLabel, Select, MenuItem
+} from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
@@ -8,6 +10,14 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import SportsScoreIcon from '@mui/icons-material/SportsScore';
+import GroupIcon from '@mui/icons-material/Group';
+import TimerIcon from '@mui/icons-material/Timer';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import EventIcon from '@mui/icons-material/Event';
+import axiosInstance from '../utils/axiosInstance';
+import { jwtDecode } from 'jwt-decode';
 
 // Define dashboard items
 const dashboardItems = {
@@ -25,6 +35,135 @@ const dashboardItems = {
 function Home({ isLoggedIn, isAdmin }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
+  const [userStatus, setUserStatus] = useState(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
+  const [statusError, setStatusError] = useState(null);
+  const [championshipsList, setChampionshipsList] = useState([]);
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+
+  const getUserIdFromToken = () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        return decodedToken.userId;
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Fetch list of all championships
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const fetchChampionships = async () => {
+      try {
+        const response = await axiosInstance.get('/api/championships');
+        if (response.data && response.data.length > 0) {
+          const sortedChampionships = [...response.data].sort((a, b) => b.id - a.id); // Sort by ID desc for latest first
+          setChampionshipsList(sortedChampionships);
+          setSelectedChampionshipId(sortedChampionships[0].id); // Default to the latest one
+        } else {
+          setChampionshipsList([]);
+          setUserStatus({ noChampionships: true }); // To display a message
+        }
+      } catch (error) {
+        console.error("Error fetching championships list:", error);
+        setStatusError('Failed to load championships list.');
+        setChampionshipsList([]);
+      }
+    };
+    fetchChampionships();
+  }, [isLoggedIn]);
+
+  // Fetch user status based on selected championship
+  const fetchUserStatus = useCallback(async () => {
+    const currentSelectedChampionshipId = selectedChampionshipId; // Capture current value
+    console.log(`[fetchUserStatus] START - Championship ID: ${currentSelectedChampionshipId}, Logged In: ${isLoggedIn}`);
+
+    if (!isLoggedIn || !currentSelectedChampionshipId) {
+      console.log(`[fetchUserStatus] Skipping fetch - Logged In: ${isLoggedIn}, Championship ID: ${currentSelectedChampionshipId}`);
+      if (!currentSelectedChampionshipId && championshipsList.length > 0) {
+         setUserStatus(null); 
+      } else if (championshipsList.length === 0 && isLoggedIn) {
+      }
+      return;
+    }
+
+    const currentUserId = getUserIdFromToken();
+    if (!currentUserId) {
+      setStatusError('Could not identify user.');
+      console.log(`[fetchUserStatus] END - Error: Could not identify user.`);
+      return;
+    }
+
+    setIsLoadingStatus(true);
+    setStatusError(null);
+    setUserStatus(null); 
+    console.log(`[fetchUserStatus] Set loading TRUE, cleared status for Championship ID: ${currentSelectedChampionshipId}`);
+
+    try {
+      console.log(`[fetchUserStatus] Fetching rankings for Championship ID: ${currentSelectedChampionshipId}`);
+      let userRank = null, userPoints = null, teammatePoints = 0, userTeamId = null, userTeamName = null; 
+      const rankingsResponse = await axiosInstance.get(`/api/drivers?championshipId=${currentSelectedChampionshipId}`);
+      console.log(`[fetchUserStatus] Rankings response received for Championship ID: ${currentSelectedChampionshipId}`);
+      const rankings = rankingsResponse.data;
+      
+      const userDriverInfo = rankings.find(d => d.user_id === currentUserId);
+      if (userDriverInfo) {
+        userRank = rankings.findIndex(d => d.user_id === currentUserId) + 1;
+        userPoints = userDriverInfo.points;
+        userTeamId = userDriverInfo.team_id;
+        userTeamName = userDriverInfo.team_name; 
+
+        if (userTeamId) {
+          rankings.forEach(d => {
+            if (d.team_id === userTeamId && d.user_id !== currentUserId) {
+              teammatePoints += d.points;
+            }
+          });
+        }
+      }
+
+      console.log(`[fetchUserStatus] Fetching last race result for Championship ID: ${currentSelectedChampionshipId}`);
+      let lastRace = null;
+      const lastRaceResponse = await axiosInstance.get(`/api/users/me/last-race-result?championshipId=${currentSelectedChampionshipId}`);
+      console.log(`[fetchUserStatus] Last race response received for Championship ID: ${currentSelectedChampionshipId}`);
+      if (lastRaceResponse.data.success) {
+        lastRace = lastRaceResponse.data.lastRace;
+      }
+
+      const currentChampionship = championshipsList.find(c => c.id === currentSelectedChampionshipId);
+
+      const newStatus = {
+        rank: userRank,
+        points: userPoints,
+        teammatePoints,
+        lastRace,
+        championshipName: currentChampionship ? currentChampionship.name : null,
+        teamName: userTeamName 
+      };
+      console.log(`[fetchUserStatus] Setting user status for Championship ID: ${currentSelectedChampionshipId}`, newStatus);
+      setUserStatus(newStatus);
+
+    } catch (error) {
+      console.error(`[fetchUserStatus] ERROR for Championship ID: ${currentSelectedChampionshipId}`, error);
+      let errorMessage = 'Error fetching status for the selected championship.';
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      }
+      setStatusError(errorMessage);
+    }
+    setIsLoadingStatus(false);
+    console.log(`[fetchUserStatus] END - Set loading FALSE for Championship ID: ${currentSelectedChampionshipId}`);
+
+  }, [isLoggedIn, selectedChampionshipId, championshipsList]);
+
+  useEffect(() => {
+    fetchUserStatus();
+  }, [fetchUserStatus]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -33,9 +172,7 @@ function Home({ isLoggedIn, isAdmin }) {
       setShowInstallButton(true);
       console.log('beforeinstallprompt event captured.');
     };
-
     window.addEventListener('beforeinstallprompt', handler);
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
     };
@@ -51,6 +188,10 @@ function Home({ isLoggedIn, isAdmin }) {
     console.log(`User response to the install prompt: ${outcome}`);
     setDeferredPrompt(null);
     setShowInstallButton(false);
+  };
+
+  const handleChampionshipChange = (event) => {
+    setSelectedChampionshipId(event.target.value);
   };
 
   const renderDashboardCard = (item) => (
@@ -69,7 +210,139 @@ function Home({ isLoggedIn, isAdmin }) {
   );
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {isLoggedIn && (
+        <Box mb={4}>
+          {championshipsList.length > 0 && (
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel id="championship-select-label"><Localized id="select-championship-label" /></InputLabel>
+              <Select
+                labelId="championship-select-label"
+                id="championship-select"
+                value={selectedChampionshipId}
+                label={<Localized id="select-championship-label" />}
+                onChange={handleChampionshipChange}
+              >
+                {championshipsList.map((champ) => (
+                  <MenuItem key={champ.id} value={champ.id}>
+                    {champ.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+
+          {isLoadingStatus && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
+          {statusError && <Alert severity="error" sx={{ my: 2 }}>{statusError}</Alert>}
+          
+          {userStatus && !isLoadingStatus && !statusError && !userStatus.noChampionships && selectedChampionshipId && (
+            <Card elevation={3}>
+              <CardContent>
+                <Typography variant="h5" component="div" gutterBottom sx={{ textAlign: 'center' }}>
+                  <Localized id="my-status-title" /> {userStatus.championshipName ? `(${userStatus.championshipName})` : ''}
+                </Typography>
+                <Grid container spacing={2} alignItems="stretch">
+                  <Grid item xs={12} md={userStatus.lastRace ? 4 : 6}>
+                    <Typography variant="h6" gutterBottom><Localized id="my-current-standing" /></Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
+                        <ListItemText 
+                          primary={<Localized id="team-label" />} 
+                          secondary={userStatus.teamName ? userStatus.teamName : <Localized id="team-name-not-available" />}
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><SportsScoreIcon color="primary" /></ListItemIcon>
+                        <ListItemText primary={<Localized id="points-label" />} secondary={userStatus.points !== null ? userStatus.points : '0'} />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
+                        <ListItemText primary={<Localized id="teammate-points-label" />} secondary={userStatus.teammatePoints !== null ? userStatus.teammatePoints : '0'} />
+                      </ListItem>
+                    </List>
+                  </Grid>
+
+                  {userStatus.lastRace && (
+                    <Grid item xs={12} md={4}>
+                      { console.log('DEBUG userStatus.lastRace:', JSON.stringify(userStatus.lastRace, null, 2)) }
+                      <Typography variant="h6" gutterBottom>
+                        <Localized 
+                          id="last-race-result-title" 
+                          vars={{ raceName: String(userStatus.lastRace.race_title || '') }}
+                        />
+                      </Typography>
+                      <List dense>
+                        <ListItem>
+                          <ListItemIcon><EventIcon color="secondary"/></ListItemIcon>
+                          <ListItemText 
+                            primary={<Localized id="race-date-label" />} 
+                            secondary={
+                              userStatus.lastRace.race_date 
+                              ? new Date(userStatus.lastRace.race_date).toLocaleDateString('en-GB') 
+                              : 'N/A'
+                            }
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon><FormatListNumberedIcon color="secondary" /></ListItemIcon>
+                          <ListItemText primary={<Localized id="position-label" />} secondary={userStatus.lastRace.position} />
+                          {/* Conditionally add medal icon */} 
+                          {userStatus.lastRace && [1, 2, 3].includes(userStatus.lastRace.position) && (
+                            <EmojiEventsIcon sx={{
+                              marginLeft: 'auto', // Push to the right
+                              color: userStatus.lastRace.position === 1 ? '#FFD700' // Gold
+                                     : userStatus.lastRace.position === 2 ? '#C0C0C0' // Silver
+                                     : '#CD7F32' // Bronze
+                            }} />
+                          )}
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon><TimerIcon color="secondary" /></ListItemIcon>
+                          <ListItemText 
+                            primary={<Localized id="fastest-lap-label" />} 
+                            secondary={userStatus.lastRace.fastest_lap || 'N/A'} 
+                            secondaryTypographyProps={{
+                              sx: {
+                                color: userStatus.lastRace.isOverallFastestLap ? 'secondary.main' : 'inherit',
+                                fontWeight: userStatus.lastRace.isOverallFastestLap ? 'bold' : 'normal' 
+                              }
+                            }}
+                          />
+                        </ListItem>
+                      </List>
+                    </Grid>
+                  )}
+                  <Grid item xs={12} md={userStatus.lastRace ? 4 : 6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Avatar sx={{
+                          width: 100, 
+                          height: 100, 
+                          fontSize: '2rem',
+                          bgcolor: userStatus.rank === 1 ? '#FFD700' // Gold
+                                   : userStatus.rank === 2 ? '#C0C0C0' // Silver
+                                   : userStatus.rank === 3 ? '#CD7F32' // Bronze
+                                   : 'primary.main' // Default
+                        }}>
+                            {userStatus.rank !== null ? userStatus.rank : '-'}
+                        </Avatar>
+                    </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
+          {userStatus && userStatus.noChampionships && (
+             <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
+                <Localized id="no-championships-for-status" />
+            </Typography>
+          )}
+          {!selectedChampionshipId && championshipsList.length > 0 && !isLoadingStatus && (
+             <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
+                <Localized id="please-select-championship-status" />
+            </Typography>
+          )}
+        </Box>
+      )}
+
       {showInstallButton && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Button 

@@ -211,3 +211,27 @@ selected-team-label = Equipe Selecionada
 # PWA / Instalação
 install-app-button = Instalar App
 
+# Seção do Cartão Meu Status
+my-status-title = Meu Status
+no-championships-for-status = Nenhum dado de campeonato disponível para exibir o status.
+my-current-standing = Minha Classificação Atual
+team-label = Equipe
+not-ranked = Não Classificado
+points-label = Pontos
+teammate-points-label = Pontos do Colega de Equipe
+race-event-label = Corrida
+position-label = Posição
+fastest-lap-label = Volta Mais Rápida
+select-championship-label = Selecionar Campeonato
+please-select-championship-status = Por favor, selecione um campeonato para ver seu status.
+last-race-result-title = Última Corrida: { $raceName }
+race-date-label = Data
+
+# src/components/admin/ChampionshipManager.js
+admin-attendees-heading = Participantes
+admin-no-attendees = Nenhum participante encontrado para este campeonato.
+admin-remove-attendee-title = Remover Participante
+admin-remove-attendee-confirm = Tem certeza que deseja remover { $userName } do campeonato "{ $champName }"? Sua pontuação e seus pontos serão zerados para este campeonato.
+admin-remove-button = Remover
+remove-attendee-error = Erro ao remover participante.
+generic-error-fallback = Ocorreu um erro inesperado.

@@ -208,3 +208,27 @@ selected-team-label = Selected Team
 
 # PWA / Install
 install-app-button = Install App
+
+# My Status Card Section
+my-status-title = My Status
+no-championships-for-status = No championship data available to display status.
+my-current-standing = My Current Standing
+team-label = Team
+not-ranked = Not Ranked
+points-label = Points
+teammate-points-label = Teammate(s) Points
+last-race-result-title = Last Race: { $raceName }
+race-event-label = Race
+race-date-label = Date
+position-label = Position
+fastest-lap-label = Fastest Lap
+select-championship-label = Select Championship
+please-select-championship-status = Please select a championship to view your status.
+
+# src/components/admin/ChampionshipManager.js
+admin-attendees-heading = Attendees
+admin-no-attendees = No attendees found for this championship.
+admin-remove-attendee-title = Remove Attendee
+admin-remove-attendee-confirm = Are you sure you want to remove { $userName } from the championship "{ $champName }"? Their score and points will be reset for this championship.
+admin-remove-button = Remove
+remove-attendee-error = Error removing attendee.

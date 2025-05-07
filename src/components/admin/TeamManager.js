@@ -167,8 +167,6 @@ function TeamManager() {
   // --- Memoized calculations for user lists ---
   const { assignedUsers, availableUsers } = useMemo(() => {
       if (!selectedChampionshipId || users.length === 0) {
-          // If no championship selected, all users are potentially "available" in a general sense
-          // but we should probably show nothing or a prompt. Let's return empty for now.
           return { assignedUsers: [], availableUsers: [] };
       }
       const attendeeMap = new Map(attendees.map(att => [att.user_id, att.team_id]));
@@ -178,13 +176,16 @@ function TeamManager() {
 
       users.forEach(user => {
           const userTeamId = attendeeMap.get(user.id);
-          if (selectedTeamId && userTeamId === selectedTeamId) {
+          const isAttendee = attendeeMap.has(user.id);
+
+          if (selectedTeamId && isAttendee && userTeamId === selectedTeamId) {
+              // User is an attendee and assigned to the currently selected team
               assigned.push(user);
-          } else if (!attendeeMap.has(user.id)) {
-              // User is not an attendee of this championship at all
+          } else if (!isAttendee || userTeamId === null) {
+              // User is NOT an attendee OR is an attendee but has no team assigned (team_id is null)
               available.push(user);
           }
-          // Users assigned to *other* teams in this championship are neither available nor assigned to the *selected* team.
+          // Users who are attendees AND assigned to a *different* team are ignored (not available, not assigned to selected)
       });
 
       return { assignedUsers: assigned, availableUsers: available };
