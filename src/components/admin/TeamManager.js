@@ -295,8 +295,8 @@ function TeamManager() {
                      <Typography variant="h6" gutterBottom><Localized id="admin-assign-users-heading" /></Typography>
                     
                      {/* Selectors */} 
-                     <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                        <FormControl fullWidth sx={{ flex: 1 }} disabled={loadingChampionships || loadingAttendees}>
+                     <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+                        <FormControl fullWidth sx={{ flex: {sm: 1} }} disabled={loadingChampionships || loadingAttendees}>
                             <InputLabel id="champ-select-label"><Localized id="admin-select-championship-label"/></InputLabel>
                             <Select
                                 labelId="champ-select-label"
@@ -317,7 +317,7 @@ function TeamManager() {
                             label={<Localized id="selected-team-label" />}
                             value={teams.find(t => t.id === selectedTeamId)?.name || ''}
                             fullWidth
-                            sx={{ flex: 1 }}
+                            sx={{ flex: {sm: 1} }}
                             disabled
                             size="small"
                             InputLabelProps={{ shrink: true }}

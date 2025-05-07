@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Localized } from '@fluent/react';
 import { Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
@@ -7,6 +7,7 @@ import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
+import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
 
 // Define dashboard items
 const dashboardItems = {
@@ -22,6 +23,36 @@ const dashboardItems = {
 };
 
 function Home({ isLoggedIn, isAdmin }) {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallButton(true);
+      console.log('beforeinstallprompt event captured.');
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      console.log('Install prompt not available');
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowInstallButton(false);
+  };
+
   const renderDashboardCard = (item) => (
     <Grid item xs={12} sm={6} md={4} key={item.id}>
       <Card sx={{ height: '100%' }}>
@@ -39,6 +70,19 @@ function Home({ isLoggedIn, isAdmin }) {
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
+      {showInstallButton && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            onClick={handleInstallClick}
+            startIcon={<AddToHomeScreenIcon />}
+          >
+            <Localized id="install-app-button" />
+          </Button>
+        </Box>
+      )}
+
       {isLoggedIn ? (
         <Box>
           <Typography variant="h4" component="h1" gutterBottom>

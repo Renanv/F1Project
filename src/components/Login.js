@@ -17,7 +17,7 @@ function Login({ onLoginSuccess }) {
     setIsLoading(true);
     setError('');
     try {
-      const response = await axiosInstance.post('/api/login', { username, password });
+      const response = await axiosInstance.post('/api/auth/login', { username, password });
       localStorage.setItem('authToken', response.data.token);
       console.log('Token stored, calling onLoginSuccess');
       onLoginSuccess(); // Call the callback passed from App
