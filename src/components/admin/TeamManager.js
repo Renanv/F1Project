@@ -10,6 +10,7 @@ import GroupIcon from '@mui/icons-material/Group'; // For title
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'; // Assign icon
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Unassign icon
 import { Localized } from '@fluent/react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // --- Expected Backend Endpoints (use axiosInstance for all) --- 
 // GET /api/teams
@@ -23,22 +24,15 @@ import { Localized } from '@fluent/react';
 // -------------------------------------
 
 function TeamManager() {
+  const queryClient = useQueryClient();
+
   // --- Base State ---
-  const [teams, setTeams] = useState([]);
   const [newTeamName, setNewTeamName] = useState('');
-  const [championships, setChampionships] = useState([]);
-  const [users, setUsers] = useState([]); 
-  const [attendees, setAttendees] = useState([]); 
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
   const [selectedTeamId, setSelectedTeamId] = useState(''); 
 
   // --- Loading State ---
-  const [loadingTeams, setLoadingTeams] = useState(false);
-  const [loadingChampionships, setLoadingChampionships] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [loadingAttendees, setLoadingAttendees] = useState(false);
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
-  const [assigningUserId, setAssigningUserId] = useState(null); // For assign/unassign loading
   const [isEditingTeam, setIsEditingTeam] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
 
@@ -52,113 +46,192 @@ function TeamManager() {
   const [teamToDelete, setTeamToDelete] = useState(null); 
   const [editedTeamName, setEditedTeamName] = useState('');
 
+  // --- React Query for fetching teams ---
+  const { 
+    data: teams = [], 
+    isLoading: isLoadingTeams, 
+    error: teamsError 
+  } = useQuery({
+    queryKey: ['teams'],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/api/teams');
+      return res.data;
+    },
+    onError: (err) => {
+      console.error("Error fetching teams:", err);
+      setError('fetch-teams-error'); 
+    }
+  });
+
+  // --- React Query for fetching championships ---
+  const { 
+    data: championships = [], 
+    isLoading: isLoadingChampionships, 
+    error: championshipsError 
+  } = useQuery({
+    queryKey: ['championships'],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/api/championships');
+      return res.data;
+    },
+    onError: (err) => {
+      console.error("Error fetching championships:", err);
+      setError('fetch-championships-error');
+    }
+  });
+
+  // --- React Query for fetching users ---
+  const { 
+    data: users = [], 
+    isLoading: isLoadingUsers, 
+    error: usersError 
+  } = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/api/users');
+      return res.data;
+    },
+    onError: (err) => {
+      console.error("Error fetching users:", err);
+      setError('fetch-users-error');
+    }
+  });
+
+  // --- React Query for fetching attendees for the selected championship ---
+  const { 
+    data: attendees = [], 
+    isLoading: isLoadingAttendees, 
+    error: attendeesError 
+  } = useQuery({
+    queryKey: ['attendees', selectedChampionshipId], // Query key includes selectedChampionshipId
+    queryFn: async () => {
+      if (!selectedChampionshipId) return []; // Do not fetch if no championship is selected
+      const res = await axiosInstance.get(`/api/championship-attendees?championshipId=${selectedChampionshipId}`);
+      return res.data;
+    },
+    enabled: !!selectedChampionshipId, // Only run query if selectedChampionshipId exists
+    onError: (err) => {
+      console.error(`Error fetching attendees for championship ${selectedChampionshipId}:`, err);
+      setError('fetch-attendees-error'); 
+    }
+  });
+
   // --- Initial Data Fetching ---
   useEffect(() => {
-    fetchTeams();
-    fetchChampionships();
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
     if (selectedChampionshipId) {
-      fetchAttendees(selectedChampionshipId);
+      // fetchAttendees(selectedChampionshipId); // Replaced by useQuery
     } else {
-      setAttendees([]);
+      // setAttendees([]); // Handled by useQuery if selectedChampionshipId is null (enabled: false)
       setSelectedTeamId(''); // Reset team if championship changes
     }
   }, [selectedChampionshipId]);
 
   // --- API Fetch Functions ---
-  const fetchTeams = async () => {
-    setLoadingTeams(true); setError(null);
-    try { const res = await axiosInstance.get('/api/teams'); setTeams(res.data); }
-    catch (err) { console.error("Error fetching teams:", err); setError('fetch-teams-error'); }
-    finally { setLoadingTeams(false); }
-  };
+  // const fetchAttendees = async (champId) => {
+  //   setLoadingAttendees(true); setError(null);
+  //   try { const res = await axiosInstance.get(`/api/championship-attendees?championshipId=${champId}`); setAttendees(res.data); }
+  //   catch (err) { console.error("Error fetching attendees:", err); setError('fetch-attendees-error'); }
+  //   finally { setLoadingAttendees(false); }
+  // };
 
-   const fetchChampionships = async () => {
-    setLoadingChampionships(true); setError(null);
-    try { const res = await axiosInstance.get('/api/championships'); setChampionships(res.data); }
-    catch (err) { console.error("Error fetching champs:", err); setError('fetch-championships-error'); }
-    finally { setLoadingChampionships(false); }
-  };
+  // --- React Query Mutation for creating a team ---
+  const createTeamMutation = useMutation({
+    mutationFn: async (teamName) => {
+      const response = await axiosInstance.post('/api/teams', { name: teamName });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setNewTeamName('');
+      setError(null); // Clear any previous error
+      // Optionally: add success message logic here if needed
+    },
+    onError: (err) => {
+      console.error("Error creating team:", err);
+      setError(err.response?.data?.message || 'create-team-error');
+    }
+  });
 
-   const fetchUsers = async () => {
-    setLoadingUsers(true); setError(null);
-    try { const res = await axiosInstance.get('/api/users'); setUsers(res.data); }
-    catch (err) { console.error("Error fetching users:", err); setError('fetch-users-error'); }
-    finally { setLoadingUsers(false); }
-  };
+  // --- React Query Mutation for assigning/unassigning a user to/from a team ---
+  const updateUserTeamAssignmentMutation = useMutation({
+    mutationFn: async ({ userId, teamId, championshipId }) => {
+      // teamId can be a number or null (for unassigning)
+      return axiosInstance.put(`/api/championships/${championshipId}/attendees/${userId}/team`, { teamId });
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['attendees', variables.championshipId] });
+      setError(null);
+    },
+    onError: (err, variables) => {
+      console.error(`Error updating team assignment for user ${variables.userId}:`, err);
+      setError(err.response?.data?.message || (variables.teamId ? 'error-assigning-user' : 'error-unassigning-user'));
+      // Consider refetching attendees on error to revert optimistic updates if we were using them
+      // queryClient.invalidateQueries({ queryKey: ['attendees', variables.championshipId] });
+    }
+  });
 
-   const fetchAttendees = async (champId) => {
-    setLoadingAttendees(true); setError(null);
-    try { const res = await axiosInstance.get(`/api/championship-attendees?championshipId=${champId}`); setAttendees(res.data); }
-    catch (err) { console.error("Error fetching attendees:", err); setError('fetch-attendees-error'); }
-    finally { setLoadingAttendees(false); }
-  };
+  // --- React Query Mutation for editing a team ---
+  const editTeamMutation = useMutation({
+    mutationFn: async ({ teamId, newName }) => {
+      return axiosInstance.put(`/api/teams/${teamId}`, { name: newName });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      handleCloseEditTeam();
+      setError(null);
+    },
+    onError: (err) => {
+      console.error("Edit team error:", err);
+      setError(err.response?.data?.message || 'edit-team-error');
+      // No need to fetchTeams(); manually, invalidation handles it.
+    }
+  });
+
+  // --- React Query Mutation for deleting a team ---
+  const deleteTeamMutation = useMutation({
+    mutationFn: async (teamId) => {
+      return axiosInstance.delete(`/api/teams/${teamId}`);
+    },
+    onSuccess: (data, teamId) => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      // If the deleted team was selected, clear the selection
+      if (selectedTeamId === teamId) {
+        setSelectedTeamId('');
+      }
+      handleCloseDeleteTeam();
+      setError(null);
+      // Also, potentially invalidate attendees if teams affect their display directly
+      // For now, just invalidating teams as primary effect.
+    },
+    onError: (err) => {
+      console.error("Delete team error:", err);
+      setError(err.response?.data?.message || 'delete-team-error');
+    }
+  });
 
   // --- Create/Edit/Delete Handlers ---
   const handleCreateTeam = async (e) => {
-    e.preventDefault(); setError(null);
+    e.preventDefault(); 
     if (!newTeamName) return;
-    setIsCreatingTeam(true);
-    try {
-      const response = await axiosInstance.post('/api/teams', { name: newTeamName });
-      // Optimistically update the teams state
-      setTeams(prevTeams => [...prevTeams, response.data]);
-      setNewTeamName('');
-    } catch (err) { 
-      console.error("Error creating team:", err); 
-      setError(err.response?.data?.message || 'create-team-error');
-    } finally {
-      setIsCreatingTeam(false);
-    }
+    createTeamMutation.mutate(newTeamName);
   };
 
   const handleAssignUser = async (userId) => {
       if (!selectedChampionshipId || !selectedTeamId) return; 
-      setAssigningUserId(userId); setError(null);
-      try {
-          await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: selectedTeamId });
-          // Optimistically update attendees state
-          setAttendees(prevAttendees => 
-              prevAttendees.map(att => 
-                  att.user_id === userId 
-                      ? { ...att, team_id: selectedTeamId }
-                      : att
-              )
-          );
-      } catch (err) { 
-          console.error("Assign error:", err); 
-          setError(err.response?.data?.message || 'error-assigning-user');
-          // Revert optimistic update on error
-          fetchAttendees(selectedChampionshipId);
-      } finally { 
-          setAssigningUserId(null); 
-      }
+      updateUserTeamAssignmentMutation.mutate({ 
+          userId,
+          teamId: selectedTeamId,
+          championshipId: selectedChampionshipId 
+      });
   };
 
   const handleUnassignUser = async (userId) => {
-       if (!selectedChampionshipId || !selectedTeamId) return;
-       setAssigningUserId(userId); setError(null);
-       try {
-           await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: null });
-           // Optimistically update attendees state
-           setAttendees(prevAttendees => 
-               prevAttendees.map(att => 
-                   att.user_id === userId 
-                       ? { ...att, team_id: null }
-                       : att
-               )
-           );
-       } catch (err) { 
-           console.error("Unassign error:", err); 
-           setError(err.response?.data?.message || 'error-unassigning-user');
-           // Revert optimistic update on error
-           fetchAttendees(selectedChampionshipId);
-       } finally { 
-           setAssigningUserId(null); 
-       }
+       if (!selectedChampionshipId) return; // selectedTeamId is not strictly needed for unassign from ANY team
+       updateUserTeamAssignmentMutation.mutate({
+            userId,
+            teamId: null, // Unassign
+            championshipId: selectedChampionshipId
+       });
   };
 
   const handleOpenEditTeam = (team) => {
@@ -172,44 +245,12 @@ function TeamManager() {
 
   const handleConfirmEditTeam = async () => {
       if (!teamToEdit || !editedTeamName) return;
-      setError(null); setIsEditingTeam(true);
-      try {
-          await axiosInstance.put(`/api/teams/${teamToEdit.id}`, { name: editedTeamName });
-          // Update the teams state locally with the new name
-          setTeams(prevTeams => 
-              prevTeams.map(team => 
-                  team.id === teamToEdit.id 
-                      ? { ...team, name: editedTeamName }
-                      : team
-              )
-          );
-          handleCloseEditTeam();
-      } catch (err) { 
-          console.error("Edit team error:", err); 
-          setError(err.response?.data?.message || 'edit-team-error');
-          fetchTeams();
-      } finally { 
-          setIsEditingTeam(false); 
-      }
+      editTeamMutation.mutate({ teamId: teamToEdit.id, newName: editedTeamName });
   };
 
   const handleConfirmDeleteTeam = async () => {
       if (!teamToDelete) return;
-      setError(null); setIsDeletingTeam(true);
-      try {
-          await axiosInstance.delete(`/api/teams/${teamToDelete.id}`);
-          // Optimistically update teams state
-          setTeams(prevTeams => prevTeams.filter(team => team.id !== teamToDelete.id));
-          handleCloseDeleteTeam();
-          if (selectedTeamId === teamToDelete.id) setSelectedTeamId('');
-      } catch (err) { 
-          console.error("Delete team error:", err); 
-          setError(err.response?.data?.message || 'delete-team-error');
-          // Revert optimistic update on error
-          fetchTeams();
-      } finally { 
-          setIsDeletingTeam(false); 
-      }
+      deleteTeamMutation.mutate(teamToDelete.id);
   };
 
   // --- Memoized calculations for user lists ---
@@ -240,23 +281,31 @@ function TeamManager() {
   }, [selectedChampionshipId, selectedTeamId, users, attendees]);
 
   // Helper to render user list items
-  const renderUserListItem = (user, actionType) => (
+  const renderUserListItem = (user, actionType) => {
+    const isLoadingForThisUser = 
+        (updateUserTeamAssignmentMutation.isLoading && 
+         updateUserTeamAssignmentMutation.variables?.userId === user.id &&
+         ((actionType === 'assign' && updateUserTeamAssignmentMutation.variables?.teamId !== null) || 
+          (actionType === 'unassign' && updateUserTeamAssignmentMutation.variables?.teamId === null)));
+
+    return (
      <ListItem key={user.id} divider>
          <ListItemText primary={user.username} secondary={`#${user.driver_number} (${user.usertag})`} />
          <ListItemSecondaryAction>
              <IconButton 
                  edge="end" 
                  onClick={() => actionType === 'assign' ? handleAssignUser(user.id) : handleUnassignUser(user.id)}
-                 disabled={assigningUserId === user.id}
+                 disabled={isLoadingForThisUser}
                  size="small"
              >
-                 {assigningUserId === user.id ? <CircularProgress size={20} /> : 
+                 {isLoadingForThisUser ? <CircularProgress size={20} /> :
                     actionType === 'assign' ? <ArrowForwardIcon color="success" /> : <ArrowBackIcon color="warning" />
                  }
             </IconButton>
          </ListItemSecondaryAction>
      </ListItem>
-  );
+    );
+  };
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -278,8 +327,10 @@ function TeamManager() {
                 {/* Teams List */} 
                 <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
                     <Typography variant="h6" gutterBottom><Localized id="admin-teams-heading" /></Typography>
-                    {loadingTeams ? (
+                    {isLoadingTeams ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
+                    ) : teamsError ? (
+                        <Alert severity="error" sx={{my: 2}}><Localized id='fetch-teams-error' /></Alert>
                     ) : (
                         <List dense sx={{ maxHeight: 300, overflow: 'auto' }}>
                             {teams.map((team, index) => (
@@ -304,7 +355,7 @@ function TeamManager() {
                                     {index < teams.length - 1 && <Divider component="li" />}
                                 </React.Fragment>
                             ))}
-                            {teams.length === 0 && !loadingTeams && (
+                            {teams.length === 0 && !isLoadingTeams && (
                                 <ListItem><ListItemText primary={<Localized id="admin-no-teams" />} /></ListItem>
                             )}
                         </List>
@@ -322,14 +373,14 @@ function TeamManager() {
                             required
                             size="small"
                             margin="dense"
-                            disabled={isCreatingTeam}
+                            disabled={createTeamMutation.isLoading}
                         />
                          <Button 
                             type="submit" 
                             variant="contained" 
-                            startIcon={isCreatingTeam ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
+                            startIcon={createTeamMutation.isLoading ? <CircularProgress size={20} color="inherit" /> : <AddIcon />}
                             sx={{ mt: 2 }}
-                            disabled={isCreatingTeam || !newTeamName}
+                            disabled={createTeamMutation.isLoading || !newTeamName}
                             fullWidth
                         >
                             <Localized id="admin-create-team-button" />
@@ -345,7 +396,7 @@ function TeamManager() {
                     
                      {/* Selectors */} 
                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
-                        <FormControl fullWidth sx={{ flex: {sm: 1} }} disabled={loadingChampionships || loadingAttendees}>
+                        <FormControl fullWidth sx={{ flex: {sm: 1} }} disabled={isLoadingChampionships || isLoadingAttendees}>
                             <InputLabel id="champ-select-label"><Localized id="admin-select-championship-label"/></InputLabel>
                             <Select
                                 labelId="champ-select-label"
@@ -357,7 +408,11 @@ function TeamManager() {
                                 <MenuItem value="">
                                     <em><Localized id="admin-select-championship-placeholder"/></em>
                                 </MenuItem>
-                                {championships.map((champ) => (
+                                {isLoadingChampionships ? (
+                                    <MenuItem value="" disabled><em><Localized id='loading-championships'/></em></MenuItem>
+                                 ) : championshipsError ? (
+                                    <MenuItem value="" disabled sx={{color: 'error.main'}}><em><Localized id='fetch-championships-error'/></em></MenuItem>
+                                 ) : championships.map((champ) => (
                                 <MenuItem key={champ.id} value={champ.id}>{champ.name}</MenuItem>
                                 ))}
                             </Select>
@@ -374,17 +429,19 @@ function TeamManager() {
                      </Box>
 
                      {/* User Lists */} 
-                     {(loadingUsers || loadingAttendees) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>} 
+                     {(isLoadingUsers || isLoadingAttendees) && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>} 
                      
-                     {!loadingUsers && !loadingAttendees && !selectedChampionshipId && (
+                     {(!isLoadingUsers && !usersError && !isLoadingAttendees && !attendeesError && !selectedChampionshipId) && (
                         <Typography color="text.secondary" sx={{mt: 2}}><Localized id="select-champ-placeholder"/></Typography> 
                      )}
+                     {usersError && <Alert severity="error" sx={{my: 2}}><Localized id='fetch-users-error' /></Alert>}
+                     {attendeesError && <Alert severity="error" sx={{my: 2}}><Localized id='fetch-attendees-error' /></Alert>}
 
-                     {!loadingUsers && !loadingAttendees && selectedChampionshipId && !selectedTeamId && (
-                        <Typography color="text.secondary" sx={{mt: 2}}><Localized id="admin-select-team-prompt"/></Typography> /* New Key */
+                     {(!isLoadingUsers && !usersError && !isLoadingAttendees && !attendeesError && selectedChampionshipId && !selectedTeamId) && (
+                        <Typography color="text.secondary" sx={{mt: 2}}><Localized id="admin-select-team-prompt"/></Typography> 
                      )}
 
-                     {!loadingUsers && !loadingAttendees && selectedChampionshipId && selectedTeamId && (
+                     {(!isLoadingUsers && !usersError && !isLoadingAttendees && !attendeesError && selectedChampionshipId && selectedTeamId) && (
                          <Grid container spacing={3}>
                             {/* Available Users */} 
                             <Grid item xs={12} sm={6}>
@@ -432,8 +489,8 @@ function TeamManager() {
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2}}> {/* Padding */} 
                 <Button onClick={handleCloseEditTeam}><Localized id="admin-cancel-button"/></Button>
-                <Button onClick={handleConfirmEditTeam} variant="contained" disabled={isEditingTeam}>
-                     {isEditingTeam ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-save-button"/>}
+                <Button onClick={handleConfirmEditTeam} variant="contained" disabled={editTeamMutation.isLoading}>
+                     {editTeamMutation.isLoading ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-save-button"/>}
                 </Button>
             </DialogActions>
         </Dialog>
@@ -448,8 +505,8 @@ function TeamManager() {
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2}}> {/* Padding */} 
                 <Button onClick={handleCloseDeleteTeam}><Localized id="admin-cancel-button"/></Button>
-                <Button onClick={handleConfirmDeleteTeam} color="error" variant="contained" disabled={isDeletingTeam}>
-                    {isDeletingTeam ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-delete-button"/>}
+                <Button onClick={handleConfirmDeleteTeam} color="error" variant="contained" disabled={deleteTeamMutation.isLoading}>
+                    {deleteTeamMutation.isLoading ? <CircularProgress size={20} color="inherit"/> : <Localized id="admin-delete-button"/>}
                 </Button>
             </DialogActions>
         </Dialog>

@@ -11,16 +11,11 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import SportsScoreIcon from '@mui/icons-material/SportsScore';
-import GroupIcon from '@mui/icons-material/Group';
-import TimerIcon from '@mui/icons-material/Timer';
-import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import EventIcon from '@mui/icons-material/Event';
-import ListAltIcon from '@mui/icons-material/ListAlt';
-import StarIcon from '@mui/icons-material/Star';
 import axiosInstance from '../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
+import { useQuery } from '@tanstack/react-query';
+import UserStatusCard from './UserStatusCard'; // Import the new component
+import { bonusSourceOptions } from '../utils/bonusSourceOptions'; // Import from shared location
 
 // Define dashboard items
 const dashboardItems = {
@@ -36,30 +31,23 @@ const dashboardItems = {
 };
 
 // Copied from ChampionshipManager.js for displaying log sources
-const bonusSourceOptions = [
-  { value: 'MANUAL_ADJUSTMENT', label: 'Manual Admin Adjustment' },
-  { value: 'CLASH', label: 'Clash' },
-  { value: 'FASTEST_LAP', label: 'Fastest Lap' },
-  { value: 'DRIVER_OF_THE_DAY', label: 'Driver of the Day' },
-  { value: 'RACE_INCIDENT_PENALTY', label: 'Race Incident Penalty' },
-  { value: 'OTHER', label: 'Other (Specify in Reason)' },
-];
+// const bonusSourceOptions = [ // REMOVE THIS LOCAL DEFINITION
+//   { value: 'MANUAL_ADJUSTMENT', label: 'Manual Admin Adjustment' },
+//   { value: 'CLASH', label: 'Clash' },
+//   { value: 'FASTEST_LAP', label: 'Fastest Lap' },
+//   { value: 'DRIVER_OF_THE_DAY', label: 'Driver of the Day' },
+//   { value: 'RACE_INCIDENT_PENALTY', label: 'Race Incident Penalty' },
+//   { value: 'OTHER', label: 'Other (Specify in Reason)' },
+// ];
 
 function Home({ isLoggedIn, isAdmin }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
-  const [userStatus, setUserStatus] = useState(null);
-  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
-  const [statusError, setStatusError] = useState(null);
-  const [championshipsList, setChampionshipsList] = useState([]);
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
 
   // State for User's Bonus Log Modal
   const [openUserBonusLogDialog, setOpenUserBonusLogDialog] = useState(false);
-  const [userBonusLogEntries, setUserBonusLogEntries] = useState([]);
-  const [loadingUserBonusLog, setLoadingUserBonusLog] = useState(false);
   const [userBonusLogAttendeeName, setUserBonusLogAttendeeName] = useState(''); // For dialog title
-  const [userBonusLogError, setUserBonusLogError] = useState(null);
 
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('authToken');
@@ -75,37 +63,94 @@ function Home({ isLoggedIn, isAdmin }) {
     return null;
   };
 
-  // Fetch list of all championships
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    const fetchChampionships = async () => {
-      try {
-        const response = await axiosInstance.get('/api/users/me/participated-championships');
-        if (response.data && response.data.length > 0) {
-          setChampionshipsList(response.data);
-          setSelectedChampionshipId(response.data[0].id);
-        } else {
-          setChampionshipsList([]);
-          setSelectedChampionshipId('');
-          setUserStatus({ noChampionships: true });
+  // Fetch list of all participated championships using React Query
+  const { 
+    data: championshipsList = [],
+    isLoading: isLoadingChampionshipsList,
+    error: championshipsListError
+  } = useQuery({
+    queryKey: ['participatedChampionships'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/users/me/participated-championships');
+      return response.data;
+    },
+    enabled: !!isLoggedIn, 
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        if (!selectedChampionshipId || !data.find(c => c.id === selectedChampionshipId)){
+            setSelectedChampionshipId(data[0].id);
         }
-      } catch (error) {
-        console.error("Error fetching participated championships list:", error);
-        setStatusError('Failed to load championships list.');
-        setChampionshipsList([]);
+      } else {
         setSelectedChampionshipId('');
       }
-    };
-    fetchChampionships();
-  }, [isLoggedIn]);
+    },
+  });
 
-  // Memoize the current championship data
+  // Memoize the current championship data from the query result
   const currentChampionship = useMemo(() => 
     championshipsList.find(c => c.id === selectedChampionshipId),
     [championshipsList, selectedChampionshipId]
   );
 
-  // Memoize the user's team data
+  const userId = useMemo(() => getUserIdFromToken(), [isLoggedIn]); // Memoize userId too
+
+  // Fetch user status based on selected championship using React Query
+  const { 
+    data: userStatus,
+    isLoading: isLoadingUserStatus,
+    error: userStatusError,
+    // refetch: refetchUserStatus // Can be used if manual refetch is needed elsewhere
+  } = useQuery({
+    queryKey: ['userStatus', selectedChampionshipId, userId],
+    queryFn: async () => {
+      if (!selectedChampionshipId || !userId) return null; // Should be handled by enabled, but defensive
+
+      const [rankingsResponse, lastRaceResponse] = await Promise.all([
+        axiosInstance.get(`/api/drivers?championshipId=${selectedChampionshipId}`),
+        axiosInstance.get(`/api/users/me/last-race-result?championshipId=${selectedChampionshipId}`)
+      ]);
+
+      const rankings = rankingsResponse.data;
+      const userDriverInfo = rankings.find(d => d.user_id === userId);
+      
+      let rank = null, totalPoints = null, bonusPoints = 0, calculatedTeammatePoints = 0, teamId = null, teamName = null, attendeeId = null, userTag = null;
+      
+      if (userDriverInfo) {
+        rank = rankings.findIndex(d => d.user_id === userId) + 1;
+        totalPoints = (userDriverInfo.points || 0) + (userDriverInfo.bonus_points || 0);
+        bonusPoints = userDriverInfo.bonus_points || 0;
+        teamId = userDriverInfo.team_id;
+        teamName = userDriverInfo.team_name;
+        attendeeId = userDriverInfo.id; 
+        userTag = userDriverInfo.name;
+
+        if (teamId) {
+          calculatedTeammatePoints = rankings
+            .filter(d => d.team_id === teamId && d.user_id !== userId)
+            .reduce((sum, d) => sum + ((d.points || 0) + (d.bonus_points || 0)), 0);
+        }
+      }
+
+      const lastRace = lastRaceResponse.data.success ? lastRaceResponse.data.lastRace : null;
+      const currentChampFromList = championshipsList.find(c => c.id === selectedChampionshipId); // Get current champ name from the list
+
+      return {
+        rank: rank,
+        points: totalPoints,
+        bonusPoints: bonusPoints,
+        attendeeId: attendeeId,
+        userTag: userTag, 
+        teammatePoints: calculatedTeammatePoints,
+        lastRace,
+        championshipName: currentChampFromList?.name, // Use name from already fetched list
+        teamName: teamName,
+        noChampionships: championshipsList.length === 0 && !isLoadingChampionshipsList && !championshipsListError // Indicate if no championships
+      };
+    },
+    enabled: !!isLoggedIn && !!selectedChampionshipId && !!userId && !isLoadingChampionshipsList, // Enable only when all dependencies are ready
+  });
+
+  // Memoize the user's team data from userStatus (which is now query data)
   const userTeamData = useMemo(() => {
     if (!userStatus) return null;
     return {
@@ -114,7 +159,7 @@ function Home({ isLoggedIn, isAdmin }) {
     };
   }, [userStatus]);
 
-  // Memoize the last race data
+  // Memoize the last race data from userStatus (which is now query data)
   const lastRaceData = useMemo(() => {
     if (!userStatus?.lastRace) return null;
     return {
@@ -126,83 +171,21 @@ function Home({ isLoggedIn, isAdmin }) {
     };
   }, [userStatus?.lastRace]);
 
-  // Fetch user status based on selected championship
-  const fetchUserStatus = useCallback(async () => {
-    const currentSelectedChampionshipId = selectedChampionshipId;
-    console.log(`[fetchUserStatus] START - Championship ID: ${currentSelectedChampionshipId}, Logged In: ${isLoggedIn}`);
-
-    if (!isLoggedIn || !currentSelectedChampionshipId) {
-      console.log(`[fetchUserStatus] Skipping fetch - Logged In: ${isLoggedIn}, Championship ID: ${currentSelectedChampionshipId}`);
-      if (!currentSelectedChampionshipId && championshipsList.length > 0) {
-        setUserStatus(null); 
-      }
-      return;
-    }
-
-    const currentUserId = getUserIdFromToken();
-    if (!currentUserId) {
-      setStatusError('Could not identify user.');
-      console.log(`[fetchUserStatus] END - Error: Could not identify user.`);
-      return;
-    }
-
-    setIsLoadingStatus(true);
-    setStatusError(null);
-    setUserStatus(null); 
-
-    try {
-      // Fetch rankings and last race result in parallel
-      const [rankingsResponse, lastRaceResponse] = await Promise.all([
-        axiosInstance.get(`/api/drivers?championshipId=${currentSelectedChampionshipId}`),
-        axiosInstance.get(`/api/users/me/last-race-result?championshipId=${currentSelectedChampionshipId}`)
-      ]);
-
-      const rankings = rankingsResponse.data;
-      const userDriverInfo = rankings.find(d => d.user_id === currentUserId);
-      
-      // Initialize variables to be populated
-      let rank = null, totalPoints = null, bonusPoints = 0, calculatedTeammatePoints = 0, teamId = null, teamName = null, attendeeId = null, userTag = null; // Added userTag
-      
-      if (userDriverInfo) {
-        rank = rankings.findIndex(d => d.user_id === currentUserId) + 1;
-        totalPoints = (userDriverInfo.points || 0) + (userDriverInfo.bonus_points || 0);
-        bonusPoints = userDriverInfo.bonus_points || 0;
-        teamId = userDriverInfo.team_id;
-        teamName = userDriverInfo.team_name;
-        attendeeId = userDriverInfo.id; 
-        userTag = userDriverInfo.name; // Store the user's tag (u.usertag AS name from API)
-
-        if (teamId) {
-          calculatedTeammatePoints = rankings
-            .filter(d => d.team_id === teamId && d.user_id !== currentUserId)
-            .reduce((sum, d) => sum + ((d.points || 0) + (d.bonus_points || 0)), 0);
-        }
-      }
-
-      const lastRace = lastRaceResponse.data.success ? lastRaceResponse.data.lastRace : null;
-
-      setUserStatus({
-        rank: rank,
-        points: totalPoints,
-        bonusPoints: bonusPoints,
-        attendeeId: attendeeId,
-        userTag: userTag, // Added userTag to userStatus
-        teammatePoints: calculatedTeammatePoints,
-        lastRace,
-        championshipName: currentChampionship?.name,
-        teamName: teamName
-      });
-    } catch (err) {
-      console.error("Error fetching user status:", err);
-      setStatusError('Error fetching user status');
-    } finally {
-      setIsLoadingStatus(false);
-    }
-  }, [selectedChampionshipId, isLoggedIn, championshipsList, currentChampionship]);
-
-  useEffect(() => {
-    fetchUserStatus();
-  }, [fetchUserStatus]);
+  // --- User Bonus Log Query ---
+  const {
+    data: userBonusLogEntries = [], // Default to empty array
+    isLoading: isLoadingUserBonusLog,
+    error: userBonusLogError,
+    // refetch: refetchUserBonusLog // if needed for manual refresh
+  } = useQuery({
+    queryKey: ['userBonusLog', userStatus?.attendeeId],
+    queryFn: async () => {
+      if (!userStatus?.attendeeId) return []; // Should be caught by enabled, but defensive
+      const response = await axiosInstance.get(`/api/championship-attendees/${userStatus.attendeeId}/bonus-points-log`);
+      return response.data;
+    },
+    enabled: openUserBonusLogDialog && !!userStatus?.attendeeId, // Only fetch when dialog is open and attendeeId is available
+  });
 
   useEffect(() => {
     const handler = (e) => {
@@ -235,30 +218,20 @@ function Home({ isLoggedIn, isAdmin }) {
 
   const handleOpenUserBonusLogDialog = async () => {
     if (!userStatus?.attendeeId) {
-      setUserBonusLogError('Cannot load log: Attendee ID not found.');
+      // It's better to handle this via disabling the button or showing a message
+      // rather than setting an error here, as the query won't run anyway.
+      console.warn('Cannot open bonus log: Attendee ID not found.');
       return;
     }
     
-    const nameForLog = userStatus?.userTag || 'Your'; // Use stored userTag, fallback to 'Your'
+    const nameForLog = userStatus?.userTag || 'Your'; 
     setUserBonusLogAttendeeName(nameForLog); 
-
     setOpenUserBonusLogDialog(true);
-    setLoadingUserBonusLog(true);
-    setUserBonusLogError(null);
-    try {
-      const response = await axiosInstance.get(`/api/championship-attendees/${userStatus.attendeeId}/bonus-points-log`);
-      setUserBonusLogEntries(response.data);
-    } catch (err) {
-      console.error("Error fetching user bonus points log:", err);
-      setUserBonusLogError(err.response?.data?.message || 'fetch-bonus-log-error');
-    } finally {
-      setLoadingUserBonusLog(false);
-    }
+    // Data fetching is now handled by the useQuery based on openUserBonusLogDialog and userStatus.attendeeId
   };
 
   const handleCloseUserBonusLogDialog = () => {
     setOpenUserBonusLogDialog(false);
-    setUserBonusLogEntries([]);
     // setUserBonusLogError(null); // Optional: clear error on close
   };
 
@@ -281,7 +254,9 @@ function Home({ isLoggedIn, isAdmin }) {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {isLoggedIn && (
         <Box mb={4}>
-          {championshipsList.length > 0 && (
+          {isLoadingChampionshipsList && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress size={24} /></Box>}
+          {championshipsListError && <Alert severity="error" sx={{my: 2}}><Localized id="fetch-championships-list-error" fallback="Failed to load championships list." /></Alert>}
+          {!isLoadingChampionshipsList && !championshipsListError && championshipsList.length > 0 && (
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel id="championship-select-label"><Localized id="select-championship-label" /></InputLabel>
               <Select
@@ -290,6 +265,7 @@ function Home({ isLoggedIn, isAdmin }) {
                 value={selectedChampionshipId}
                 label={<Localized id="select-championship-label" />}
                 onChange={handleChampionshipChange}
+                disabled={isLoadingUserStatus}
               >
                 {championshipsList.map((champ) => (
                   <MenuItem key={champ.id} value={champ.id}>
@@ -299,123 +275,33 @@ function Home({ isLoggedIn, isAdmin }) {
               </Select>
             </FormControl>
           )}
-
-          {isLoadingStatus && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
-          {statusError && <Alert severity="error" sx={{ my: 2 }}>{statusError}</Alert>}
-          
-          {userStatus && !isLoadingStatus && !statusError && !userStatus.noChampionships && selectedChampionshipId && (
-            <Card elevation={3}>
-              <CardContent>
-                <Typography variant="h5" component="div" gutterBottom sx={{ textAlign: 'center' }}>
-                  <Localized id="my-status-title" /> {userStatus.championshipName ? `(${userStatus.championshipName})` : ''}
-                </Typography>
-                <Grid container spacing={2} alignItems="stretch">
-                  <Grid item xs={12} md={userStatus.lastRace ? 4 : 6}>
-                    <Typography variant="h6" gutterBottom><Localized id="my-current-standing" /></Typography>
-                    <List dense>
-                      <ListItem>
-                        <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
-                        <ListItemText 
-                          primary={<Localized id="team-label" />} 
-                          secondary={userTeamData?.teamName ? userTeamData.teamName : <Localized id="team-name-not-available" />}
-                        />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon><SportsScoreIcon color="primary" /></ListItemIcon>
-                        <ListItemText primary={<Localized id="points-label" />} secondary={userStatus.points !== null ? userStatus.points : '0'} />
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon><StarIcon color="primary" /></ListItemIcon>
-                        <ListItemText 
-                          primary={<Localized id="bonus-points-label" fallback="Bonus Points"/>}
-                          secondary={userStatus.bonusPoints !== null ? userStatus.bonusPoints : '0'} 
-                        />
-                        {userStatus.attendeeId && (
-                           <IconButton onClick={handleOpenUserBonusLogDialog} size="small" edge="end" aria-label="view bonus log">
-                               <ListAltIcon />
-                           </IconButton>
-                        )}
-                      </ListItem>
-                      <ListItem>
-                        <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
-                        <ListItemText primary={<Localized id="teammate-points-label" />} secondary={userTeamData?.teammatePoints !== null ? userTeamData.teammatePoints : '0'} />
-                      </ListItem>
-                    </List>
-                  </Grid>
-
-                  {userStatus.lastRace && (
-                    <Grid item xs={12} md={4}>
-                      { console.log('DEBUG userStatus.lastRace:', JSON.stringify(userStatus.lastRace, null, 2)) }
-                      <Typography variant="h6" gutterBottom>
-                        <Localized 
-                          id="last-race-result-title" 
-                          vars={{ raceName: lastRaceData?.raceName || '' }}
-                        />
-                      </Typography>
-                      <List dense>
-                        <ListItem>
-                          <ListItemIcon><EventIcon color="secondary"/></ListItemIcon>
-                          <ListItemText 
-                            primary={<Localized id="race-date-label" />} 
-                            secondary={
-                              lastRaceData?.date 
-                              ? new Date(lastRaceData.date).toLocaleDateString('en-GB') 
-                              : 'N/A'
-                            }
-                          />
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon><FormatListNumberedIcon color="secondary" /></ListItemIcon>
-                          <ListItemText primary={<Localized id="position-label" />} secondary={lastRaceData?.position} />
-                          {/* Conditionally add medal icon */} 
-                          {lastRaceData && [1, 2, 3].includes(lastRaceData.position) && (
-                            <EmojiEventsIcon sx={{
-                              marginLeft: 'auto', // Push to the right
-                              color: lastRaceData.position === 1 ? '#FFD700' // Gold
-                                     : lastRaceData.position === 2 ? '#C0C0C0' // Silver
-                                     : '#CD7F32' // Bronze
-                            }} />
-                          )}
-                        </ListItem>
-                        <ListItem>
-                          <ListItemIcon><TimerIcon color="secondary" /></ListItemIcon>
-                          <ListItemText 
-                            primary={<Localized id="fastest-lap-label" />} 
-                            secondary={lastRaceData?.fastestLap || 'N/A'} 
-                            secondaryTypographyProps={{
-                              sx: {
-                                color: lastRaceData.isOverallFastestLap ? 'secondary.main' : 'inherit',
-                                fontWeight: lastRaceData.isOverallFastestLap ? 'bold' : 'normal' 
-                              }
-                            }}
-                          />
-                        </ListItem>
-                      </List>
-                    </Grid>
-                  )}
-                  <Grid item xs={12} md={userStatus.lastRace ? 4 : 6} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Avatar sx={{
-                          width: 100, 
-                          height: 100, 
-                          fontSize: '2rem',
-                          bgcolor: userStatus.rank === 1 ? '#FFD700' // Gold
-                                   : userStatus.rank === 2 ? '#C0C0C0' // Silver
-                                   : userStatus.rank === 3 ? '#CD7F32' // Bronze
-                                   : 'primary.main' // Default
-                        }}>
-                            {userStatus.rank !== null ? userStatus.rank : '-'}
-                        </Avatar>
-                    </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+          {!isLoadingChampionshipsList && !championshipsListError && championshipsList.length === 0 && isLoggedIn && (
+             <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
+                <Localized id="no-participated-championships" />
+            </Typography>
           )}
-          {userStatus && userStatus.noChampionships && (
+
+          {/* User Status Section */}
+          {isLoadingUserStatus && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
+          {userStatusError && <Alert severity="error" sx={{ my: 2 }}><Localized id="fetch-user-status-error" fallback="Failed to load user status."/></Alert>}
+          
+          {/* Display UserStatusCard when data is available, not loading, no error, and a championship is selected */}
+          {userStatus && !isLoadingUserStatus && !userStatusError && selectedChampionshipId && !userStatus.noChampionships && (
+            <UserStatusCard 
+              status={userStatus}
+              teamData={userTeamData}
+              raceData={lastRaceData}
+              onOpenBonusLog={handleOpenUserBonusLogDialog}
+            />
+          )}
+          {/* Handle case where user has no championships at all (derived from userStatus.noChampionships) */}
+          {userStatus && userStatus.noChampionships && !isLoadingUserStatus && !userStatusError && (
              <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
                 <Localized id="no-championships-for-status" />
             </Typography>
           )}
-          {!selectedChampionshipId && championshipsList.length > 0 && !isLoadingStatus && (
+           {/* Handle case where championships list is loaded, but nothing is selected (e.g. if list was empty initially) */}
+          {!selectedChampionshipId && !isLoadingChampionshipsList && championshipsList.length > 0 && !isLoadingUserStatus && (
              <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
                 <Localized id="please-select-championship-status" />
             </Typography>
@@ -494,11 +380,11 @@ function Home({ isLoggedIn, isAdmin }) {
             />
           </DialogTitle>
           <DialogContent>
-            {loadingUserBonusLog ? (
+            {isLoadingUserBonusLog ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
             ) : userBonusLogError ? (
-              <Alert severity="error" onClose={() => setUserBonusLogError(null)}> 
-                <Localized id={userBonusLogError} fallback={<Localized id='generic-error-fallback' />} />
+              <Alert severity="error" onClose={() => { /* Consider queryClient.resetQueries(['userBonusLog', userStatus?.attendeeId]) or similar if needed */ }}> 
+                <Localized id={userBonusLogError.message || 'fetch-bonus-log-error'} fallback={<Localized id='generic-error-fallback' />} />
               </Alert>
             ) : userBonusLogEntries.length === 0 ? (
               <Typography><Localized id="admin-no-bonus-log-entries" fallback="No bonus point entries found."/></Typography>

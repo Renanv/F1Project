@@ -297,3 +297,4 @@ no-data-for-ranking = Não há dados disponíveis para o tipo de classificação
 # Admin LSF Score Reveal Race
 admin-lsf-score-reveal-race-label = Ponto de Exibição do LSF Score
 admin-lsf-score-reveal-race-live-option = Mostrar Pontuação Atual (Ao Vivo)
+no-participated-championships = Campeonato participante não encontrado

@@ -6,6 +6,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Import the new view components
 import DriverRankingsView from './rankings/DriverRankingsView';
@@ -27,18 +28,10 @@ const constructorTiers = [
 ];
 
 function RankingsPage({ isAdmin }) {
-  const [drivers, setDrivers] = useState([]);
-  const [teamRankings, setTeamRankings] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [racesList, setRacesList] = useState([]);
+  const queryClient = useQueryClient();
   const [selectedRaceId, setSelectedRaceId] = useState('');
-  const [loadingRaces, setLoadingRaces] = useState(false);
 
-  const [championshipsList, setChampionshipsList] = useState([]);
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
-  const [loadingChampionships, setLoadingChampionships] = useState(true);
 
   const [rankingType, setRankingType] = useState('driver');
 
@@ -48,104 +41,91 @@ function RankingsPage({ isAdmin }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const fetchChampionships = useCallback(async () => {
-    setLoadingChampionships(true);
-    setError(null);
-    try {
-      const res = await axiosInstance.get('/api/championships'); 
-      setChampionshipsList(res.data);
-      if (res.data.length > 0) {
-        setSelectedChampionshipId(res.data[0].id); 
+  // Fetch championships using React Query
+  const {
+    data: championshipsList = [],
+    isLoading: isLoadingChampionships,
+    error: championshipsError
+  } = useQuery({
+    queryKey: ['championships'],
+    queryFn: async () => {
+      const res = await axiosInstance.get('/api/championships');
+      return res.data;
+    },
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        if (!selectedChampionshipId || !data.find(c => c.id === selectedChampionshipId)) {
+          setSelectedChampionshipId(data[0].id);
+        }
       } else {
         setSelectedChampionshipId('');
-        setDrivers([]);
-        setTeamRankings([]);
       }
-    } catch (err) {
+    },
+    onError: (err) => {
       console.error('Error fetching championships:', err);
-      setError('fetch-championships-error');
-    } finally {
-      setLoadingChampionships(false);
     }
-  }, []);
+  });
 
-  const fetchDriverRankings = useCallback(async (championshipId) => {
-    if (!championshipId) {
-        setDrivers([]);
-        setIsLoading(false);
-        return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const driversRes = await axiosInstance.get(`/api/drivers?championshipId=${championshipId}`);
-      setDrivers(driversRes.data);
-    } catch (err) {
+  // Fetch driver rankings using React Query
+  const {
+    data: drivers = [],
+    isLoading: isLoadingDriverRankings,
+    error: driverRankingsError,
+  } = useQuery({
+    queryKey: ['driverRankings', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return [];
+      const driversRes = await axiosInstance.get(`/api/drivers?championshipId=${selectedChampionshipId}`);
+      return driversRes.data;
+    },
+    enabled: !!selectedChampionshipId && (rankingType === 'driver' || rankingType === 'constructors'),
+    onError: (err) => {
       console.error('Error fetching driver rankings:', err);
-      setError('fetch-rankings-error');
-      setDrivers([]);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  });
 
-  const fetchTeamRankings = useCallback(async (championshipId) => {
-    if (!championshipId) {
-        setTeamRankings([]);
-        setIsLoading(false);
-        return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const teamRes = await axiosInstance.get(`/api/team-rankings?championshipId=${championshipId}`);
-      setTeamRankings(teamRes.data);
-    } catch (err) {
+  // Fetch team rankings using React Query
+  const {
+    data: teamRankings = [],
+    isLoading: isLoadingTeamRankings,
+    error: teamRankingsError,
+  } = useQuery({
+    queryKey: ['teamRankings', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return [];
+      const teamRes = await axiosInstance.get(`/api/team-rankings?championshipId=${selectedChampionshipId}`);
+      return teamRes.data;
+    },
+    enabled: !!selectedChampionshipId && rankingType === 'team',
+    onError: (err) => {
       console.error('Error fetching team rankings:', err);
-      setError('fetch-team-rankings-error');
-      setTeamRankings([]);
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  });
 
-  useEffect(() => {
-    fetchChampionships();
-  }, [fetchChampionships]);
+  // Fetch races list for admin using React Query
+  const {
+    data: racesList = [], // Default to empty array
+    isLoading: isLoadingAdminRaces,
+    error: adminRacesError
+  } = useQuery({
+    queryKey: ['adminRacesList'],
+    queryFn: async () => {
+      const racesRes = await axiosInstance.get('/api/races/list');
+      return racesRes.data || [];
+    },
+    enabled: !!isAdmin, // Only fetch if the user is an admin
+    onError: (err) => {
+      console.error('Error fetching races list for admin:', err);
+      // Error is handled by adminRacesError
+    }
+  });
 
   useEffect(() => {
     const currentChamp = championshipsList.find(c => c.id === selectedChampionshipId);
     setSelectedChampionshipObject(currentChamp || null);
 
-    if (selectedChampionshipId) {
-      if (rankingType === 'driver' || rankingType === 'constructors') {
-        fetchDriverRankings(selectedChampionshipId);
-      }
-      if (rankingType === 'team') {
-        fetchTeamRankings(selectedChampionshipId);
-      }
-    } else {
-      setDrivers([]);
-      setTeamRankings([]);
-      setIsLoading(false);
-    }
-  }, [selectedChampionshipId, championshipsList, rankingType, fetchDriverRankings, fetchTeamRankings]);
-
-  useEffect(() => {
-    const fetchRacesForAdmin = async () => {
-        if (!isAdmin) return;
-        setLoadingRaces(true);
-        try {
-            const racesRes = await axiosInstance.get('/api/races/list');
-            setRacesList(racesRes.data || []);
-        } catch (err) {
-            console.error('Error fetching races list for admin:', err);
-        } finally {
-            setLoadingRaces(false);
-        }
-    };
-    fetchRacesForAdmin();
-  }, [isAdmin]);
+    // Data fetching is now handled by useQuery hooks based on selectedChampionshipId and rankingType
+  }, [selectedChampionshipId, championshipsList, rankingType]);
 
   const handleChampionshipChange = (event) => {
     setSelectedChampionshipId(event.target.value);
@@ -162,13 +142,32 @@ function RankingsPage({ isAdmin }) {
   };
 
   const renderRankingsDisplay = () => {
-    if (isLoading) {
+    // Consolidated loading check for all relevant queries
+    const overallLoading = isLoadingChampionships || 
+                         (rankingType === 'driver' || rankingType === 'constructors' ? isLoadingDriverRankings : false) || 
+                         (rankingType === 'team' ? isLoadingTeamRankings : false);
+
+    if (overallLoading) {
       return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}><CircularProgress /></Box>;
     }
-    if (error && !loadingChampionships) {
-      return <Alert severity="error" sx={{mt: 2}} onClose={() => setError(null)}><Localized id={error} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+    
+    // Handle championships loading error first
+    if (championshipsError) {
+      return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['championships'] })}><Localized id={'fetch-championships-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
     }
-    if (!selectedChampionshipId && !loadingChampionships) { 
+
+    // Handle rankings-specific errors
+    if (rankingType === 'driver' || rankingType === 'constructors') {
+      if (driverRankingsError) {
+        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['driverRankings', selectedChampionshipId] })}><Localized id={'fetch-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+      }
+    } else if (rankingType === 'team') {
+      if (teamRankingsError) {
+        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['teamRankings', selectedChampionshipId] })}><Localized id={'fetch-team-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+      }
+    }
+    
+    if (!selectedChampionshipId && !isLoadingChampionships) { 
         return <Typography sx={{mt: 2}}><Localized id="admin-select-championship-prompt" /></Typography>;
     }
 
@@ -180,8 +179,10 @@ function RankingsPage({ isAdmin }) {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} constructorTiers={constructorTiers} />;
     }
 
-    if ((rankingType === 'driver' && drivers.length === 0 && !isLoading) || 
-        (rankingType === 'team' && teamRankings.length === 0 && !isLoading)) {
+    if ((rankingType === 'driver' && drivers.length === 0 && !isLoadingDriverRankings) || 
+        (rankingType === 'team' && teamRankings.length === 0 && !isLoadingTeamRankings) ||
+        (rankingType === 'constructors' && drivers.length === 0 && !isLoadingDriverRankings) // Also check for constructors
+        ) {
         return <Typography sx={{mt: 2}}><Localized id="no-data-for-ranking" fallback="No data available for the selected ranking type."/></Typography>;
     }
     
@@ -217,7 +218,7 @@ function RankingsPage({ isAdmin }) {
       </Box>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth disabled={loadingChampionships || isLoading}>
+        <FormControl fullWidth disabled={isLoadingChampionships || isLoadingDriverRankings || isLoadingTeamRankings}>
             <InputLabel id="championship-select-label"><Localized id="select-championship-label" /></InputLabel>
             <Select
                 labelId="championship-select-label"
@@ -225,12 +226,12 @@ function RankingsPage({ isAdmin }) {
                 label={<Localized id="select-championship-label" />}
                 onChange={handleChampionshipChange}
             >
-                {loadingChampionships && (
+                {isLoadingChampionships && (
                     <MenuItem value="" disabled>
                          <em><Localized id="loading-championships" /></em>
                     </MenuItem>
                 )}
-                {!loadingChampionships && championshipsList.length === 0 && (
+                {!isLoadingChampionships && championshipsList.length === 0 && (
                      <MenuItem value="" disabled>
                          <em><Localized id="no-championships-available" /></em>
                      </MenuItem>
@@ -250,7 +251,7 @@ function RankingsPage({ isAdmin }) {
             <Grid item xs={12} md={4}>
                 <Paper sx={{p: 2}} elevation={1}>
                     <Box sx={{ mb: 2 }}>
-                        <FormControl fullWidth disabled={loadingRaces || championshipsList.length === 0 || !selectedChampionshipId}>
+                        <FormControl fullWidth disabled={isLoadingAdminRaces || championshipsList.length === 0 || !selectedChampionshipId}>
                             <InputLabel id="race-select-admin-label"><Localized id="select-race-label"/></InputLabel>
                             <Select
                                 labelId="race-select-admin-label"
@@ -267,9 +268,15 @@ function RankingsPage({ isAdmin }) {
                                     {race.name}
                                     </MenuItem>
                                 ))}
-                                {racesList.length === 0 && !loadingRaces && (
+                                {racesList.length === 0 && !isLoadingAdminRaces && (
                                     <MenuItem value="" disabled>
                                         <em><Localized id="no-races-for-upload" /></em>
+                                    </MenuItem>
+                                )}
+                                {/* Display error if admin races fetching failed */}
+                                {adminRacesError && (
+                                    <MenuItem value="" disabled sx={{color: 'error.main'}}>
+                                        <em><Localized id="fetch-admin-races-error" fallback="Error loading races"/></em>
                                     </MenuItem>
                                 )}
                             </Select>
@@ -278,17 +285,12 @@ function RankingsPage({ isAdmin }) {
                     <FileUpload 
                         onSuccess={() => {
                             if (!selectedChampionshipId) return;
-                            setIsLoading(true);
-                            const refetchData = async () => {
-                                if (rankingType === 'driver' || rankingType === 'constructors') {
-                                    await fetchDriverRankings(selectedChampionshipId);
-                                }
-                                if (rankingType === 'team') {
-                                    await fetchTeamRankings(selectedChampionshipId);
-                                }
-                                setIsLoading(false);
-                            };
-                            refetchData();
+                            if (rankingType === 'driver' || rankingType === 'constructors') {
+                                queryClient.invalidateQueries({ queryKey: ['driverRankings', selectedChampionshipId] });
+                            }
+                            if (rankingType === 'team') {
+                                queryClient.invalidateQueries({ queryKey: ['teamRankings', selectedChampionshipId] });
+                            }
                         }} 
                         selectedRaceId={selectedRaceId}
                         isAdmin={isAdmin}

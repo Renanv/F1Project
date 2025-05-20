@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LocalizationProvider, ReactLocalization } from '@fluent/react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { jwtDecode } from 'jwt-decode';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axiosInstance from './utils/axiosInstance';
 import Home from './components/Home';
 import Login from './components/Login';
@@ -19,11 +20,15 @@ import TeamManager from './components/admin/TeamManager';
 import AdminPanel from './components/admin/AdminPanel';
 import { bundles } from './i18n';
 
+// Create a client
+const queryClient = new QueryClient();
+
 function App() {
   const [activeLocale, setActiveLocale] = useState('pt');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const navigate = useNavigate();
 
   const l10n = useMemo(() => {
     return new ReactLocalization(bundles.filter(bundle => bundle.locales.includes(activeLocale)));
@@ -86,6 +91,7 @@ function App() {
     localStorage.removeItem('userId');
     setIsLoggedIn(false);
     setIsAdmin(false);
+    navigate('/login');
   };
 
   const darkTheme = createTheme({
@@ -97,7 +103,8 @@ function App() {
   // Callback for Login component
   const handleLoginSuccess = () => {
     console.log('Login success callback triggered. Re-checking auth status...');
-    checkAuthStatus(); // Immediately update state after token is set
+    checkAuthStatus();
+    navigate('/');
   };
 
   if (isLoadingAuth) {
@@ -108,7 +115,7 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <LocalizationProvider l10n={l10n}>
-        <Router>
+        <QueryClientProvider client={queryClient}>
           <NavigationBar
             isLoggedIn={isLoggedIn}
             isAdmin={isAdmin}
@@ -131,10 +138,18 @@ function App() {
               <Route path="/config" element={<Config />} />
             </Route>
           </Routes>
-        </Router>
+        </QueryClientProvider>
       </LocalizationProvider>
     </ThemeProvider>
   );
 }
 
-export default App;
+function Root() {
+  return (
+    <Router>
+      <App />
+    </Router>
+  );
+}
+
+export default Root;
