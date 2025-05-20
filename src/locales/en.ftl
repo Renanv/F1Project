@@ -232,3 +232,68 @@ admin-remove-attendee-title = Remove Attendee
 admin-remove-attendee-confirm = Are you sure you want to remove { $userName } from the championship "{ $champName }"? Their score and points will be reset for this championship.
 admin-remove-button = Remove
 remove-attendee-error = Error removing attendee.
+
+# LSF Score Reveal Race Admin
+admin-lsf-score-reveal-race-label = LSF Score Display Point
+admin-lsf-score-reveal-race-live-option = Show Current Live Score
+
+# Bonus Points System (Admin)
+admin-add-bonus-points-title = Add Bonus/Penalty Points for { $userName }
+admin-bonus-points-amount-label = Points Amount (can be negative)
+admin-bonus-points-source-label = Source
+admin-bonus-points-reason-label = Reason (Optional)
+admin-submit-bonus-points-button = Submit Points
+bonus-points-missing-fields = Error: Points amount and source are required.
+bonus-points-invalid-amount = Error: Points amount must be a valid number.
+add-bonus-points-error = Error: Could not add bonus points. Please try again.
+add-bonus-points-success = Bonus points added successfully for { $userName }.
+
+# Bonus Points Log (Admin)
+admin-bonus-points-log-title = Bonus Points Log for { $userName }
+fetch-bonus-log-error = Error: Could not fetch bonus points log.
+admin-no-bonus-log-entries = No bonus point entries found for this attendee.
+bonus-log-points-header = Points
+bonus-log-source-header = Source
+bonus-log-reason-header = Reason
+bonus-log-awarded-at-header = Date Awarded
+admin-close-button = Close
+
+# Bonus Point Sources
+bonus-source-MANUAL_ADJUSTMENT = Manual Adjustment
+# bonus-source-PENALTY_APPEAL_WON = Penalty Appeal Won (Removed)
+# bonus-source-SPORTING_CONDUCT_AWARD = Sporting Conduct Award (Removed)
+bonus-source-RACE_INCIDENT_PENALTY = Race Incident Penalty
+bonus-source-BEAUTIFUL_PLAY = Beautiful Play
+bonus-source-OTHER = Other (Specify in Reason)
+bonus-source-CLASH = Clash
+bonus-source-FASTEST_LAP = Fastest Lap
+bonus-source-DRIVER_OF_THE_DAY = Driver of the Day
+
+# Home Page - My Status Card
+bonus-points-label = Bonus Points
+
+# Rankings Page
+rankings-page-title = Rankings
+ranking-type-driver = Drivers
+ranking-type-team = Teams
+ranking-type-constructors = Constructors
+
+# Team Rankings
+fetch-team-rankings-error = Error fetching team rankings.
+no-team-rankings-found = No team rankings found for this championship.
+team-position = Rank
+team-name = Team
+team-total-points = Total Points
+
+# Constructors (Score) Rankings
+no-drivers-for-constructors = No driver data available to generate constructors ranking.
+no-drivers-in-tier = No drivers in this tier for the selected championship.
+
+# Generic
+no-data-for-ranking = No data available for the selected ranking type.
+
+# LSF Score Reveal Message
+# lsf-score-reveal-message = LSF Scores displayed are as of { $raceTitle }.
+
+# Admin LSF Score Reveal Race
+admin-lsf-score-reveal-race-label = LSF Score Display Point

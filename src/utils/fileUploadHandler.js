@@ -123,7 +123,7 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
         
         // Apply team multiplier
         const teamMultiplier = teamConfigs[teamName] || 1;
-        const finalRaceScore = (raceScoreAdjustment / 4) * teamMultiplier;
+        const finalRaceScore = raceScoreAdjustment * teamMultiplier;
 
         // --- Prepare data object for this driver for the backend --- 
         const resultData = {

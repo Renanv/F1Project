@@ -218,7 +218,7 @@ my-current-standing = Minha Classificação Atual
 team-label = Equipe
 not-ranked = Não Classificado
 points-label = Pontos
-teammate-points-label = Pontos do Colega de Equipe
+teammate-points-label = Pontos do companheiro de Equipe
 race-event-label = Corrida
 position-label = Posição
 fastest-lap-label = Volta Mais Rápida
@@ -235,3 +235,65 @@ admin-remove-attendee-confirm = Tem certeza que deseja remover { $userName } do 
 admin-remove-button = Remover
 remove-attendee-error = Erro ao remover participante.
 generic-error-fallback = Ocorreu um erro inesperado.
+
+# Sistema de Pontos de Bônus (Admin)
+admin-add-bonus-points-title = Adicionar/Remover Pontos bônus para { $userName }
+admin-bonus-points-amount-label = Quantidade de Pontos (pode ser negativo)
+admin-bonus-points-source-label = Fonte
+admin-bonus-points-reason-label = Motivo (Opcional)
+admin-submit-bonus-points-button = Submeter Pontos
+bonus-points-missing-fields = Erro: Quantidade de pontos e fonte são obrigatórios.
+bonus-points-invalid-amount = Erro: A quantidade de pontos deve ser um número válido.
+add-bonus-points-error = Erro: Não foi possível adicionar pontos bônus. Tente novamente.
+add-bonus-points-success = Pontos bônus adicionados com sucesso para { $userName }.
+
+# Log de Pontos de Bônus (Admin)
+admin-bonus-points-log-title = Log de Pontos bônus para { $userName }
+fetch-bonus-log-error = Erro: Não foi possível buscar o log de pontos bônus.
+admin-no-bonus-log-entries = Nenhuma entrada de pontos bônus encontrada para este participante.
+bonus-log-points-header = Pontos
+bonus-log-source-header = Fonte
+bonus-log-reason-header = Motivo
+bonus-log-awarded-at-header = Data da Concessão
+admin-close-button = Fechar
+
+# Fontes de Pontos de Bônus
+bonus-source-MANUAL_ADJUSTMENT = Ajuste Manual
+# bonus-source-PENALTY_APPEAL_WON = Apelação de Penalidade Vencida (Removido)
+# bonus-source-SPORTING_CONDUCT_AWARD = Prêmio de Conduta Esportiva (Removido)
+bonus-source-RACE_INCIDENT_PENALTY = Penalidade por Incidente de Corrida
+bonus-source-BEAUTIFUL_PLAY = Joga Bonito (Especificar no Motivo)
+bonus-source-OTHER = Outro (Especificar no Motivo)
+bonus-source-CLASH = Embate
+bonus-source-FASTEST_LAP = Volta Mais Rápida
+bonus-source-DRIVER_OF_THE_DAY = Piloto do Dia
+
+# Home Page - Painel Meu Status
+bonus-points-label = Pontos Bônus
+
+# Página de Classificações
+rankings-page-title = Classificações
+ranking-type-driver = Pilotos
+ranking-type-team = Equipes
+ranking-type-constructors = Lastro
+
+# Classificação de Equipes
+fetch-team-rankings-error = Erro ao buscar classificação de equipes.
+no-team-rankings-found = Nenhuma classificação de equipe encontrada para este campeonato.
+team-position = Class.
+team-name = Equipe
+team-total-points = Pontos Totais
+
+# Classificação de Construtores (Score)
+no-drivers-for-constructors = Não há dados de pilotos para gerar a classificação de construtores.
+no-drivers-in-tier = Nenhum piloto neste tier para o campeonato selecionado.
+
+# Genérico
+no-data-for-ranking = Não há dados disponíveis para o tipo de classificação selecionado.
+
+# Mensagem de Revelação do LSF Score
+# lsf-score-reveal-message = As pontuações LSF exibidas são da corrida { $raceTitle }.
+
+# Admin LSF Score Reveal Race
+admin-lsf-score-reveal-race-label = Ponto de Exibição do LSF Score
+admin-lsf-score-reveal-race-live-option = Mostrar Pontuação Atual (Ao Vivo)

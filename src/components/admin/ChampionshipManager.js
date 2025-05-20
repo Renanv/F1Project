@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // Use axiosInstance
 import axiosInstance from '../../utils/axiosInstance';
 // import axios from 'axios';
@@ -6,13 +6,16 @@ import {
     Container, Typography, Box, List, ListItem, ListItemText, Button, TextField,
     Grid, Paper, CircularProgress, Alert, IconButton, Dialog, DialogActions,
     DialogContent, DialogContentText, DialogTitle, Divider, Avatar,
-    ListItemIcon
+    ListItemIcon, Select, MenuItem, InputLabel, FormControl,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow // Added Table components
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; // For title
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove'; // Icon for removing attendee
+import StarsIcon from '@mui/icons-material/Stars'; // Icon for bonus points
+import ListAltIcon from '@mui/icons-material/ListAlt'; // Icon for bonus points log
 import { Localized } from '@fluent/react';
 
 // --- Expected Backend Endpoints --- 
@@ -25,6 +28,9 @@ import { Localized } from '@fluent/react';
 // PUT /api/races/:id - Expects { title: string, date: string }
 // DELETE /api/races/:id
 // DELETE /api/championships/:champId/attendees/:userId
+// GET /api/championship-attendees?championshipId=:champId - Returns [{ id, user_id, team_id, score, points, bonus_points }]
+// POST /api/championship-attendees/:attendeeId/bonus-points - Expects { points: number, source: string, reason?: string }
+// GET /api/championship-attendees/:attendeeId/bonus-points-log - Returns [{ id, points_awarded, source, reason, awarded_at }, ...]
 // -------------------------------------
 
 function ChampionshipManager() {
@@ -37,6 +43,7 @@ function ChampionshipManager() {
   const [loadingChampionships, setLoadingChampionships] = useState(false);
   const [loadingRaces, setLoadingRaces] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null); // For success messages
 
   // --- NEW STATE FOR ATTENDEES/USERS ---
   const [attendees, setAttendees] = useState([]);
@@ -47,6 +54,31 @@ function ChampionshipManager() {
   const [openRemoveAttendeeDialog, setOpenRemoveAttendeeDialog] = useState(false);
   const [isRemovingAttendee, setIsRemovingAttendee] = useState(false);
   // --- END NEW STATE ---
+
+  // --- State for Bonus Points Modal ---
+  const [openBonusPointsDialog, setOpenBonusPointsDialog] = useState(false);
+  const [attendeeForBonus, setAttendeeForBonus] = useState(null); // { id (attendee_id), name (user's name for display), currentBonusPoints }
+  const [bonusAmount, setBonusAmount] = useState('');
+  const [bonusSource, setBonusSource] = useState('');
+  const [bonusReason, setBonusReason] = useState('');
+  const [isAddingBonusPoints, setIsAddingBonusPoints] = useState(false);
+  const bonusSourceOptions = [
+    { value: 'MANUAL_ADJUSTMENT', label: 'Manual Admin Adjustment' },
+    { value: 'CLASH', label: 'Clash' },
+    { value: 'FASTEST_LAP', label: 'Fastest Lap' },
+    { value: 'DRIVER_OF_THE_DAY', label: 'Driver of the Day' },
+    { value: 'RACE_INCIDENT_PENALTY', label: 'Race Incident Penalty' },
+    { value: 'BEAUTIFUL_PLAY', label: 'Beautiful Play' },
+    { value: 'OTHER', label: 'Other (Specify in Reason)' },
+  ];
+  // --- End State for Bonus Points Modal ---
+
+  // --- State for Bonus Points Log Modal ---
+  const [openBonusLogDialog, setOpenBonusLogDialog] = useState(false);
+  const [attendeeForLog, setAttendeeForLog] = useState(null); // { id (attendee_id), name (user's name) }
+  const [bonusLogEntries, setBonusLogEntries] = useState([]);
+  const [loadingBonusLog, setLoadingBonusLog] = useState(false);
+  // --- End State for Bonus Points Log Modal ---
 
   // --- State for Modals ---
   const [openEditChampDialog, setOpenEditChampDialog] = useState(false);
@@ -62,6 +94,12 @@ function ChampionshipManager() {
   const [editedRaceTitle, setEditedRaceTitle] = useState('');
   const [editedRaceDate, setEditedRaceDate] = useState('');
   // --- End State for Modals ---
+
+  // --- State for LSF Score Reveal Race ID in Edit Champ Dialog ---
+  const [editedChampLsfRevealRaceId, setEditedChampLsfRevealRaceId] = useState(''); // Empty string for 'Live Score' option
+  const [racesForEditDialog, setRacesForEditDialog] = useState([]);
+  const [loadingRacesForEditDialog, setLoadingRacesForEditDialog] = useState(false);
+  // --- End LSF Score State ---
 
   const [isCreatingChamp, setIsCreatingChamp] = useState(false);
   const [isCreatingRace, setIsCreatingRace] = useState(false);
@@ -173,11 +211,27 @@ function ChampionshipManager() {
   };
 
   // --- Modal Open/Close Handlers ---
-  const handleOpenEditChamp = (champ) => {
+  const handleOpenEditChamp = useCallback(async (champ) => {
       setChampToEdit(champ);
       setEditedChampName(champ.name);
+      setEditedChampLsfRevealRaceId(champ.lsf_score_reveal_race_id === null || champ.lsf_score_reveal_race_id === undefined ? '' : champ.lsf_score_reveal_race_id);
       setOpenEditChampDialog(true);
-  };
+      // Fetch races for this specific championship to populate the dropdown
+      if (champ && champ.id) {
+          setLoadingRacesForEditDialog(true);
+          try {
+              const response = await axiosInstance.get(`/api/championships/${champ.id}/races`);
+              setRacesForEditDialog(response.data || []);
+          } catch (err) {
+              console.error(`Error fetching races for champ ${champ.id} in edit dialog:`, err);
+              setRacesForEditDialog([]); // Clear or set error state
+              // Optionally, set an error message specific to this fetch for the dialog
+          } finally {
+              setLoadingRacesForEditDialog(false);
+          }
+      }
+  }, []);
+
   const handleCloseEditChamp = () => setOpenEditChampDialog(false);
   const handleOpenDeleteChamp = (champ) => {
       setChampToDelete(champ);
@@ -205,18 +259,24 @@ function ChampionshipManager() {
       setError(null);
       setIsEditingChamp(true);
       try {
-          await axiosInstance.put(`/api/championships/${champToEdit.id}`, { name: editedChampName });
+          const payload = {
+            name: editedChampName,
+            lsf_score_reveal_race_id: editedChampLsfRevealRaceId === '' ? null : parseInt(editedChampLsfRevealRaceId, 10)
+          };
+          const response = await axiosInstance.put(`/api/championships/${champToEdit.id}`, payload);
+          const updatedChampData = response.data.championship; // Backend returns the updated championship object
+
           // Optimistically update championships state
           setChampionships(prevChamps => 
             prevChamps.map(champ => 
-              champ.id === champToEdit.id 
-                ? { ...champ, name: editedChampName }
+              champ.id === updatedChampData.id 
+                ? updatedChampData // Use the full updated object from backend
                 : champ
             )
           );
           handleCloseEditChamp();
-          if (selectedChampionship?.id === champToEdit.id) {
-              setSelectedChampionship(prev => ({ ...prev, name: editedChampName }));
+          if (selectedChampionship?.id === updatedChampData.id) {
+              setSelectedChampionship(updatedChampData); // Update selectedChampionship if it was the one edited
           }
       } catch (err) { 
           console.error("Error editing champ:", err); 
@@ -330,6 +390,97 @@ function ChampionshipManager() {
   };
   // --- END NEW HANDLERS ---
 
+  // --- Bonus Points Dialog Handlers ---
+  const handleOpenBonusPointsDialog = (attendee) => {
+    const user = userMap.get(attendee.user_id);
+    setAttendeeForBonus({
+      id: attendee.id, // This is championship_attendees.id
+      name: user ? `${user.username} (${user.usertag})` : `User ID ${attendee.user_id}`,
+      currentBonusPoints: attendee.bonus_points || 0
+    });
+    setBonusAmount('');
+    setBonusSource(''); // Reset to default or first option if you prefer
+    setBonusReason('');
+    setOpenBonusPointsDialog(true);
+  };
+
+  const handleCloseBonusPointsDialog = () => {
+    setOpenBonusPointsDialog(false);
+    setAttendeeForBonus(null);
+    setBonusAmount('');
+    setBonusSource('');
+    setBonusReason('');
+    // setError(null); // Optionally clear general errors
+  };
+
+  const handleSubmitBonusPoints = async () => {
+    if (!attendeeForBonus || !bonusAmount || !bonusSource) {
+      setError('bonus-points-missing-fields'); // Create this localization key
+      return;
+    }
+    const pointsNum = parseInt(bonusAmount, 10);
+    if (isNaN(pointsNum)) {
+      setError('bonus-points-invalid-amount'); // Create this localization key
+      return;
+    }
+
+    setIsAddingBonusPoints(true);
+    setError(null);
+    try {
+      const response = await axiosInstance.post(`/api/championship-attendees/${attendeeForBonus.id}/bonus-points`, {
+        points: pointsNum,
+        source: bonusSource,
+        reason: bonusReason,
+      });
+
+      // Optimistically update the attendees state
+      setAttendees(prevAttendees =>
+        prevAttendees.map(att =>
+          att.id === attendeeForBonus.id
+            ? { ...att, bonus_points: response.data.updatedBonusPoints }
+            : att
+        )
+      );
+      handleCloseBonusPointsDialog();
+    } catch (err) {
+      console.error("Error adding bonus points:", err);
+      setError(err.response?.data?.message || 'add-bonus-points-error');
+    } finally {
+      setIsAddingBonusPoints(false);
+    }
+  };
+  // --- End Bonus Points Dialog Handlers ---
+
+  // --- Bonus Points Log Dialog Handlers ---
+  const handleOpenBonusLogDialog = async (attendee) => {
+    const user = userMap.get(attendee.user_id);
+    setAttendeeForLog({
+      id: attendee.id, // championship_attendees.id
+      name: user ? `${user.username} (${user.usertag})` : `User ID ${attendee.user_id}`,
+    });
+    setOpenBonusLogDialog(true);
+    setLoadingBonusLog(true);
+    setError(null); // Clear previous errors specific to this modal
+    setSuccessMessage(null);
+    try {
+      const response = await axiosInstance.get(`/api/championship-attendees/${attendee.id}/bonus-points-log`);
+      setBonusLogEntries(response.data);
+    } catch (err) {
+      console.error("Error fetching bonus points log:", err);
+      setError(err.response?.data?.message || 'fetch-bonus-log-error');
+    } finally {
+      setLoadingBonusLog(false);
+    }
+  };
+
+  const handleCloseBonusLogDialog = () => {
+    setOpenBonusLogDialog(false);
+    setAttendeeForLog(null);
+    setBonusLogEntries([]);
+    // setError(null); // Clear error when closing, or manage it per modal
+  };
+  // --- End Bonus Points Log Dialog Handlers ---
+
   // Memoized map for quick user lookup
   const userMap = useMemo(() => {
     return new Map(users.map(user => [user.id, user]));
@@ -346,6 +497,7 @@ function ChampionshipManager() {
             </Typography>
         </Box>
         {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}><Localized id={error} fallback={<Localized id='generic-error-fallback' />} /></Alert>}
+        {successMessage && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}><Localized id={successMessage} /></Alert>}
 
       <Grid container spacing={4}>
         {/* Championships Column */}
@@ -505,20 +657,43 @@ function ChampionshipManager() {
                           <React.Fragment key={attendee.user_id}>
                             <ListItem 
                               secondaryAction={
-                                <IconButton 
-                                  edge="end" 
-                                  aria-label="remove attendee" 
-                                  onClick={() => handleOpenRemoveAttendee(attendee)}
-                                  size="small"
-                                  color="error"
-                                >
-                                  <PersonRemoveIcon fontSize="inherit"/>
-                                </IconButton>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="add bonus points"
+                                    onClick={() => handleOpenBonusPointsDialog(attendee)}
+                                    size="small"
+                                    color="primary" 
+                                    title="Add Bonus/Penalty Points"
+                                  >
+                                    <StarsIcon fontSize="inherit"/>
+                                  </IconButton>
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="view bonus points log"
+                                    onClick={() => handleOpenBonusLogDialog(attendee)}
+                                    size="small"
+                                    color="default"
+                                    title="View Bonus Points Log"
+                                  >
+                                    <ListAltIcon fontSize="inherit"/>
+                                  </IconButton>
+                                  <IconButton 
+                                    edge="end" 
+                                    aria-label="remove attendee" 
+                                    onClick={() => handleOpenRemoveAttendee(attendee)}
+                                    size="small"
+                                    color="error"
+                                    title="Remove Attendee"
+                                  >
+                                    <PersonRemoveIcon fontSize="inherit"/>
+                                  </IconButton>
+                                </Box>
                               }
                             >
                               <ListItemText 
                                 primary={user ? `${user.username} (${user.usertag})` : `User ID ${attendee.user_id}`}
-                                secondary={`#${user?.driver_number ?? 'N/A'}${isUnassigned ? ' - Unassigned' : ''}`} 
+                                secondary={`#${user?.driver_number ?? 'N/A'} - Bonus: ${attendee.bonus_points || 0}${isUnassigned ? ' - Unassigned' : ''}`} 
                               />
                             </ListItem>
                             {index < attendees.length - 1 && <Divider component="li" />} 
@@ -544,7 +719,33 @@ function ChampionshipManager() {
                     type="text" fullWidth variant="standard"
                     value={editedChampName}
                     onChange={(e) => setEditedChampName(e.target.value)}
+                    required
                 />
+                <FormControl fullWidth margin="normal" disabled={loadingRacesForEditDialog}>
+                  <InputLabel id="lsf-reveal-race-label">
+                    <Localized id="admin-lsf-score-reveal-race-label" />
+                  </InputLabel>
+                  <Select
+                    labelId="lsf-reveal-race-label"
+                    value={editedChampLsfRevealRaceId}
+                    label={<Localized id="admin-lsf-score-reveal-race-label" />}
+                    onChange={(e) => setEditedChampLsfRevealRaceId(e.target.value)}
+                  >
+                    <MenuItem value=""> {/* Represents NULL for live score */}
+                      <Localized id="admin-lsf-score-reveal-race-live-option" />
+                    </MenuItem>
+                    {racesForEditDialog.map((race) => (
+                      <MenuItem key={race.id} value={race.id}>
+                        {race.title} ({race.date ? new Date(race.date).toLocaleDateString() : 'N/A'})
+                      </MenuItem>
+                    ))}
+                    {loadingRacesForEditDialog && 
+                        <MenuItem value={editedChampLsfRevealRaceId} disabled>
+                            <em>Loading races...</em>
+                        </MenuItem>
+                    }
+                  </Select>
+                </FormControl>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2}}> 
                 <Button onClick={handleCloseEditChamp}><Localized id="admin-cancel-button"/></Button>
@@ -626,6 +827,132 @@ function ChampionshipManager() {
                 </Button>
             </DialogActions>
         </Dialog>
+
+      {/* Add Bonus Points Dialog */}
+      {attendeeForBonus && (
+        <Dialog open={openBonusPointsDialog} onClose={handleCloseBonusPointsDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Localized 
+              id="admin-add-bonus-points-title" 
+              vars={{ userName: attendeeForBonus.name }} 
+              fallback={`Add Bonus/Penalty Points for ${attendeeForBonus.name}`}
+            />
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="bonus-amount"
+              label={<Localized id="admin-bonus-points-amount-label" fallback="Points Amount (can be negative)"/>}
+              type="number"
+              fullWidth
+              variant="outlined"
+              value={bonusAmount}
+              onChange={(e) => setBonusAmount(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <FormControl fullWidth margin="dense" variant="outlined" sx={{ mb: 2 }}>
+                <InputLabel id="bonus-source-label-id"><Localized id="admin-bonus-points-source-label" fallback="Source"/></InputLabel>
+                <Select
+                    labelId="bonus-source-label-id"
+                    id="bonus-source"
+                    value={bonusSource}
+                    onChange={(e) => setBonusSource(e.target.value)}
+                    label={<Localized id="admin-bonus-points-source-label" fallback="Source"/>}
+                >
+                    {bonusSourceOptions.map(option => (
+                        <MenuItem key={option.value} value={option.value}>
+                           <Localized id={`bonus-source-${option.value}`} fallback={option.label} />
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            <TextField
+              margin="dense"
+              id="bonus-reason"
+              label={<Localized id="admin-bonus-points-reason-label" fallback="Reason (Optional)"/>}
+              type="text"
+              fullWidth
+              multiline
+              rows={3}
+              variant="outlined"
+              value={bonusReason}
+              onChange={(e) => setBonusReason(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseBonusPointsDialog} disabled={isAddingBonusPoints}>
+              <Localized id="admin-cancel-button"/>
+            </Button>
+            <Button 
+              onClick={handleSubmitBonusPoints} 
+              variant="contained" 
+              color="primary"
+              disabled={isAddingBonusPoints || !bonusAmount || !bonusSource}
+              startIcon={isAddingBonusPoints ? <CircularProgress size={20} color="inherit"/> : null}
+            >
+              <Localized id="admin-submit-bonus-points-button" fallback="Submit Points"/>
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Bonus Points Log Dialog */}
+      {attendeeForLog && (
+        <Dialog open={openBonusLogDialog} onClose={handleCloseBonusLogDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Localized 
+              id="admin-bonus-points-log-title" 
+              vars={{ userName: attendeeForLog.name }} 
+              fallback={`Bonus Points Log for ${attendeeForLog.name}`}
+            />
+          </DialogTitle>
+          <DialogContent>
+            {loadingBonusLog ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
+            ) : error && !loadingBonusLog ? ( // Only show error if not loading and error is present
+              <Alert severity="error" onClose={() => setError(null)}> 
+                <Localized id={error} fallback={<Localized id='generic-error-fallback' />} />
+              </Alert>
+            ) : bonusLogEntries.length === 0 ? (
+              <Typography><Localized id="admin-no-bonus-log-entries" fallback="No bonus point entries found for this attendee."/></Typography>
+            ) : (
+              <TableContainer component={Paper} sx={{ mt: 1 }}>
+                <Table size="small" aria-label="bonus points log table">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell><Localized id="bonus-log-points-header" fallback="Points"/></TableCell>
+                      <TableCell><Localized id="bonus-log-source-header" fallback="Source"/></TableCell>
+                      <TableCell><Localized id="bonus-log-reason-header" fallback="Reason"/></TableCell>
+                      <TableCell><Localized id="bonus-log-awarded-at-header" fallback="Date Awarded"/></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {bonusLogEntries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>{entry.points_awarded}</TableCell>
+                        <TableCell>
+                          <Localized 
+                            id={`bonus-source-${entry.source}`} 
+                            fallback={bonusSourceOptions.find(opt => opt.value === entry.source)?.label || entry.source.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())} 
+                          />
+                        </TableCell>
+                        <TableCell>{entry.reason || '-'}</TableCell>
+                        <TableCell>{new Date(entry.awarded_at).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseBonusLogDialog}>
+              <Localized id="admin-close-button" fallback="Close"/>
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
     </Container>
   );

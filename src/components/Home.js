@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
 import {
-  Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, FormControl, InputLabel, Select, MenuItem
+  Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, FormControl, InputLabel, Select, MenuItem,
+  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -16,6 +17,8 @@ import GroupIcon from '@mui/icons-material/Group';
 import TimerIcon from '@mui/icons-material/Timer';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import EventIcon from '@mui/icons-material/Event';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import StarIcon from '@mui/icons-material/Star';
 import axiosInstance from '../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
 
@@ -32,6 +35,16 @@ const dashboardItems = {
   ]
 };
 
+// Copied from ChampionshipManager.js for displaying log sources
+const bonusSourceOptions = [
+  { value: 'MANUAL_ADJUSTMENT', label: 'Manual Admin Adjustment' },
+  { value: 'CLASH', label: 'Clash' },
+  { value: 'FASTEST_LAP', label: 'Fastest Lap' },
+  { value: 'DRIVER_OF_THE_DAY', label: 'Driver of the Day' },
+  { value: 'RACE_INCIDENT_PENALTY', label: 'Race Incident Penalty' },
+  { value: 'OTHER', label: 'Other (Specify in Reason)' },
+];
+
 function Home({ isLoggedIn, isAdmin }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -40,6 +53,13 @@ function Home({ isLoggedIn, isAdmin }) {
   const [statusError, setStatusError] = useState(null);
   const [championshipsList, setChampionshipsList] = useState([]);
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+
+  // State for User's Bonus Log Modal
+  const [openUserBonusLogDialog, setOpenUserBonusLogDialog] = useState(false);
+  const [userBonusLogEntries, setUserBonusLogEntries] = useState([]);
+  const [loadingUserBonusLog, setLoadingUserBonusLog] = useState(false);
+  const [userBonusLogAttendeeName, setUserBonusLogAttendeeName] = useState(''); // For dialog title
+  const [userBonusLogError, setUserBonusLogError] = useState(null);
 
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('authToken');
@@ -60,19 +80,20 @@ function Home({ isLoggedIn, isAdmin }) {
     if (!isLoggedIn) return;
     const fetchChampionships = async () => {
       try {
-        const response = await axiosInstance.get('/api/championships');
+        const response = await axiosInstance.get('/api/users/me/participated-championships');
         if (response.data && response.data.length > 0) {
-          const sortedChampionships = [...response.data].sort((a, b) => b.id - a.id); // Sort by ID desc for latest first
-          setChampionshipsList(sortedChampionships);
-          setSelectedChampionshipId(sortedChampionships[0].id); // Default to the latest one
+          setChampionshipsList(response.data);
+          setSelectedChampionshipId(response.data[0].id);
         } else {
           setChampionshipsList([]);
-          setUserStatus({ noChampionships: true }); // To display a message
+          setSelectedChampionshipId('');
+          setUserStatus({ noChampionships: true });
         }
       } catch (error) {
-        console.error("Error fetching championships list:", error);
+        console.error("Error fetching participated championships list:", error);
         setStatusError('Failed to load championships list.');
         setChampionshipsList([]);
+        setSelectedChampionshipId('');
       }
     };
     fetchChampionships();
@@ -97,10 +118,11 @@ function Home({ isLoggedIn, isAdmin }) {
   const lastRaceData = useMemo(() => {
     if (!userStatus?.lastRace) return null;
     return {
-      raceName: userStatus.lastRace.title,
-      date: userStatus.lastRace.date,
+      raceName: userStatus.lastRace.race_title,
+      date: userStatus.lastRace.race_date,
       position: userStatus.lastRace.position,
-      fastestLap: userStatus.lastRace.fastest_lap
+      fastestLap: userStatus.lastRace.fastest_lap,
+      isOverallFastestLap: userStatus.lastRace.isOverallFastestLap
     };
   }, [userStatus?.lastRace]);
 
@@ -138,30 +160,37 @@ function Home({ isLoggedIn, isAdmin }) {
       const rankings = rankingsResponse.data;
       const userDriverInfo = rankings.find(d => d.user_id === currentUserId);
       
-      let userRank = null, userPoints = null, teammatePoints = 0, userTeamId = null, userTeamName = null;
+      // Initialize variables to be populated
+      let rank = null, totalPoints = null, bonusPoints = 0, calculatedTeammatePoints = 0, teamId = null, teamName = null, attendeeId = null, userTag = null; // Added userTag
       
       if (userDriverInfo) {
-        userRank = rankings.findIndex(d => d.user_id === currentUserId) + 1;
-        userPoints = userDriverInfo.points;
-        userTeamId = userDriverInfo.team_id;
-        userTeamName = userDriverInfo.team_name;
+        rank = rankings.findIndex(d => d.user_id === currentUserId) + 1;
+        totalPoints = (userDriverInfo.points || 0) + (userDriverInfo.bonus_points || 0);
+        bonusPoints = userDriverInfo.bonus_points || 0;
+        teamId = userDriverInfo.team_id;
+        teamName = userDriverInfo.team_name;
+        attendeeId = userDriverInfo.id; 
+        userTag = userDriverInfo.name; // Store the user's tag (u.usertag AS name from API)
 
-        if (userTeamId) {
-          teammatePoints = rankings
-            .filter(d => d.team_id === userTeamId && d.user_id !== currentUserId)
-            .reduce((sum, d) => sum + d.points, 0);
+        if (teamId) {
+          calculatedTeammatePoints = rankings
+            .filter(d => d.team_id === teamId && d.user_id !== currentUserId)
+            .reduce((sum, d) => sum + ((d.points || 0) + (d.bonus_points || 0)), 0);
         }
       }
 
       const lastRace = lastRaceResponse.data.success ? lastRaceResponse.data.lastRace : null;
 
       setUserStatus({
-        rank: userRank,
-        points: userPoints,
-        teammatePoints,
+        rank: rank,
+        points: totalPoints,
+        bonusPoints: bonusPoints,
+        attendeeId: attendeeId,
+        userTag: userTag, // Added userTag to userStatus
+        teammatePoints: calculatedTeammatePoints,
         lastRace,
         championshipName: currentChampionship?.name,
-        teamName: userTeamName
+        teamName: teamName
       });
     } catch (err) {
       console.error("Error fetching user status:", err);
@@ -202,6 +231,35 @@ function Home({ isLoggedIn, isAdmin }) {
 
   const handleChampionshipChange = (event) => {
     setSelectedChampionshipId(event.target.value);
+  };
+
+  const handleOpenUserBonusLogDialog = async () => {
+    if (!userStatus?.attendeeId) {
+      setUserBonusLogError('Cannot load log: Attendee ID not found.');
+      return;
+    }
+    
+    const nameForLog = userStatus?.userTag || 'Your'; // Use stored userTag, fallback to 'Your'
+    setUserBonusLogAttendeeName(nameForLog); 
+
+    setOpenUserBonusLogDialog(true);
+    setLoadingUserBonusLog(true);
+    setUserBonusLogError(null);
+    try {
+      const response = await axiosInstance.get(`/api/championship-attendees/${userStatus.attendeeId}/bonus-points-log`);
+      setUserBonusLogEntries(response.data);
+    } catch (err) {
+      console.error("Error fetching user bonus points log:", err);
+      setUserBonusLogError(err.response?.data?.message || 'fetch-bonus-log-error');
+    } finally {
+      setLoadingUserBonusLog(false);
+    }
+  };
+
+  const handleCloseUserBonusLogDialog = () => {
+    setOpenUserBonusLogDialog(false);
+    setUserBonusLogEntries([]);
+    // setUserBonusLogError(null); // Optional: clear error on close
   };
 
   const renderDashboardCard = (item) => (
@@ -265,6 +323,18 @@ function Home({ isLoggedIn, isAdmin }) {
                       <ListItem>
                         <ListItemIcon><SportsScoreIcon color="primary" /></ListItemIcon>
                         <ListItemText primary={<Localized id="points-label" />} secondary={userStatus.points !== null ? userStatus.points : '0'} />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><StarIcon color="primary" /></ListItemIcon>
+                        <ListItemText 
+                          primary={<Localized id="bonus-points-label" fallback="Bonus Points"/>}
+                          secondary={userStatus.bonusPoints !== null ? userStatus.bonusPoints : '0'} 
+                        />
+                        {userStatus.attendeeId && (
+                           <IconButton onClick={handleOpenUserBonusLogDialog} size="small" edge="end" aria-label="view bonus log">
+                               <ListAltIcon />
+                           </IconButton>
+                        )}
                       </ListItem>
                       <ListItem>
                         <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
@@ -412,6 +482,66 @@ function Home({ isLoggedIn, isAdmin }) {
           </Grid>
         </Box>
       )}
+
+      {/* User's Bonus Points Log Dialog */}
+      {openUserBonusLogDialog && userStatus?.attendeeId && (
+        <Dialog open={openUserBonusLogDialog} onClose={handleCloseUserBonusLogDialog} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Localized 
+              id="admin-bonus-points-log-title" // Reusing existing key
+              vars={{ userName: userBonusLogAttendeeName }} 
+              fallback={`Bonus Points Log for ${userBonusLogAttendeeName}`}
+            />
+          </DialogTitle>
+          <DialogContent>
+            {loadingUserBonusLog ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
+            ) : userBonusLogError ? (
+              <Alert severity="error" onClose={() => setUserBonusLogError(null)}> 
+                <Localized id={userBonusLogError} fallback={<Localized id='generic-error-fallback' />} />
+              </Alert>
+            ) : userBonusLogEntries.length === 0 ? (
+              <Typography><Localized id="admin-no-bonus-log-entries" fallback="No bonus point entries found."/></Typography>
+            ) : (
+              <Paper sx={{ mt: 1, maxHeight: '400px', overflow: 'auto' }}>
+                <TableContainer component={Paper} sx={{ mt: 1}}>
+                  <Table stickyHeader size="small" aria-label="user bonus points log table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell><Localized id="bonus-log-points-header" /></TableCell>
+                        <TableCell><Localized id="bonus-log-source-header" /></TableCell>
+                        <TableCell><Localized id="bonus-log-reason-header" /></TableCell>
+                        <TableCell><Localized id="bonus-log-awarded-at-header" /></TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {userBonusLogEntries.map((entry) => (
+                        <TableRow hover key={entry.id}>
+                          <TableCell>{entry.points_awarded}</TableCell>
+                          <TableCell>
+                            <Localized 
+                              id={`bonus-source-${entry.source}`} 
+                              fallback={bonusSourceOptions.find(opt => opt.value === entry.source)?.label || entry.source.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())} 
+                            />
+                          </TableCell>
+                          <TableCell>{entry.reason || '-'}</TableCell>
+                          <TableCell>{new Date(entry.awarded_at).toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleCloseUserBonusLogDialog}>
+              <Localized id="admin-close-button" fallback="Close"/>
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
     </Container>
   );
 }

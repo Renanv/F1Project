@@ -9,7 +9,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
 import Config from './components/Config';
-import DriverRankings from './components/DriverRankings';
+import DriverRankings from './components/RankingsPage';
 import AccountPage from './components/AccountPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import NavigationBar from './components/NavigationBar';
