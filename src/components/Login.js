@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { Container, Typography, Box, TextField, Button, Alert, CircularProgress, Paper } from '@mui/material';
 import { Localized } from '@fluent/react';
-import { Container, Typography, TextField, Button, Box, Alert, CircularProgress, Paper, Avatar } from '@mui/material';
+import { Avatar } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -10,7 +10,6 @@ function Login({ onLoginSuccess }) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,7 +20,6 @@ function Login({ onLoginSuccess }) {
       localStorage.setItem('authToken', response.data.token);
       console.log('Token stored, calling onLoginSuccess');
       onLoginSuccess(); // Call the callback passed from App
-      navigate('/'); // Redirect to home
     } catch (err) {
       console.error('Login error:', err);
       // Use error message from response or a generic one

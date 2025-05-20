@@ -15,21 +15,6 @@ const theme = createTheme({
   },
 });
 
-// Function to register the service worker
-function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js') // Path in public folder
-        .then(registration => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        })
-        .catch(err => {
-          console.error('ServiceWorker registration failed: ', err);
-        });
-    });
-  }
-}
-
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -38,9 +23,6 @@ root.render(
     </ThemeProvider>
   </React.StrictMode>
 );
-
-// Call the function to register the service worker
-registerServiceWorker();
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

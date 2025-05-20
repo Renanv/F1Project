@@ -82,36 +82,39 @@ function AccountPage() {
   }, []);
 
   // Debounced Driver number validation
-  const checkDriverNumberUniqueness = useCallback(debounce(async (number) => {
-    // Clear previous states before checking
-    setDriverNumberError('');
-    setDriverNumberAvailable(false); // Reset availability on new check
+  const checkDriverNumberUniqueness = useCallback((number) => {
+    const validateNumber = async () => {
+      // Clear previous states before checking
+      setDriverNumberError('');
+      setDriverNumberAvailable(false); // Reset availability on new check
 
-    // Don't check if empty or if it's the user's current number
-    if (!number || number === String(userData.driver_number)) {
-        setIsCheckingDriverNumber(false);
-        return;
-    }
-
-    setIsCheckingDriverNumber(true);
-    try {
-      const response = await axiosInstance.get(`/api/validate/driver-number/${number}`);
-      if (!response.data.isAvailable) {
-        setDriverNumberError('driver-number-invalid-or-taken');
-        setDriverNumberAvailable(false);
-      } else {
-        // Number is available and different from the original
-        setDriverNumberAvailable(true);
-        setDriverNumberError(''); // Clear any previous error
+      // Don't check if empty or if it's the user's current number
+      if (!number || number === String(userData.driver_number)) {
+          setIsCheckingDriverNumber(false);
+          return;
       }
-    } catch (error) {
-      console.error("Validation check failed:", error);
-      setDriverNumberError('validation-check-failed');
-      setDriverNumberAvailable(false);
-    } finally {
-      setIsCheckingDriverNumber(false);
-    }
-  }, 500), [userData.driver_number]); // Dependency: original driver number
+
+      setIsCheckingDriverNumber(true);
+      try {
+        const response = await axiosInstance.get(`/api/validate/driver-number/${number}`);
+        if (!response.data.isAvailable) {
+          setDriverNumberError('driver-number-invalid-or-taken');
+          setDriverNumberAvailable(false);
+        } else {
+          // Number is available and different from the original
+          setDriverNumberAvailable(true);
+          setDriverNumberError(''); // Clear any previous error
+        }
+      } catch (error) {
+        console.error("Validation check failed:", error);
+        setDriverNumberError('validation-check-failed');
+        setDriverNumberAvailable(false);
+      } finally {
+        setIsCheckingDriverNumber(false);
+      }
+    };
+    return debounce(validateNumber, 500)();
+  }, [userData.driver_number]); // Dependency: original driver number
 
   // Handle input change for driver number
   const handleDriverNumberChange = (event) => {

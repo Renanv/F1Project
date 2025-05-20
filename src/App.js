@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { LocalizationProvider, ReactLocalization, Localized } from '@fluent/react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { LocalizationProvider, ReactLocalization } from '@fluent/react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { jwtDecode } from 'jwt-decode';

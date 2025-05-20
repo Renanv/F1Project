@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Container, Typography, Button, Box, Alert, CircularProgress, Grid, Paper,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, List, ListItem, ListItemText, Avatar,
-    Slider
-} from '@mui/material';
+import { Container, Typography, Button, Box, Alert, CircularProgress, Grid, Paper, TextField, Avatar, Slider, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import { Localized } from '@fluent/react';
 import axiosInstance from '../utils/axiosInstance';
 import SettingsIcon from '@mui/icons-material/Settings';

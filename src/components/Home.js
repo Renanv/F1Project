@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
 import {
-  Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, Divider, FormControl, InputLabel, Select, MenuItem
+  Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -78,16 +78,41 @@ function Home({ isLoggedIn, isAdmin }) {
     fetchChampionships();
   }, [isLoggedIn]);
 
+  // Memoize the current championship data
+  const currentChampionship = useMemo(() => 
+    championshipsList.find(c => c.id === selectedChampionshipId),
+    [championshipsList, selectedChampionshipId]
+  );
+
+  // Memoize the user's team data
+  const userTeamData = useMemo(() => {
+    if (!userStatus) return null;
+    return {
+      teamName: userStatus.teamName,
+      teammatePoints: userStatus.teammatePoints
+    };
+  }, [userStatus]);
+
+  // Memoize the last race data
+  const lastRaceData = useMemo(() => {
+    if (!userStatus?.lastRace) return null;
+    return {
+      raceName: userStatus.lastRace.title,
+      date: userStatus.lastRace.date,
+      position: userStatus.lastRace.position,
+      fastestLap: userStatus.lastRace.fastest_lap
+    };
+  }, [userStatus?.lastRace]);
+
   // Fetch user status based on selected championship
   const fetchUserStatus = useCallback(async () => {
-    const currentSelectedChampionshipId = selectedChampionshipId; // Capture current value
+    const currentSelectedChampionshipId = selectedChampionshipId;
     console.log(`[fetchUserStatus] START - Championship ID: ${currentSelectedChampionshipId}, Logged In: ${isLoggedIn}`);
 
     if (!isLoggedIn || !currentSelectedChampionshipId) {
       console.log(`[fetchUserStatus] Skipping fetch - Logged In: ${isLoggedIn}, Championship ID: ${currentSelectedChampionshipId}`);
       if (!currentSelectedChampionshipId && championshipsList.length > 0) {
-         setUserStatus(null); 
-      } else if (championshipsList.length === 0 && isLoggedIn) {
+        setUserStatus(null); 
       }
       return;
     }
@@ -102,64 +127,49 @@ function Home({ isLoggedIn, isAdmin }) {
     setIsLoadingStatus(true);
     setStatusError(null);
     setUserStatus(null); 
-    console.log(`[fetchUserStatus] Set loading TRUE, cleared status for Championship ID: ${currentSelectedChampionshipId}`);
 
     try {
-      console.log(`[fetchUserStatus] Fetching rankings for Championship ID: ${currentSelectedChampionshipId}`);
-      let userRank = null, userPoints = null, teammatePoints = 0, userTeamId = null, userTeamName = null; 
-      const rankingsResponse = await axiosInstance.get(`/api/drivers?championshipId=${currentSelectedChampionshipId}`);
-      console.log(`[fetchUserStatus] Rankings response received for Championship ID: ${currentSelectedChampionshipId}`);
+      // Fetch rankings and last race result in parallel
+      const [rankingsResponse, lastRaceResponse] = await Promise.all([
+        axiosInstance.get(`/api/drivers?championshipId=${currentSelectedChampionshipId}`),
+        axiosInstance.get(`/api/users/me/last-race-result?championshipId=${currentSelectedChampionshipId}`)
+      ]);
+
       const rankings = rankingsResponse.data;
-      
       const userDriverInfo = rankings.find(d => d.user_id === currentUserId);
+      
+      let userRank = null, userPoints = null, teammatePoints = 0, userTeamId = null, userTeamName = null;
+      
       if (userDriverInfo) {
         userRank = rankings.findIndex(d => d.user_id === currentUserId) + 1;
         userPoints = userDriverInfo.points;
         userTeamId = userDriverInfo.team_id;
-        userTeamName = userDriverInfo.team_name; 
+        userTeamName = userDriverInfo.team_name;
 
         if (userTeamId) {
-          rankings.forEach(d => {
-            if (d.team_id === userTeamId && d.user_id !== currentUserId) {
-              teammatePoints += d.points;
-            }
-          });
+          teammatePoints = rankings
+            .filter(d => d.team_id === userTeamId && d.user_id !== currentUserId)
+            .reduce((sum, d) => sum + d.points, 0);
         }
       }
 
-      console.log(`[fetchUserStatus] Fetching last race result for Championship ID: ${currentSelectedChampionshipId}`);
-      let lastRace = null;
-      const lastRaceResponse = await axiosInstance.get(`/api/users/me/last-race-result?championshipId=${currentSelectedChampionshipId}`);
-      console.log(`[fetchUserStatus] Last race response received for Championship ID: ${currentSelectedChampionshipId}`);
-      if (lastRaceResponse.data.success) {
-        lastRace = lastRaceResponse.data.lastRace;
-      }
+      const lastRace = lastRaceResponse.data.success ? lastRaceResponse.data.lastRace : null;
 
-      const currentChampionship = championshipsList.find(c => c.id === currentSelectedChampionshipId);
-
-      const newStatus = {
+      setUserStatus({
         rank: userRank,
         points: userPoints,
         teammatePoints,
         lastRace,
-        championshipName: currentChampionship ? currentChampionship.name : null,
-        teamName: userTeamName 
-      };
-      console.log(`[fetchUserStatus] Setting user status for Championship ID: ${currentSelectedChampionshipId}`, newStatus);
-      setUserStatus(newStatus);
-
-    } catch (error) {
-      console.error(`[fetchUserStatus] ERROR for Championship ID: ${currentSelectedChampionshipId}`, error);
-      let errorMessage = 'Error fetching status for the selected championship.';
-      if (error.response && error.response.data && error.response.data.message) {
-        errorMessage = error.response.data.message;
-      }
-      setStatusError(errorMessage);
+        championshipName: currentChampionship?.name,
+        teamName: userTeamName
+      });
+    } catch (err) {
+      console.error("Error fetching user status:", err);
+      setStatusError('Error fetching user status');
+    } finally {
+      setIsLoadingStatus(false);
     }
-    setIsLoadingStatus(false);
-    console.log(`[fetchUserStatus] END - Set loading FALSE for Championship ID: ${currentSelectedChampionshipId}`);
-
-  }, [isLoggedIn, selectedChampionshipId, championshipsList]);
+  }, [selectedChampionshipId, isLoggedIn, championshipsList, currentChampionship]);
 
   useEffect(() => {
     fetchUserStatus();
@@ -249,7 +259,7 @@ function Home({ isLoggedIn, isAdmin }) {
                         <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
                         <ListItemText 
                           primary={<Localized id="team-label" />} 
-                          secondary={userStatus.teamName ? userStatus.teamName : <Localized id="team-name-not-available" />}
+                          secondary={userTeamData?.teamName ? userTeamData.teamName : <Localized id="team-name-not-available" />}
                         />
                       </ListItem>
                       <ListItem>
@@ -258,7 +268,7 @@ function Home({ isLoggedIn, isAdmin }) {
                       </ListItem>
                       <ListItem>
                         <ListItemIcon><GroupIcon color="primary" /></ListItemIcon>
-                        <ListItemText primary={<Localized id="teammate-points-label" />} secondary={userStatus.teammatePoints !== null ? userStatus.teammatePoints : '0'} />
+                        <ListItemText primary={<Localized id="teammate-points-label" />} secondary={userTeamData?.teammatePoints !== null ? userTeamData.teammatePoints : '0'} />
                       </ListItem>
                     </List>
                   </Grid>
@@ -269,7 +279,7 @@ function Home({ isLoggedIn, isAdmin }) {
                       <Typography variant="h6" gutterBottom>
                         <Localized 
                           id="last-race-result-title" 
-                          vars={{ raceName: String(userStatus.lastRace.race_title || '') }}
+                          vars={{ raceName: lastRaceData?.raceName || '' }}
                         />
                       </Typography>
                       <List dense>
@@ -278,21 +288,21 @@ function Home({ isLoggedIn, isAdmin }) {
                           <ListItemText 
                             primary={<Localized id="race-date-label" />} 
                             secondary={
-                              userStatus.lastRace.race_date 
-                              ? new Date(userStatus.lastRace.race_date).toLocaleDateString('en-GB') 
+                              lastRaceData?.date 
+                              ? new Date(lastRaceData.date).toLocaleDateString('en-GB') 
                               : 'N/A'
                             }
                           />
                         </ListItem>
                         <ListItem>
                           <ListItemIcon><FormatListNumberedIcon color="secondary" /></ListItemIcon>
-                          <ListItemText primary={<Localized id="position-label" />} secondary={userStatus.lastRace.position} />
+                          <ListItemText primary={<Localized id="position-label" />} secondary={lastRaceData?.position} />
                           {/* Conditionally add medal icon */} 
-                          {userStatus.lastRace && [1, 2, 3].includes(userStatus.lastRace.position) && (
+                          {lastRaceData && [1, 2, 3].includes(lastRaceData.position) && (
                             <EmojiEventsIcon sx={{
                               marginLeft: 'auto', // Push to the right
-                              color: userStatus.lastRace.position === 1 ? '#FFD700' // Gold
-                                     : userStatus.lastRace.position === 2 ? '#C0C0C0' // Silver
+                              color: lastRaceData.position === 1 ? '#FFD700' // Gold
+                                     : lastRaceData.position === 2 ? '#C0C0C0' // Silver
                                      : '#CD7F32' // Bronze
                             }} />
                           )}
@@ -301,11 +311,11 @@ function Home({ isLoggedIn, isAdmin }) {
                           <ListItemIcon><TimerIcon color="secondary" /></ListItemIcon>
                           <ListItemText 
                             primary={<Localized id="fastest-lap-label" />} 
-                            secondary={userStatus.lastRace.fastest_lap || 'N/A'} 
+                            secondary={lastRaceData?.fastestLap || 'N/A'} 
                             secondaryTypographyProps={{
                               sx: {
-                                color: userStatus.lastRace.isOverallFastestLap ? 'secondary.main' : 'inherit',
-                                fontWeight: userStatus.lastRace.isOverallFastestLap ? 'bold' : 'normal' 
+                                color: lastRaceData.isOverallFastestLap ? 'secondary.main' : 'inherit',
+                                fontWeight: lastRaceData.isOverallFastestLap ? 'bold' : 'normal' 
                               }
                             }}
                           />

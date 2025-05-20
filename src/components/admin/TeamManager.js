@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 // Use axiosInstance
 import axiosInstance from '../../utils/axiosInstance';
 // import axios from 'axios';
-import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Avatar, ListItemSecondaryAction, ListItemIcon } from '@mui/material';
+import { Container, Typography, Box, List, ListItem, ListItemText, Button, TextField, Grid, Paper, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Avatar, ListItemSecondaryAction } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -103,9 +103,10 @@ function TeamManager() {
     if (!newTeamName) return;
     setIsCreatingTeam(true);
     try {
-      await axiosInstance.post('/api/teams', { name: newTeamName });
+      const response = await axiosInstance.post('/api/teams', { name: newTeamName });
+      // Optimistically update the teams state
+      setTeams(prevTeams => [...prevTeams, response.data]);
       setNewTeamName('');
-      fetchTeams(); 
     } catch (err) { 
       console.error("Error creating team:", err); 
       setError(err.response?.data?.message || 'create-team-error');
@@ -119,9 +120,22 @@ function TeamManager() {
       setAssigningUserId(userId); setError(null);
       try {
           await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: selectedTeamId });
+          // Optimistically update attendees state
+          setAttendees(prevAttendees => 
+              prevAttendees.map(att => 
+                  att.user_id === userId 
+                      ? { ...att, team_id: selectedTeamId }
+                      : att
+              )
+          );
+      } catch (err) { 
+          console.error("Assign error:", err); 
+          setError(err.response?.data?.message || 'error-assigning-user');
+          // Revert optimistic update on error
           fetchAttendees(selectedChampionshipId);
-      } catch (err) { console.error("Assign error:", err); setError(err.response?.data?.message || 'error-assigning-user'); }
-      finally { setAssigningUserId(null); }
+      } finally { 
+          setAssigningUserId(null); 
+      }
   };
 
   const handleUnassignUser = async (userId) => {
@@ -129,9 +143,22 @@ function TeamManager() {
        setAssigningUserId(userId); setError(null);
        try {
            await axiosInstance.put(`/api/championships/${selectedChampionshipId}/attendees/${userId}/team`, { teamId: null });
+           // Optimistically update attendees state
+           setAttendees(prevAttendees => 
+               prevAttendees.map(att => 
+                   att.user_id === userId 
+                       ? { ...att, team_id: null }
+                       : att
+               )
+           );
+       } catch (err) { 
+           console.error("Unassign error:", err); 
+           setError(err.response?.data?.message || 'error-unassigning-user');
+           // Revert optimistic update on error
            fetchAttendees(selectedChampionshipId);
-       } catch (err) { console.error("Unassign error:", err); setError(err.response?.data?.message || 'error-unassigning-user'); }
-       finally { setAssigningUserId(null); }
+       } finally { 
+           setAssigningUserId(null); 
+       }
   };
 
   const handleOpenEditTeam = (team) => {
@@ -148,9 +175,22 @@ function TeamManager() {
       setError(null); setIsEditingTeam(true);
       try {
           await axiosInstance.put(`/api/teams/${teamToEdit.id}`, { name: editedTeamName });
-          handleCloseEditTeam(); fetchTeams();
-      } catch (err) { console.error("Edit team error:", err); setError(err.response?.data?.message || 'edit-team-error'); }
-      finally { setIsEditingTeam(false); }
+          // Update the teams state locally with the new name
+          setTeams(prevTeams => 
+              prevTeams.map(team => 
+                  team.id === teamToEdit.id 
+                      ? { ...team, name: editedTeamName }
+                      : team
+              )
+          );
+          handleCloseEditTeam();
+      } catch (err) { 
+          console.error("Edit team error:", err); 
+          setError(err.response?.data?.message || 'edit-team-error');
+          fetchTeams();
+      } finally { 
+          setIsEditingTeam(false); 
+      }
   };
 
   const handleConfirmDeleteTeam = async () => {
@@ -158,10 +198,18 @@ function TeamManager() {
       setError(null); setIsDeletingTeam(true);
       try {
           await axiosInstance.delete(`/api/teams/${teamToDelete.id}`);
-          handleCloseDeleteTeam(); fetchTeams();
+          // Optimistically update teams state
+          setTeams(prevTeams => prevTeams.filter(team => team.id !== teamToDelete.id));
+          handleCloseDeleteTeam();
           if (selectedTeamId === teamToDelete.id) setSelectedTeamId('');
-      } catch (err) { console.error("Delete team error:", err); setError(err.response?.data?.message || 'delete-team-error'); }
-      finally { setIsDeletingTeam(false); }
+      } catch (err) { 
+          console.error("Delete team error:", err); 
+          setError(err.response?.data?.message || 'delete-team-error');
+          // Revert optimistic update on error
+          fetchTeams();
+      } finally { 
+          setIsDeletingTeam(false); 
+      }
   };
 
   // --- Memoized calculations for user lists ---

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { Localized } from '@fluent/react';
 import { Container, Typography, TextField, Button, Box, Alert, CircularProgress, Paper, Avatar, Grid, Link } from '@mui/material';
@@ -23,7 +23,7 @@ function Register() {
   const [usertag, setUsertag] = useState('');
   const [driverNumberInput, setDriverNumberInput] = useState('');
   const [isCheckingDriverNumber, setIsCheckingDriverNumber] = useState(false);
-  const [isDriverNumberAvailable, setIsDriverNumberAvailable] = useState(null); // null, true, or false
+  const [driverNumberAvailable, setDriverNumberAvailable] = useState(null); // null, true, or false
   const [driverNumberError, setDriverNumberError] = useState(''); // Specific error for driver number field
   const [isLoading, setIsLoading] = useState(false); // General loading state for submission
   const [message, setMessage] = useState(''); // For general success/error messages
@@ -31,41 +31,46 @@ function Register() {
   const navigate = useNavigate();
 
   // --- Driver Number Validation --- 
-  const validateDriverNumber = useCallback(async (number) => {
-    if (!number || !/^\d+$/.test(number)) {
-      setIsDriverNumberAvailable(null);
-      setDriverNumberError('invalid-driver-number-format');
-      return;
-    }
-    setIsCheckingDriverNumber(true);
-    setIsDriverNumberAvailable(null);
-    setDriverNumberError('');
-    try {
-      // Use axiosInstance for consistency
-      const response = await axiosInstance.get(`/api/validate/driver-number/${number}`);
-      setIsDriverNumberAvailable(response.data.isAvailable);
-      if (!response.data.isAvailable) {
-        setDriverNumberError('driver-number-taken-error'); 
-      }
-    } catch (error) {
-      console.error("Driver number validation error:", error);
-      setIsDriverNumberAvailable(null); // Error state
-      setDriverNumberError('validation-check-failed');
-    } finally {
-      setIsCheckingDriverNumber(false);
-    }
-  }, []);
+  const checkDriverNumberUniqueness = useCallback((number) => {
+    const validateNumber = async () => {
+      // Clear previous states before checking
+      setDriverNumberError('');
+      setDriverNumberAvailable(false);
 
-  const debouncedValidateDriverNumber = useCallback(debounce(validateDriverNumber, 500), [validateDriverNumber]);
+      if (!number) {
+        setIsCheckingDriverNumber(false);
+        return;
+      }
+
+      setIsCheckingDriverNumber(true);
+      try {
+        const response = await axiosInstance.get(`/api/validate/driver-number/${number}`);
+        if (!response.data.isAvailable) {
+          setDriverNumberError('driver-number-invalid-or-taken');
+          setDriverNumberAvailable(false);
+        } else {
+          setDriverNumberAvailable(true);
+          setDriverNumberError('');
+        }
+      } catch (error) {
+        console.error("Validation check failed:", error);
+        setDriverNumberError('validation-check-failed');
+        setDriverNumberAvailable(false);
+      } finally {
+        setIsCheckingDriverNumber(false);
+      }
+    };
+    return debounce(validateNumber, 500)();
+  }, []);
 
   const handleDriverNumberChange = (event) => {
     const value = event.target.value;
     setDriverNumberInput(value);
     if (value) {
-      debouncedValidateDriverNumber(value);
+      checkDriverNumberUniqueness(value);
     } else {
       // Clear status if input is empty
-      setIsDriverNumberAvailable(null);
+      setDriverNumberAvailable(null);
       setDriverNumberError('');
       setIsCheckingDriverNumber(false);
     }
@@ -74,13 +79,13 @@ function Register() {
   const getDriverNumberHelperText = () => {
     if (isCheckingDriverNumber) return <Localized id="driver-number-checking" />;
     if (driverNumberError) return <Localized id={driverNumberError} />; 
-    if (isDriverNumberAvailable === true) return <Localized id="driver-number-available" />;
+    if (driverNumberAvailable === true) return <Localized id="driver-number-available" />;
     return ""; // Default no text
   };
 
   const getDriverNumberColor = () => {
      if (driverNumberError) return "error";
-     if (isDriverNumberAvailable === true) return "success";
+     if (driverNumberAvailable === true) return "success";
      return "primary"; // Default or while checking
   };
 
@@ -99,7 +104,7 @@ function Register() {
         setMessage('fill-all-fields'); // Add this key
         return;
     }
-    if (isCheckingDriverNumber || isDriverNumberAvailable === null || !isDriverNumberAvailable) {
+    if (isCheckingDriverNumber || driverNumberAvailable === null || !driverNumberAvailable) {
       setMessage('wait-driver-number-validation');
       return;
     }
@@ -227,7 +232,7 @@ function Register() {
                     fullWidth
                     variant="contained"
                     sx={{ mt: 3, mb: 2 }}
-                    disabled={isLoading || isCheckingDriverNumber || isDriverNumberAvailable !== true} // Disable if loading, checking, or number not available
+                    disabled={isLoading || isCheckingDriverNumber || driverNumberAvailable !== true} // Disable if loading, checking, or number not available
                 >
                     {isLoading ? <CircularProgress size={24} /> : <Localized id="register-button" />}
                 </Button>

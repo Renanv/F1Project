@@ -6,7 +6,7 @@ import {
     Container, Typography, Box, List, ListItem, ListItemText, Button, TextField,
     Grid, Paper, CircularProgress, Alert, IconButton, Dialog, DialogActions,
     DialogContent, DialogContentText, DialogTitle, Divider, Avatar,
-    ListItemSecondaryAction
+    ListItemIcon
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -135,15 +135,16 @@ function ChampionshipManager() {
   const handleCreateChampionship = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!newChampionshipName) return; // Prevent empty submission
+    if (!newChampionshipName) return;
     setIsCreatingChamp(true);
     try {
-      await axiosInstance.post('/api/championships', { name: newChampionshipName });
+      const response = await axiosInstance.post('/api/championships', { name: newChampionshipName });
+      // Optimistically update championships state
+      setChampionships(prevChamps => [...prevChamps, response.data]);
       setNewChampionshipName('');
-      fetchChampionships();
     } catch (err) {
       console.error("Error creating championship:", err);
-      setError(err.response?.data?.message || 'create-championship-error'); // Use localized key
+      setError(err.response?.data?.message || 'create-championship-error');
     } finally {
       setIsCreatingChamp(false);
     }
@@ -151,22 +152,23 @@ function ChampionshipManager() {
 
   const handleCreateRace = async (e) => {
     e.preventDefault();
-    if (!selectedChampionship || !newRaceTitle || !newRaceDate) return;
     setError(null);
+    if (!selectedChampionship || !newRaceTitle || !newRaceDate) return;
     setIsCreatingRace(true);
     try {
-      await axiosInstance.post(`/api/championships/${selectedChampionship.id}/races`, { 
-          title: newRaceTitle, 
-          date: newRaceDate
+      const response = await axiosInstance.post(`/api/championships/${selectedChampionship.id}/races`, {
+        title: newRaceTitle,
+        date: newRaceDate
       });
+      // Optimistically update races state
+      setRaces(prevRaces => [...prevRaces, response.data]);
       setNewRaceTitle('');
       setNewRaceDate('');
-      fetchRaces(selectedChampionship.id);
     } catch (err) {
       console.error("Error creating race:", err);
-      setError(err.response?.data?.message || 'create-race-error'); // Use localized key
+      setError(err.response?.data?.message || 'create-race-error');
     } finally {
-        setIsCreatingRace(false);
+      setIsCreatingRace(false);
     }
   };
 
@@ -204,8 +206,15 @@ function ChampionshipManager() {
       setIsEditingChamp(true);
       try {
           await axiosInstance.put(`/api/championships/${champToEdit.id}`, { name: editedChampName });
+          // Optimistically update championships state
+          setChampionships(prevChamps => 
+            prevChamps.map(champ => 
+              champ.id === champToEdit.id 
+                ? { ...champ, name: editedChampName }
+                : champ
+            )
+          );
           handleCloseEditChamp();
-          fetchChampionships();
           if (selectedChampionship?.id === champToEdit.id) {
               setSelectedChampionship(prev => ({ ...prev, name: editedChampName }));
           }
@@ -223,14 +232,17 @@ function ChampionshipManager() {
       setIsDeletingChamp(true);
       try {
           await axiosInstance.delete(`/api/championships/${champToDelete.id}`);
+          // Optimistically update championships state
+          setChampionships(prevChamps => prevChamps.filter(champ => champ.id !== champToDelete.id));
           handleCloseDeleteChamp();
-          fetchChampionships();
           if (selectedChampionship?.id === champToDelete.id) {
               setSelectedChampionship(null);
           }
       } catch (err) { 
           console.error("Error deleting champ:", err); 
           setError(err.response?.data?.message || 'delete-championship-error'); // Localized ID
+          // Revert optimistic update on error
+          fetchChampionships();
       } finally {
           setIsDeletingChamp(false);
       }
@@ -241,9 +253,19 @@ function ChampionshipManager() {
       setError(null);
       setIsEditingRace(true);
       try {
-          await axiosInstance.put(`/api/races/${raceToEdit.id}`, { title: editedRaceTitle, date: editedRaceDate });
+          await axiosInstance.put(`/api/races/${raceToEdit.id}`, { 
+            title: editedRaceTitle, 
+            date: editedRaceDate 
+          });
+          // Optimistically update races state
+          setRaces(prevRaces => 
+            prevRaces.map(race => 
+              race.id === raceToEdit.id 
+                ? { ...race, title: editedRaceTitle, date: editedRaceDate }
+                : race
+            )
+          );
           handleCloseEditRace();
-          fetchRaces(selectedChampionship.id);
       } catch (err) { 
           console.error("Error editing race:", err); 
           setError(err.response?.data?.message || 'edit-race-error'); // Localized ID
@@ -258,11 +280,14 @@ function ChampionshipManager() {
       setIsDeletingRace(true);
       try {
           await axiosInstance.delete(`/api/races/${raceToDelete.id}`);
+          // Optimistically update races state
+          setRaces(prevRaces => prevRaces.filter(race => race.id !== raceToDelete.id));
           handleCloseDeleteRace();
-          fetchRaces(selectedChampionship.id);
       } catch (err) { 
           console.error("Error deleting race:", err); 
           setError(err.response?.data?.message || 'delete-race-error'); // Localized ID
+          // Revert optimistic update on error
+          fetchRaces(selectedChampionship.id);
       } finally {
           setIsDeletingRace(false);
       }
@@ -289,11 +314,16 @@ function ChampionshipManager() {
     setIsRemovingAttendee(true);
     try {
       await axiosInstance.delete(`/api/championships/${selectedChampionship.id}/attendees/${attendeeToRemove.userId}`);
+      // Optimistically update attendees state
+      setAttendees(prevAttendees => 
+        prevAttendees.filter(att => att.user_id !== attendeeToRemove.userId)
+      );
       handleCloseRemoveAttendee();
-      fetchAttendees(selectedChampionship.id); // Re-fetch attendees
     } catch (err) {
       console.error("Error removing attendee:", err);
-      setError(err.response?.data?.message || 'remove-attendee-error'); // Add new loc key
+      setError(err.response?.data?.message || 'remove-attendee-error');
+      // Revert optimistic update on error
+      fetchAttendees(selectedChampionship.id);
     } finally {
       setIsRemovingAttendee(false);
     }
