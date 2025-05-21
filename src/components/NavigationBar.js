@@ -15,6 +15,15 @@ import MenuItem from '@mui/material/MenuItem';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import GavelIcon from '@mui/icons-material/Gavel';
 
+// Import additional icons for mobile menu
+import HomeIcon from '@mui/icons-material/Home';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LoginIcon from '@mui/icons-material/Login';
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
+import LogoutIcon from '@mui/icons-material/Logout';
+
 // Import SVG flags as React components
 import { ReactComponent as BrazilFlagIcon } from '../assets/brazil_flag.svg';
 import { ReactComponent as USFlagIcon } from '../assets/us_flag.svg';
@@ -102,43 +111,43 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
               onClose={handleClose}
             >
               <MenuItem onClick={handleClose} component={Link} to="/">
-                <Localized id="home" />
+                <HomeIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="home" />
               </MenuItem>
               {isLoggedIn && (
                 <>
                   <MenuItem onClick={handleClose} component={Link} to="/drivers">
-                    <Localized id="driver-rankings-title" />
+                    <LeaderboardIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="driver-rankings-title" />
                   </MenuItem>
                   <MenuItem onClick={handleClose} component={Link} to="/penalties">
                     <GavelIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="penalties-list-link" />
                   </MenuItem>
                   <MenuItem onClick={handleClose} component={Link} to="/account">
-                    <Localized id="account-link" />
+                    <AccountCircleIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="account-link" />
                   </MenuItem>
                 </>
               )}
               {isLoggedIn && isAdmin && (
                 <MenuItem onClick={handleClose} component={Link} to="/admin">
-                  <Localized id="admin-panel-link" />
+                  <AdminPanelSettingsIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="admin-panel-link" />
                 </MenuItem>
               )}
               {!isLoggedIn && (
                 <>
                   <MenuItem onClick={handleClose} component={Link} to="/login">
-                    <Localized id="login" />
+                    <LoginIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="login" />
                   </MenuItem>
                   <MenuItem onClick={handleClose} component={Link} to="/register">
-                    <Localized id="register" />
+                    <AppRegistrationIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="register" />
                   </MenuItem>
                 </>
               )}
               {isLoggedIn && (
                 <MenuItem onClick={() => { handleClose(); handleLogout(); }}>
-                  <Localized id="logout" />
+                  <LogoutIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="logout" />
                 </MenuItem>
               )}
               <MenuItem onClick={clearCacheAndReload}>
-                <RefreshIcon sx={{ mr: 1 }} /> <Localized id="clear-cache-reload" />
+                <RefreshIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="clear-cache-reload" />
               </MenuItem>
             </Menu>
           </>
