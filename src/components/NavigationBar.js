@@ -12,6 +12,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 // Import SVG flags as React components
 import { ReactComponent as BrazilFlagIcon } from '../assets/brazil_flag.svg';
@@ -30,6 +31,38 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const clearCacheAndReload = () => {
+    console.log('Attempting to clear cache and reload...');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        if (registrations.length > 0) {
+          console.log(`Found ${registrations.length} service worker registrations.`);
+          let unregisterPromises = registrations.map(function(registration) {
+            return registration.unregister().then(function(success) {
+              console.log(`Service worker ${registration.scope} unregister: ${success}`);
+              return success;
+            });
+          });
+          Promise.all(unregisterPromises).then(() => {
+            console.log('All service workers unregistered (or attempted to).');
+            // Force reload from server by adding a cache-busting query parameter
+            window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+          });
+        } else {
+          console.log('No service workers found to unregister.');
+          window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+        }
+      }).catch(function(error) {
+        console.error('Service Worker unregistration failed:', error);
+        window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+      });
+    } else {
+      console.log('Service workers not supported or not active. Reloading page.');
+      window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+    }
+    handleClose(); // Close the menu if open
   };
 
   return (
@@ -100,6 +133,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                   <Localized id="logout" />
                 </MenuItem>
               )}
+              <MenuItem onClick={clearCacheAndReload}>
+                <RefreshIcon sx={{ mr: 1 }} /> <Localized id="clear-cache-reload" />
+              </MenuItem>
             </Menu>
           </>
         ) : (
@@ -139,6 +175,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                 <Localized id="logout" />
               </Button>
             )}
+            <Button color="inherit" onClick={clearCacheAndReload} title="Clear Cache & Reload">
+              <RefreshIcon sx={{ mr: 0.5 }} />
+            </Button>
           </>
         )}
 
