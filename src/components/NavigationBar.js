@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import GavelIcon from '@mui/icons-material/Gavel';
 
 // Import SVG flags as React components
 import { ReactComponent as BrazilFlagIcon } from '../assets/brazil_flag.svg';
@@ -108,6 +109,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                   <MenuItem onClick={handleClose} component={Link} to="/drivers">
                     <Localized id="driver-rankings-title" />
                   </MenuItem>
+                  <MenuItem onClick={handleClose} component={Link} to="/penalties">
+                    <GavelIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="penalties-list-link" />
+                  </MenuItem>
                   <MenuItem onClick={handleClose} component={Link} to="/account">
                     <Localized id="account-link" />
                   </MenuItem>
@@ -147,6 +151,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                <>
                  <Button color="inherit" component={Link} to="/drivers">
                    <Localized id="driver-rankings-title" />
+                 </Button>
+                 <Button color="inherit" component={Link} to="/penalties">
+                   <Localized id="penalties-list-link" />
                  </Button>
                  <Button color="inherit" component={Link} to="/account">
                    <Localized id="account-link" />

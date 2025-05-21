@@ -20,6 +20,13 @@ import TeamManager from './components/admin/TeamManager';
 import AdminPanel from './components/admin/AdminPanel';
 import { bundles } from './i18n';
 
+// Penalty System Components
+import PenaltySubmissionForm from './components/penalties/PenaltySubmissionForm';
+import PenaltiesListPage from './components/penalties/PenaltiesListPage';
+import PenaltyDetailPage from './components/penalties/PenaltyDetailPage';
+import MyJuryTasksPage from './components/penalties/MyJuryTasksPage';
+import AdminPenaltyManager from './components/admin/AdminPenaltyManager';
+
 // Create a client
 const queryClient = new QueryClient();
 
@@ -130,12 +137,19 @@ function App() {
             <Route element={<ProtectedRoute isLoggedIn={isLoggedIn} />}>
               <Route path="/drivers" element={<DriverRankings isAdmin={isAdmin} />} />
               <Route path="/account" element={<AccountPage />} />
+              {/* Penalty System Routes for authenticated users */}
+              <Route path="/penalties" element={<PenaltiesListPage />} />
+              <Route path="/penalties/submit" element={<PenaltySubmissionForm />} />
+              <Route path="/penalties/:penaltyId" element={<PenaltyDetailPage />} />
+              <Route path="/jury/tasks" element={<MyJuryTasksPage />} />
             </Route>
             <Route element={<AdminRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin} />}>
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/admin/championships" element={<ChampionshipManager />} />
               <Route path="/admin/teams" element={<TeamManager />} />
               <Route path="/config" element={<Config />} />
+              {/* Admin Penalty Management Route */}
+              <Route path="/admin/penalties" element={<AdminPenaltyManager />} />
             </Route>
           </Routes>
         </QueryClientProvider>

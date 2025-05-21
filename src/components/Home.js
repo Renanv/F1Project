@@ -11,6 +11,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
+import GavelIcon from '@mui/icons-material/Gavel';
 import axiosInstance from '../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
 import { useQuery } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ const dashboardItems = {
   user: [
     { id: 'rankings', titleId: 'driver-rankings-title', path: '/drivers', icon: <LeaderboardIcon fontSize="large" /> },
     { id: 'account', titleId: 'account-link', path: '/account', icon: <AccountCircleIcon fontSize="large" /> },
+    { id: 'penalties', titleId: 'penalties-list-link', path: '/penalties', icon: <GavelIcon fontSize="large" /> },
   ],
   admin: [
     { id: 'adminPanel', titleId: 'admin-panel-link', path: '/admin', icon: <AdminPanelSettingsIcon fontSize="large" /> },

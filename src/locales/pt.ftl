@@ -300,3 +300,160 @@ admin-lsf-score-reveal-race-live-option = Mostrar Pontuação Atual (Ao Vivo)
 no-participated-championships = Campeonato participante não encontrado
 
 clear-cache-reload = Limpar Cache e Recarregar
+
+# Sistema de Penalidades
+penalties-list-title = Lista de Penalidades
+submit-new-penalty-button = Submeter Nova Penalidade
+filter-by-championship-label = Filtrar por Campeonato
+all-championships-option = Todos os Campeonatos
+penalty-header-id = ID
+penalty-header-race = Corrida
+penalty-header-submitted-by = Submetido Por
+penalty-header-accused = Acusado
+penalty-header-status = Status
+penalty-header-submitted-at = Data da Submissão
+penalty-header-actions = Ações
+view-details-button = Ver Detalhes
+
+# Status das Penalidades (usado também em getStatusChip)
+penalty-status-pending-review = Revisão Pendente
+penalty-status-under-jury-review = Em Análise pela comissão
+penalty-status-awaiting-final-decision = Aguardando Decisão Final
+penalty-status-closed-approved = Fechado - Aprovado
+penalty-status-closed-rejected = Fechado - Rejeitado
+penalty-status-closed-no-action = Fechado - Sem Ação
+
+# Formulário de Submissão de Penalidade
+penalty-submission-form-title = Submeter Revisão de Penalidade
+championship-label = Campeonato
+select-championship-placeholder = Selecione o Campeonato
+race-label = Corrida
+select-race-placeholder = Selecione a Corrida
+accused-user-label = Usuário a ser Revisado
+select-accused-user-placeholder = Selecione o Usuário
+video-link-label = Link do Vídeo (YouTube, Twitch, etc.)
+video-timestamp-label = Timestamp do Vídeo (Opcional, ex: 1m23s)
+considerations-label = Considerações (Descreva o incidente)
+submit-penalty-button = Submeter Penalidade
+penalty-submission-success = Penalidade submetida com sucesso!
+penalty-submission-error = Erro ao submeter penalidade.
+# fetch-championships-error = Erro ao buscar campeonatos. (Já existe)
+# fetch-races-error = Erro ao buscar corridas. (Já existe)
+fetch-drivers-error = Erro ao buscar pilotos para revisão.
+
+# Página de Detalhes da Penalidade
+penalty-detail-title = Detalhes da Penalidade # { $penaltyId }
+fetch-penalty-detail-error = Erro ao carregar detalhes da penalidade.
+penalty-detail-forbidden = Você não tem permissão para ver esta penalidade.
+penalty-detail-not-found = Submissão de penalidade não encontrada.
+penalty-detail-no-data = Nenhum detalhe disponível para esta penalidade.
+back-to-list-button = Voltar para a Lista
+
+penalty-general-info = Informações Gerais
+penalty-submitted-by = Submetido Por
+penalty-accused-user = Usuário Acusado
+penalty-submitted-at = Data da Submissão
+penalty-evidence = Evidência e Descrição
+video-timestamp-label = Timestamp do Vídeo
+penalty-current-status = Status Atual
+penalty-jury-assignments = Painel da comissão
+
+# Status de Atribuição e Julgamento do Júri
+jury-judgment-status-pending-judgment = Analise Pendente
+jury-judgment-status-judgment-submitted = Analise Submetido
+
+no-jury-assigned = Nenhum comissário foi atribuído a esta penalidade ainda.
+penalty-judgments-title = Analises da comissão
+judgment-reason-label = Motivo
+
+penalty-final-outcome = Resultado Final
+final-outcome-decision = Decisão
+final-outcome-reason = Motivo
+outcome-not-specified = Não Especificado
+
+# Ações do Admin na Página de Detalhes da Penalidade
+admin-actions-header = Ações do Administrador
+admin-final-decision-title = Tomar Decisão Final
+new-penalty-status-label = Novo Status
+final-outcome-label = Resultado Final
+final-reason-label = Motivo Final (Opcional)
+submit-decision-button = Submeter Decisão
+assign-jury-title = Atribuir Painel do comissário
+juror-c1-label = Jurado C1
+juror-c2-label = Jurado C2
+juror-c3-label = Jurado C3
+select-juror-placeholder = Selecione um Jurado
+assign-jury-button = Atribuir/Atualizar comissário
+admin-or-divider = OU
+assign-jury-race-wide-note = Nota: Atribuir um comissário aqui será aplicado a todas as penalidades aplicáveis submetidas para esta corrida.
+
+# Fallbacks de Exibição do Jurado (para visão não-admin da lista do painel)
+juror-slot-display-c1 = Jurado C1
+juror-slot-display-c2 = Jurado C2
+juror-slot-display-c3 = Jurado C3
+anonymous-juror-display = Jurado Anônimo (C2)
+judgment-slot-c3-popular-vote = Voto Popular (C3)
+
+# Opções de Julgamento (usadas em Detalhes e Formulário de Submissão)
+judgment-option-sp = Sem Punição (SP)
+judgment-option-l = Penalidade Leve (L)
+judgment-option-m = Penalidade Média (M)
+judgment-option-g = Penalidade Grave (G)
+judgment-option-no-action = Nenhuma Ação Necessária
+
+# Página Minhas Tarefas do Júri
+my-jury-tasks-title = Minhas Tarefas de comissário
+assigned-penalty-id = ID da Penalidade
+assigned-championship = Campeonato
+assigned-race = Corrida
+assigned-accused = Usuário Acusado
+juror-slot-header = Seu Posto
+assigned-submission-time = Data da Submissão
+view-and-judge-button = Ver e Analisar
+no-jury-tasks-found = Nenhuma tarefa de comissão pendente encontrada para você.
+fetch-jury-tasks-error = Erro ao buscar suas tarefas de comissão atribuídas.
+
+# Página do Gerenciador de Penalidades do Admin
+admin-penalty-manager-title = Gerenciar Penalidades (Admin)
+filter-by-status-label = Filtrar por Status
+all-statuses-option = Todos os Status
+assigned-jurors-count-header = Jurados
+judgments-submitted-count-header = Julgamentos Recebidos
+manage-penalty-button = Ver/Gerenciar
+fetch-admin-penalties-error = Erro ao buscar penalidades para visão do admin.
+
+# Formulário de Submissão de Julgamento (Novas Strings)
+submit-judgment-title = Submeta Seu Analise (Posto: { $assignedSlot }) para { $userTag }
+judgment-label = Analise
+select-judgment-placeholder = Selecione um Julgamento...
+submit-judgment-button = Submeter Analise
+your-turn-to-judge-chip = Sua Vez!
+
+# User Status Card (PT)
+user-status-card-no-championship-selected = Por favor, selecione um campeonato para ver seu status.
+user-status-card-loading = Carregando status...
+user-status-card-error = Não foi possível carregar o status para este campeonato.
+user-status-card-not-participant = Você não é participante deste campeonato.
+user-status-card-rank-label = Classificação
+user-status-card-points-label = Pontos Totais
+user-status-card-bonus-points-label = Pontos Bônus
+user-status-card-team-label = Equipe
+user-status-card-teammate-points-label = Pontos do Colega
+user-status-card-last-race-title = Última Corrida ({ $raceName })
+user-status-card-position-label = Posição
+user-status-card-fastest-lap-label = Volta Mais Rápida
+user-status-card-overall-fastest-lap-chip = Mais Rápida Geral!
+user-status-card-no-last-race = Nenhum resultado de corrida registrado neste campeonato ainda.
+user-status-card-view-bonus-log-button = Ver Log de Bônus
+
+# Navigation / Dashboard Link for Penalties (PT)
+penalties-list-link = Sistema de Penalidades
+
+# Table Pagination (PT)
+pagination-rows-per-page = Linhas por página:
+pagination-displayed-rows = { $from }–{ $to } de { $count }
+pagination-displayed-rows-of-more-than = { $from }–{ $to } de mais de { $count }
+no-championships-for-penalties = Nenhum campeonato disponível para exibir penalidades.
+fetch-penalties-error = Erro ao buscar penalidades para este campeonato.
+no-penalties-found-for-championship = Nenhuma penalidade encontrada para o campeonato selecionado.
+back-button = Voltar

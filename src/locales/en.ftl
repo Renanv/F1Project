@@ -300,3 +300,160 @@ admin-lsf-score-reveal-race-label = LSF Score Display Point
 no-participated-championships = No participated championship found.
 
 clear-cache-reload = Clear Cache & Reload
+
+# Penalty System
+penalties-list-title = Penalties List
+submit-new-penalty-button = Submit New Penalty
+filter-by-championship-label = Filter by Championship
+all-championships-option = All Championships
+penalty-header-id = ID
+penalty-header-race = Race
+penalty-header-submitted-by = Submitted By
+penalty-header-accused = Accused
+penalty-header-status = Status
+penalty-header-submitted-at = Submitted At
+penalty-header-actions = Actions
+view-details-button = View Details
+
+# Penalty Statuses (also used in getStatusChip)
+penalty-status-pending-review = Pending Review
+penalty-status-under-jury-review = Under Jury Review
+penalty-status-awaiting-final-decision = Awaiting Final Decision
+penalty-status-closed-approved = Closed - Approved
+penalty-status-closed-rejected = Closed - Rejected
+penalty-status-closed-no-action = Closed - No Action
+
+# Penalty Submission Form
+penalty-submission-form-title = Submit Penalty Review
+championship-label = Championship
+select-championship-placeholder = Select Championship
+race-label = Race
+select-race-placeholder = Select Race
+accused-user-label = User to be Reviewed
+select-accused-user-placeholder = Select User
+video-link-label = Video Link (YouTube, Twitch, etc.)
+video-timestamp-label = Video Timestamp (Optional, e.g., 1m23s)
+considerations-label = Considerations (Describe the incident)
+submit-penalty-button = Submit Penalty
+penalty-submission-success = Penalty submitted successfully!
+penalty-submission-error = Error submitting penalty.
+fetch-championships-error = Error fetching championships.
+fetch-races-error = Error fetching races.
+fetch-drivers-error = Error fetching drivers for review.
+
+# Penalty Detail Page
+penalty-detail-title = Penalty Details # { $penaltyId }
+fetch-penalty-detail-error = Error loading penalty details.
+penalty-detail-forbidden = You do not have permission to view this penalty.
+penalty-detail-not-found = Penalty submission not found.
+penalty-detail-no-data = No details available for this penalty.
+back-to-list-button = Back to List
+
+penalty-general-info = General Information
+penalty-submitted-by = Submitted By
+penalty-accused-user = Accused User
+penalty-submitted-at = Submitted At
+penalty-evidence = Evidence & Description
+video-timestamp-label = Video Timestamp
+penalty-current-status = Current Status
+penalty-jury-assignments = Jury Panel
+
+# Jury Assignment & Judgment Statuses
+jury-judgment-status-pending-judgment = Pending Judgment
+jury-judgment-status-judgment-submitted = Judgment Submitted
+
+no-jury-assigned = No jury has been assigned to this penalty yet.
+penalty-judgments-title = Jury Judgments
+judgment-reason-label = Reason
+
+penalty-final-outcome = Final Outcome
+final-outcome-decision = Decision
+final-outcome-reason = Reason
+outcome-not-specified = Not Specified
+
+# Admin Actions on Penalty Detail Page
+admin-actions-header = Admin Actions
+admin-final-decision-title = Make Final Decision
+new-penalty-status-label = New Status
+final-outcome-label = Final Outcome
+final-reason-label = Final Reason (Optional)
+submit-decision-button = Submit Decision
+assign-jury-title = Assign Jury Panel
+juror-c1-label = Juror C1
+juror-c2-label = Juror C2
+juror-c3-label = Juror C3
+select-juror-placeholder = Select a Juror
+assign-jury-button = Assign/Update Jury
+admin-or-divider = OR
+assign-jury-race-wide-note = Note: Assigning a jury here will apply to all applicable penalties submitted for this race.
+
+# Juror Display Fallbacks (for non-admin view of panel list)
+juror-slot-display-c1 = Juror C1
+juror-slot-display-c2 = Juror C2
+juror-slot-display-c3 = Juror C3
+anonymous-juror-display = Anonymous Juror (C2)
+judgment-slot-c3-popular-vote = Popular Vote (C3)
+
+# Judgment Options (used in Detail and Submission Form)
+judgment-option-sp = Stop and Go Penalty (SP)
+judgment-option-l = Light Penalty (L)
+judgment-option-m = Medium Penalty (M)
+judgment-option-g = Grid Penalty (G)
+judgment-option-no-action = No Action Warranted
+
+# My Jury Tasks Page
+my-jury-tasks-title = My Jury Tasks
+assigned-penalty-id = Penalty ID
+assigned-championship = Championship
+assigned-race = Race
+assigned-accused = Accused User
+juror-slot-header = Your Slot
+assigned-submission-time = Submitted At
+view-and-judge-button = View & Judge
+no-jury-tasks-found = No pending jury tasks found for you.
+fetch-jury-tasks-error = Error fetching your assigned jury tasks.
+
+# Admin Penalty Manager Page
+admin-penalty-manager-title = Manage Penalties (Admin)
+filter-by-status-label = Filter by Status
+all-statuses-option = All Statuses
+assigned-jurors-count-header = Jurors
+judgments-submitted-count-header = Judgments In
+manage-penalty-button = View/Manage
+fetch-admin-penalties-error = Error fetching penalties for admin view.
+
+# Submit Judgment Form (New Strings)
+submit-judgment-title = Submit Your Judgment (Slot: { $assignedSlot }) for { $userTag }
+judgment-label = Judgment
+select-judgment-placeholder = Select a Judgment...
+submit-judgment-button = Submit Judgment
+your-turn-to-judge-chip = Your Turn!
+
+# User Status Card
+user-status-card-no-championship-selected = Please select a championship to view your status.
+user-status-card-loading = Loading status...
+user-status-card-error = Could not load status for this championship.
+user-status-card-not-participant = You are not a participant in this championship.
+user-status-card-rank-label = Rank
+user-status-card-points-label = Total Points
+user-status-card-bonus-points-label = Bonus Points
+user-status-card-team-label = Team
+user-status-card-teammate-points-label = Teammate Points
+user-status-card-last-race-title = Last Race ({ $raceName })
+user-status-card-position-label = Position
+user-status-card-fastest-lap-label = Fastest Lap
+user-status-card-overall-fastest-lap-chip = Overall Fastest!
+user-status-card-no-last-race = No race results recorded in this championship yet.
+user-status-card-view-bonus-log-button = View Bonus Log
+
+# Navigation / Dashboard Link for Penalties
+penalties-list-link = Penalty System
+
+# Table Pagination
+pagination-rows-per-page = Rows per page:
+pagination-displayed-rows = { $from }–{ $to } of { $count }
+pagination-displayed-rows-of-more-than = { $from }–{ $to } of more than { $count }
+no-championships-for-penalties = No championships available to show penalties.
+fetch-penalties-error = Error fetching penalties for this championship.
+no-penalties-found-for-championship = No penalties found for the selected championship.
+back-button = Go Back
