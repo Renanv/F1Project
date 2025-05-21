@@ -400,6 +400,7 @@ judgment-option-l = Penalidade Leve (L)
 judgment-option-m = Penalidade Média (M)
 judgment-option-g = Penalidade Grave (G)
 judgment-option-no-action = Nenhuma Ação Necessária
+judgment-option-no-penalty = Sem Penalidade
 
 # Página Minhas Tarefas do Júri
 my-jury-tasks-title = Minhas Tarefas de comissário
@@ -421,6 +422,9 @@ assigned-jurors-count-header = Jurados
 judgments-submitted-count-header = Julgamentos Recebidos
 manage-penalty-button = Ver/Gerenciar
 fetch-admin-penalties-error = Erro ao buscar penalidades para visão do admin.
+
+# Penalty List Page - New Header (PT)
+penalty-header-final-outcome = Decisão Final
 
 # Formulário de Submissão de Julgamento (Novas Strings)
 submit-judgment-title = Submeta Seu Analise (Posto: { $assignedSlot }) para { $userTag }

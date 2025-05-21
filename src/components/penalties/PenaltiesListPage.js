@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import axiosInstance from '../../utils/axiosInstance';
 import { useQuery } from '@tanstack/react-query';
+import { getJudgmentDisplay } from '../../utils/penaltyUtils';
 
 // Helper to get a user-friendly status
 const getStatusChip = (status) => {
@@ -186,6 +187,7 @@ export default function PenaltiesListPage() {
                       <TableCell><Localized id="penalty-header-accused" fallback="Accused" /></TableCell>
                       <TableCell><Localized id="penalty-header-status" fallback="Status" /></TableCell>
                       <TableCell><Localized id="penalty-header-submitted-at" fallback="Submitted At" /></TableCell>
+                      <TableCell><Localized id="penalty-header-final-outcome" fallback="Final Outcome" /></TableCell>
                       <TableCell><Localized id="penalty-header-actions" fallback="Actions" /></TableCell>
                     </TableRow>
                   </TableHead>
@@ -209,6 +211,7 @@ export default function PenaltiesListPage() {
                             return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
                           })()}
                         </TableCell>
+                        <TableCell>{getJudgmentDisplay(penalty.final_outcome) || '-'}</TableCell>
                         <TableCell>
                           <Button
                             variant="outlined"

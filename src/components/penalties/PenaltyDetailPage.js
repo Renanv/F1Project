@@ -43,6 +43,7 @@ import axiosInstance from '../../utils/axiosInstance';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jwtDecode } from 'jwt-decode';
 import SubmitJudgmentForm from './SubmitJudgmentForm';
+import { getJudgmentDisplay } from '../../utils/penaltyUtils'; // Import the new utility
 
 // Helper from PenaltiesListPage for status chip - consider moving to a shared utils file
 const getStatusChip = (status) => {
@@ -88,17 +89,7 @@ const baseJudgmentOptions = {
     'G': { labelId: 'judgment-option-g', fallback: 'Grid Penalty (G)' },
     // 'NO_ACTION' is removed from admin final outcome choice, but kept for displaying juror votes if they had it previously.
     // And for the status 'CLOSED_NO_ACTION' which is different from a penalty type.
-};
-
-const fullDisplayJudgmentOptions = {
-    ...baseJudgmentOptions,
-    'NO_ACTION': { labelId: 'judgment-option-no-action', fallback: 'No Action Warranted' }
-};
-
-const getJudgmentDisplay = (judgmentKey) => {
-    const option = fullDisplayJudgmentOptions[judgmentKey]; // Use full set for display
-    if (!option) return judgmentKey; // Fallback to raw key if not found
-    return <Localized id={option.labelId} fallback={option.fallback} />;
+    // 'NO_PENALTY' can be added here if admins can select it, or just rely on getJudgmentDisplay from utils
 };
 
 // --- Final Decision Form Component ---

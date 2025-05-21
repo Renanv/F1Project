@@ -400,6 +400,7 @@ judgment-option-l = Light Penalty (L)
 judgment-option-m = Medium Penalty (M)
 judgment-option-g = Grid Penalty (G)
 judgment-option-no-action = No Action Warranted
+judgment-option-no-penalty = No Penalty
 
 # My Jury Tasks Page
 my-jury-tasks-title = My Jury Tasks
@@ -457,3 +458,6 @@ no-championships-for-penalties = No championships available to show penalties.
 fetch-penalties-error = Error fetching penalties for this championship.
 no-penalties-found-for-championship = No penalties found for the selected championship.
 back-button = Go Back
+
+# Penalty List Page - New Header
+penalty-header-final-outcome = Final Outcome
