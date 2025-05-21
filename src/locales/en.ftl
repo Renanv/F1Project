@@ -298,3 +298,5 @@ no-data-for-ranking = No data available for the selected ranking type.
 # Admin LSF Score Reveal Race
 admin-lsf-score-reveal-race-label = LSF Score Display Point
 no-participated-championships = No participated championship found.
+
+clear-cache-reload = Clear Cache & Reload

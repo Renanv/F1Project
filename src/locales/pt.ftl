@@ -13,8 +13,8 @@ login-button = Entrar
 login-success = Login realizado com sucesso!
 login-prompt = Por favor, faça o login para continuar.
 
-driver-rankings-title = Classificação dos Pilotos
-view-driver-rankings = Ver Classificação dos Pilotos
+driver-rankings-title = Classificações
+view-driver-rankings = Ver Classificações
 
 driver-name = Piloto
 driver-number = Número
@@ -298,3 +298,5 @@ no-data-for-ranking = Não há dados disponíveis para o tipo de classificação
 admin-lsf-score-reveal-race-label = Ponto de Exibição do LSF Score
 admin-lsf-score-reveal-race-live-option = Mostrar Pontuação Atual (Ao Vivo)
 no-participated-championships = Campeonato participante não encontrado
+
+clear-cache-reload = Limpar Cache e Recarregar
