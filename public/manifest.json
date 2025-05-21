@@ -3,13 +3,13 @@
   "name": "LSF F1",
   "icons": [
     {
-      "src": "https://placehold.co/192x192/000000/FFFFFF/png?text=192",
+      "src": "android-chrome-192x192.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "https://placehold.co/512x512/000000/FFFFFF/png?text=512",
+      "src": "android-chrome-512x512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
