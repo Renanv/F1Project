@@ -381,6 +381,7 @@ export default function PenaltyDetailPage() {
     setActionFeedback({ type: 'success', message: 'Jury assigned successfully! Penalty details updated.' });
     refetchPenaltyDetails();
     queryClient.invalidateQueries(['adminPenalties']); // Invalidate admin list if it exists
+    queryClient.invalidateQueries(['penalties']); // Invalidate general penalties list
     setTimeout(() => setActionFeedback({type:'', message:''}), 4000); // Clear feedback after a delay
 };
 
@@ -395,8 +396,8 @@ export default function PenaltyDetailPage() {
   const handleJudgmentSubmissionSuccess = (message) => {
     setActionFeedback({ type: 'success', message: message || 'Judgment submitted successfully! Details updated.' });
     refetchPenaltyDetails(); // Refetch to update jury assignment status and potentially judgments list
-    // No need to invalidate adminPenalties here usually, but penaltyDetails is key.
-    // MyJuryTasksPage will be invalidated by the form itself.
+    queryClient.invalidateQueries(['penalties']); // Invalidate general penalties list
+    // MyJuryTasksPage will be invalidated by the form itself (via ['assignedPenalties']).
     setTimeout(() => setActionFeedback({type:'', message:''}), 5000);
   };
 
