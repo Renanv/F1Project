@@ -44,35 +44,10 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
   };
 
   const clearCacheAndReload = () => {
-    console.log('Attempting to clear cache and reload...');
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        if (registrations.length > 0) {
-          console.log(`Found ${registrations.length} service worker registrations.`);
-          let unregisterPromises = registrations.map(function(registration) {
-            return registration.unregister().then(function(success) {
-              console.log(`Service worker ${registration.scope} unregister: ${success}`);
-              return success;
-            });
-          });
-          Promise.all(unregisterPromises).then(() => {
-            console.log('All service workers unregistered (or attempted to).');
-            // Force reload from server by adding a cache-busting query parameter
-            window.location.href = window.location.pathname + '?v=' + new Date().getTime();
-          });
-        } else {
-          console.log('No service workers found to unregister.');
-          window.location.href = window.location.pathname + '?v=' + new Date().getTime();
-        }
-      }).catch(function(error) {
-        console.error('Service Worker unregistration failed:', error);
-        window.location.href = window.location.pathname + '?v=' + new Date().getTime();
-      });
-    } else {
-      console.log('Service workers not supported or not active. Reloading page.');
-      window.location.href = window.location.pathname + '?v=' + new Date().getTime();
-    }
-    handleClose(); // Close the menu if open
+    console.log('Attempting to force a hard reload...');
+    // Force a hard reload, bypassing the cache. This is equivalent to Ctrl+F5.
+    window.location.reload(true);
+    handleClose(); // Close the menu if open, though the page will reload immediately.
   };
 
   return (
