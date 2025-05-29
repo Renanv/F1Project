@@ -91,7 +91,16 @@ export default function PenaltiesListPage() {
   } = useQuery({
     queryKey: ['penalties', selectedChampionshipId, page, rowsPerPage],
     queryFn: async () => {
-      if (!selectedChampionshipId) return { data: [], totalItems: 0, totalPages: 0 };
+      console.log('[PenaltiesListPage] Fetching penalties with params:', {
+        championshipId: selectedChampionshipId,
+        pageApi: page + 1, // API is 1-indexed
+        limit: rowsPerPage,
+        rawFrontendPage: page
+      });
+      if (!selectedChampionshipId) {
+        console.log('[PenaltiesListPage] No selectedChampionshipId, returning empty.');
+        return { data: [], totalItems: 0, totalPages: 0 };
+      }
       const response = await axiosInstance.get('/api/penalties', {
         params: {
           championshipId: selectedChampionshipId,
@@ -99,6 +108,7 @@ export default function PenaltiesListPage() {
           limit: rowsPerPage,
         },
       });
+      console.log('[PenaltiesListPage] Received penalties response:', response.data);
       return response.data;
     },
     enabled: !!selectedChampionshipId,
