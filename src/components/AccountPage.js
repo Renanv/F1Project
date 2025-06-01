@@ -2,9 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 // Use axiosInstance
 import axiosInstance from '../utils/axiosInstance';
 // import axios from 'axios';
-import { Container, Typography, Box, TextField, Button, Grid, Paper, CircularProgress, Alert, Avatar } from '@mui/material';
+import { Container, Typography, Box, TextField, Button, Grid, Paper, CircularProgress, Alert, Avatar, Card, CardMedia, Link } from '@mui/material';
 import { Localized } from '@fluent/react';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import PhotoCamera from '@mui/icons-material/PhotoCamera';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 // Simple debounce function (reuse from Register? Consider moving to a utils file)
 const debounce = (func, delay) => {
@@ -22,10 +24,12 @@ const debounce = (func, delay) => {
 // PUT /api/users/me // Need to implement this backend route
 // PUT /api/users/me/password
 // GET /api/validate/driver-number/:number - (Assuming still public)
+// POST /api/users/me/driver-picture - NEW
+// POST /api/users/me/payment-confirmation - NEW
 // -------------------------------------
 
 function AccountPage() {
-  const [userData, setUserData] = useState({ username: '', usertag: '', driver_number: '' });
+  const [userData, setUserData] = useState({ username: '', usertag: '', driver_number: '', driver_picture_url: null, payment_confirmation_url: null });
   const [usertagInput, setUsertagInput] = useState('');
   const [driverNumberInput, setDriverNumberInput] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -43,6 +47,17 @@ function AccountPage() {
   const [isCheckingDriverNumber, setIsCheckingDriverNumber] = useState(false);
   const [driverNumberAvailable, setDriverNumberAvailable] = useState(false); // State for success message
 
+  // File Upload States
+  const [driverPictureFile, setDriverPictureFile] = useState(null);
+  const [driverPicturePreview, setDriverPicturePreview] = useState(null);
+  const [uploadingDriverPicture, setUploadingDriverPicture] = useState(false);
+  const [driverPictureUrl, setDriverPictureUrl] = useState(null); // To display current picture
+
+  const [paymentConfirmationFile, setPaymentConfirmationFile] = useState(null);
+  const [uploadingPaymentConfirmation, setUploadingPaymentConfirmation] = useState(false);
+  const [paymentConfirmationUrl, setPaymentConfirmationUrl] = useState(null); // To display current link
+  const [fetchedPaymentSignedUrl, setFetchedPaymentSignedUrl] = useState(null); // For the actual link href
+
   // Fetch user data using axiosInstance
   useEffect(() => {
     const fetchUserData = async () => {
@@ -51,6 +66,8 @@ function AccountPage() {
       try {
         const response = await axiosInstance.get('/api/users/me');
         const fetchedUser = response.data.user;
+        console.log("Fetched user data:", fetchedUser);
+        console.log("Fetched driver_picture_url:", fetchedUser?.driver_picture_url);
         if (!fetchedUser) {
             console.error("User data not found in response:", response.data);
             throw new Error("User data structure incorrect in API response");
@@ -58,6 +75,27 @@ function AccountPage() {
         setUserData(fetchedUser);
         setUsertagInput(fetchedUser.usertag || '');
         setDriverNumberInput(fetchedUser.driver_number !== null && fetchedUser.driver_number !== undefined ? String(fetchedUser.driver_number) : '');
+        setDriverPictureUrl(fetchedUser.driver_picture_url || null);
+        console.log("State driverPictureUrl after set:", fetchedUser.driver_picture_url || null); // Log what was set
+        setPaymentConfirmationUrl(fetchedUser.payment_confirmation_url || null);
+
+        // If a payment confirmation URL/pathname exists, fetch its signed URL for viewing
+        if (fetchedUser.payment_confirmation_url) {
+          const fetchSignedUrl = async () => {
+            try {
+              setError(null); // Clear previous errors
+              const response = await axiosInstance.get('/api/users/me/payment-confirmation-link');
+              setFetchedPaymentSignedUrl(response.data.signedUrl);
+            } catch (err) {
+              console.error("Error fetching payment confirmation link:", err);
+              // Set a generic error, or a specific one if available
+              setError(err.response?.data?.message || 'fetch-payment-link-error'); 
+              setFetchedPaymentSignedUrl(null); // Ensure no broken link
+            }
+          };
+          fetchSignedUrl();
+        }
+
       } catch (err) {
         console.error("Error fetching user data:", err);
         if (err.response) {
@@ -124,6 +162,100 @@ function AccountPage() {
       setDriverNumberInput(value);
       // Trigger debounced validation
       checkDriverNumberUniqueness(value);
+    }
+  };
+
+  // Handle Driver Picture File Change
+  const handleDriverPictureChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setDriverPictureFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDriverPicturePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setDriverPictureFile(null);
+      setDriverPicturePreview(null);
+    }
+  };
+
+  // Handle Payment Confirmation File Change
+  const handlePaymentConfirmationChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setPaymentConfirmationFile(file);
+    } else {
+      setPaymentConfirmationFile(null);
+    }
+  };
+
+  // Handle Driver Picture Upload
+  const handleUploadDriverPicture = async () => {
+    if (!driverPictureFile) {
+      setError('select-driver-picture-first');
+      return;
+    }
+    setUploadingDriverPicture(true);
+    setError(null);
+    setSuccessMessage('');
+    const formData = new FormData();
+    formData.append('driverPicture', driverPictureFile);
+
+    try {
+      const response = await axiosInstance.post('/api/users/me/driver-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setSuccessMessage('driver-picture-uploaded');
+      setDriverPictureUrl(response.data.url); // Update with the new URL from blob storage
+      setDriverPictureFile(null); // Clear the file input
+      setDriverPicturePreview(null); // Clear the preview
+    } catch (err) {
+      console.error("Error uploading driver picture:", err);
+      setError(err.response?.data?.message || 'driver-picture-upload-error');
+    } finally {
+      setUploadingDriverPicture(false);
+    }
+  };
+
+  // Handle Payment Confirmation Upload
+  const handleUploadPaymentConfirmation = async () => {
+    if (!paymentConfirmationFile) {
+      setError('select-payment-confirmation-first');
+      return;
+    }
+    setUploadingPaymentConfirmation(true);
+    setError(null);
+    setSuccessMessage('');
+    const formData = new FormData();
+    formData.append('paymentConfirmation', paymentConfirmationFile);
+
+    try {
+      const response = await axiosInstance.post('/api/users/me/payment-confirmation', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      setSuccessMessage('payment-confirmation-uploaded');
+      setPaymentConfirmationUrl(response.data.url); // Update with the new URL
+      setPaymentConfirmationFile(null); // Clear the file input
+      // After successful upload, fetch the new signed URL for the link
+      try {
+        const signedUrlResponse = await axiosInstance.get('/api/users/me/payment-confirmation-link');
+        setFetchedPaymentSignedUrl(signedUrlResponse.data.signedUrl);
+      } catch (fetchErr) {
+        console.error("Error fetching new payment confirmation link:", fetchErr);
+        setError(fetchErr.response?.data?.message || 'fetch-payment-link-error');
+        setFetchedPaymentSignedUrl(null);
+      }
+    } catch (err) {
+      console.error("Error uploading payment confirmation:", err);
+      setError(err.response?.data?.message || 'payment-confirmation-upload-error');
+    } finally {
+      setUploadingPaymentConfirmation(false);
     }
   };
 
@@ -291,7 +423,7 @@ function AccountPage() {
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" gutterBottom><Localized id="account-details-heading" /></Typography>
-            <Box component="form" onSubmit={handleUpdateDetails} noValidate>
+            <Box component="form" onSubmit={handleUpdateDetails} noValidate sx={{ mb: 3 }}>
               {/* Username (Display Only) */}
               <TextField
                 label={<Localized id="username-label"/>}
@@ -357,6 +489,87 @@ function AccountPage() {
                 {savingDetails ? <CircularProgress size={24} /> : <Localized id="account-save-details-button" />}
               </Button>
             </Box>
+
+            {/* Driver Picture Upload */}
+            <Box sx={{ mt: 4, mb: 3 }}>
+              <Typography variant="subtitle1" gutterBottom><Localized id="account-driver-picture-heading" /></Typography>
+              {console.log("Rendering CardMedia. driverPicturePreview:", driverPicturePreview, "driverPictureUrl:", driverPictureUrl)}
+              {(driverPictureUrl || driverPicturePreview) && (
+                <Card sx={{ maxWidth: 345, mb: 2 }}>
+                  <CardMedia
+                    component="img"
+                    height="194"
+                    image={driverPicturePreview || driverPictureUrl} // Preview takes precedence, otherwise shows current URL
+                    alt={driverPicturePreview ? "Driver Picture Preview" : "Driver Picture"}
+                  />
+                </Card>
+              )}
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<PhotoCamera />}
+                sx={{ mr: 2 }}
+              >
+                <Localized id="account-select-driver-picture-button" />
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleDriverPictureChange}
+                />
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleUploadDriverPicture}
+                disabled={!driverPictureFile || uploadingDriverPicture}
+                startIcon={uploadingDriverPicture ? <CircularProgress size={20} /> : <UploadFileIcon />}
+              >
+                <Localized id="account-upload-driver-picture-button" />
+              </Button>
+              {driverPictureFile && <Typography variant="caption" display="block" sx={{mt:1}}>{driverPictureFile.name}</Typography>}
+            </Box>
+
+            {/* Payment Confirmation Upload */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="subtitle1" gutterBottom><Localized id="account-payment-confirmation-heading" /></Typography>
+              {paymentConfirmationUrl && fetchedPaymentSignedUrl && (
+                 <Typography variant="body2" sx={{ mb: 1 }}>
+                    <Localized id="account-current-payment-confirmation-label" />{' '}
+                    <Link href={fetchedPaymentSignedUrl} target="_blank" rel="noopener noreferrer">
+                        <Localized id="account-view-payment-confirmation-link" />
+                    </Link>
+                </Typography>
+              )}
+              {paymentConfirmationUrl && !fetchedPaymentSignedUrl && error && (
+                <Typography variant="body2" sx={{ mb: 1, color: 'error.main' }}>
+                  <Localized id={error} />
+                </Typography>
+              )}
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<UploadFileIcon />}
+                sx={{ mr: 2 }}
+              >
+                <Localized id="account-select-payment-confirmation-button" />
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*,application/pdf"
+                  onChange={handlePaymentConfirmationChange}
+                />
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleUploadPaymentConfirmation}
+                disabled={!paymentConfirmationFile || uploadingPaymentConfirmation}
+                startIcon={uploadingPaymentConfirmation ? <CircularProgress size={20} /> : <UploadFileIcon />}
+              >
+                <Localized id="account-upload-payment-confirmation-button" />
+              </Button>
+              {paymentConfirmationFile && <Typography variant="caption" display="block" sx={{mt:1}}>{paymentConfirmationFile.name}</Typography>}
+            </Box>
+
           </Paper>
         </Grid>
 

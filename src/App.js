@@ -18,6 +18,7 @@ import AdminRoute from './components/admin/AdminRoute';
 import ChampionshipManager from './components/admin/ChampionshipManager';
 import TeamManager from './components/admin/TeamManager';
 import AdminPanel from './components/admin/AdminPanel';
+import AdminUploadedFilesPage from './components/admin/AdminUploadedFilesPage';
 import { bundles } from './i18n';
 
 // Penalty System Components
@@ -150,6 +151,8 @@ function App() {
               <Route path="/config" element={<Config />} />
               {/* Admin Penalty Management Route */}
               <Route path="/admin/penalties" element={<AdminPenaltyManager />} />
+              {/* Admin Uploaded Files Overview Route */}
+              <Route path="/admin/uploaded-files" element={<AdminUploadedFilesPage />} />
             </Route>
           </Routes>
         </QueryClientProvider>

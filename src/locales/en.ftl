@@ -486,3 +486,32 @@ select-team-label = Select Team
 submit-judgment-title = Submit Your Judgment
 submit-your-judgment-link = Submit Your Judgment
 view-and-judge-button = View & Judge
+
+# Account Page File Uploads
+account-driver-picture-heading = Driver Picture
+account-select-driver-picture-button = Select Picture
+account-upload-driver-picture-button = Upload Picture
+select-driver-picture-first = Please select a driver picture file first.
+driver-picture-uploaded = Driver picture uploaded successfully.
+driver-picture-upload-error = Failed to upload driver picture.
+
+account-payment-confirmation-heading = Payment Confirmation
+account-current-payment-confirmation-label = Current Confirmation:
+account-view-payment-confirmation-link = View File
+account-select-payment-confirmation-button = Select File
+account-upload-payment-confirmation-button = Upload File
+select-payment-confirmation-first = Please select a payment confirmation file first.
+payment-confirmation-uploaded = Payment confirmation uploaded successfully.
+payment-confirmation-upload-error = Failed to upload payment confirmation.
+fetch-payment-link-error = Could not load payment confirmation link.
+
+# Admin Uploaded Files Overview
+admin-uploaded-files-title = Uploaded Files Overview
+fetch-uploaded-files-error = Error fetching uploaded files.
+admin-driver-pictures-heading = Driver Pictures
+admin-no-driver-pictures = No driver pictures found.
+admin-payment-confirmations-heading = Payment Confirmations
+admin-no-payment-confirmations = No payment confirmations found.
+admin-view-payment-confirmation-link = View Confirmation
+admin-uploaded-files-nav-link = Uploaded Files
+admin-desc-uploaded-files = Review and manage user-uploaded driver pictures and payment confirmations.

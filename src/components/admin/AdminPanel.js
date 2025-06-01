@@ -6,6 +6,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import GroupIcon from '@mui/icons-material/Group'; 
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; 
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; // Import for title
+import CollectionsIcon from '@mui/icons-material/Collections'; // Import for Uploaded Files
 import { Localized } from '@fluent/react';
 
 function AdminPanel() {
@@ -29,6 +30,12 @@ function AdminPanel() {
       descriptionId: 'admin-desc-config',
       link: '/config', // Assuming /config is admin-only based on previous structure
       icon: <SettingsIcon fontSize="large" />
+    },
+    {
+      titleId: 'admin-uploaded-files-nav-link', // Use existing ID from nav link
+      descriptionId: 'admin-desc-uploaded-files', // New ID for description
+      link: '/admin/uploaded-files',
+      icon: <CollectionsIcon fontSize="large" />
     }
     // Add more admin sections here by following the same structure
   ];

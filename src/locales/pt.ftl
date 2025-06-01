@@ -483,3 +483,32 @@ select-team-label = Selecionar Equipe
 submit-judgment-title = Submeter Julgamento
 submit-your-judgment-link = Submeter seu julgamento
 view-and-judge-button = Ver e Julgar
+
+# Account Page File Uploads (PT)
+account-driver-picture-heading = Foto do Piloto
+account-select-driver-picture-button = Selecionar Foto
+account-upload-driver-picture-button = Enviar Foto
+select-driver-picture-first = Por favor, selecione um arquivo para a foto do piloto primeiro.
+driver-picture-uploaded = Foto do piloto enviada com sucesso.
+driver-picture-upload-error = Falha ao enviar a foto do piloto.
+
+account-payment-confirmation-heading = Comprovante de Pagamento
+account-current-payment-confirmation-label = Comprovante Atual:
+account-view-payment-confirmation-link = Ver Arquivo
+account-select-payment-confirmation-button = Selecionar Arquivo
+account-upload-payment-confirmation-button = Enviar Arquivo
+select-payment-confirmation-first = Por favor, selecione um arquivo de comprovante de pagamento primeiro.
+payment-confirmation-uploaded = Comprovante de pagamento enviado com sucesso.
+payment-confirmation-upload-error = Falha ao enviar o comprovante de pagamento.
+fetch-payment-link-error = Não foi possível carregar o link do comprovante de pagamento.
+
+# Admin Uploaded Files Overview (PT)
+admin-uploaded-files-title = Visão Geral de Arquivos Carregados
+fetch-uploaded-files-error = Erro ao buscar arquivos carregados.
+admin-driver-pictures-heading = Fotos dos Pilotos
+admin-no-driver-pictures = Nenhuma foto de piloto encontrada.
+admin-payment-confirmations-heading = Comprovantes de Pagamento
+admin-no-payment-confirmations = Nenhum comprovante de pagamento encontrado.
+admin-view-payment-confirmation-link = Ver Comprovante
+admin-uploaded-files-nav-link = Arquivos Carregados
+admin-desc-uploaded-files = Revise e gerencie as fotos dos pilotos e os comprovantes de pagamento carregados pelos usuários.
