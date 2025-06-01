@@ -238,9 +238,9 @@ generic-error-fallback = Ocorreu um erro inesperado.
 
 # Sistema de Pontos de Bônus (Admin)
 admin-add-bonus-points-title = Adicionar/Remover Pontos bônus para { $userName }
-admin-bonus-points-amount-label = Quantidade de Pontos (pode ser negativo)
-admin-bonus-points-source-label = Fonte
+admin-bonus-points-amount-label = Quantidade de Pontos
 admin-bonus-points-reason-label = Motivo (Opcional)
+admin-bonus-points-source-label = Fonte dos Pontos
 admin-submit-bonus-points-button = Submeter Pontos
 bonus-points-missing-fields = Erro: Quantidade de pontos e fonte são obrigatórios.
 bonus-points-invalid-amount = Erro: A quantidade de pontos deve ser um número válido.
@@ -461,3 +461,25 @@ no-championships-for-penalties = Nenhum campeonato disponível para exibir penal
 fetch-penalties-error = Erro ao buscar penalidades para este campeonato.
 no-penalties-found-for-championship = Nenhuma penalidade encontrada para o campeonato selecionado.
 back-button = Voltar
+
+# Newly added localization keys
+championship-name-required = Nome do campeonato é obrigatório
+fetch-admin-penalties-error = Erro ao buscar penalidades
+fetch-admin-races-error = Erro ao buscar corridas
+filter-all-championships = Todos os Campeonatos
+filter-by-status = Filtrar por Status
+filters-label = Filtros
+loading-races-message = Carregando corridas...
+my-jury-tasks-title = Minhas Tarefas de Júri
+no-championships-for-penalties = Nenhum campeonato para exibir penalidades
+no-pending-jury-tasks = Nenhuma tarefa de júri pendente
+no-penalties-found-filters = Nenhuma penalidade encontrada para os filtros aplicados
+no-penalties-found-for-championship = Nenhuma penalidade encontrada para este campeonato
+no-users-for-championship = Nenhum usuário encontrado para este campeonato
+penalty-header-jurors = Jurados Designados
+penalty-header-judgments = Julgamentos Recebidos
+race-title-date-required = Título e data da corrida são obrigatórios
+select-team-label = Selecionar Equipe
+submit-judgment-title = Submeter Julgamento
+submit-your-judgment-link = Submeter seu julgamento
+view-and-judge-button = Ver e Julgar

@@ -461,3 +461,28 @@ back-button = Go Back
 
 # Penalty List Page - New Header
 penalty-header-final-outcome = Final Outcome
+
+admin-bonus-points-amount-label = Points Amount (can be negative)
+admin-bonus-points-reason-label = Reason (Optional)
+admin-bonus-points-source-label = Source
+admin-submit-bonus-points-button = Submit Points
+championship-name-required = Championship name is required
+fetch-admin-penalties-error = Error fetching penalties.
+fetch-admin-races-error = Error loading races
+filter-all-championships = All Championships (Select One)
+filter-by-status = Filter by Status
+filters-label = Filters
+loading-races-message = Loading races...
+my-jury-tasks-title = My Pending Jury Tasks
+no-championships-for-penalties = No championships available to show penalties.
+no-pending-jury-tasks = You have no pending jury tasks at the moment.
+no-penalties-found-filters = No penalties found matching the current filters.
+no-penalties-found-for-championship = No penalties found for the selected championship.
+no-users-for-championship = No users found for this championship
+penalty-header-jurors = Jurors Assigned
+penalty-header-judgments = Judgments In
+race-title-date-required = Race title and date are required
+select-team-label = Select Team
+submit-judgment-title = Submit Your Judgment
+submit-your-judgment-link = Submit Your Judgment
+view-and-judge-button = View & Judge

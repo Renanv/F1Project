@@ -57,34 +57,49 @@ const Config = () => {
   };
 
   const handleSave = async () => {
+    console.log('[Config.js] handleSave: Initiating save...');
     setIsSaving(true);
     setError('');
     setSuccessMessage('');
     try {
-      const teamUpdatePromises = teamConfigs.map(config =>
-        axiosInstance.put(`/api/team-configs/${config.id}`, {
-          configValue: config.config_value
-        })
-      );
-      const pointsUpdatePromises = racePoints.map(point =>
-        axiosInstance.put(`/api/race-points-config/${point.id}`, {
-          points: point.points
-        })
-      );
+      console.log(`[Config.js] handleSave: Preparing to update ${teamConfigs.length} team configs and ${racePoints.length} race points.`);
 
-      const results = await Promise.allSettled([...teamUpdatePromises, ...pointsUpdatePromises]);
+      const teamUpdatePromises = teamConfigs.map(config => {
+        console.log(`[Config.js] handleSave: Creating promise to update team config ID ${config.id} with value ${config.config_value}`);
+        return axiosInstance.put(`/api/team-configs/${config.id}`, {
+          configValue: config.config_value
+        }).then(response => ({ status: 'fulfilled', id: config.id, response }))
+          .catch(error => ({ status: 'rejected', id: config.id, error }));
+      });
+
+      const pointsUpdatePromises = racePoints.map(point => {
+        console.log(`[Config.js] handleSave: Creating promise to update race point ID ${point.id} with points ${point.points}`);
+        return axiosInstance.put(`/api/race-points-config/${point.id}`, {
+          points: point.points
+        }).then(response => ({ status: 'fulfilled', id: point.id, response }))
+          .catch(error => ({ status: 'rejected', id: point.id, error }));
+      });
+
+      console.log('[Config.js] handleSave: Awaiting all promises...');
+      const results = await Promise.all([...teamUpdatePromises, ...pointsUpdatePromises]); // Using all instead of allSettled for simpler individual logging
+      console.log('[Config.js] handleSave: All promises settled. Results:', results);
 
       const failedUpdates = results.filter(result => result.status === 'rejected');
       if (failedUpdates.length > 0) {
-          console.error('Some configuration updates failed:', failedUpdates);
+          console.error('[Config.js] handleSave: Some configuration updates failed:', failedUpdates);
+          failedUpdates.forEach(fail => {
+            console.error(`[Config.js] handleSave: Failed update for ID ${fail.id}. Error:`, fail.error.response?.data || fail.error.message);
+          });
           throw new Error('save-config-partial-error');
       }
 
+      console.log('[Config.js] handleSave: All updates successful.');
       setSuccessMessage('save-config-success');
     } catch (err) {
-      console.error('Error saving configurations:', err);
+      console.error('[Config.js] handleSave: Error during save operation:', err);
       setError(err.message === 'save-config-partial-error' ? err.message : 'save-config-error');
     } finally {
+      console.log('[Config.js] handleSave: Save operation finished. Setting isSaving to false.');
       setIsSaving(false);
     }
   };
