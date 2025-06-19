@@ -210,7 +210,7 @@ export default function PenaltySubmissionForm() {
                   {isLoadingUsers && <MenuItem value=""><CircularProgress size={20} /></MenuItem>}
                   {users.map((user) => (
                     <MenuItem key={user.id} value={user.id}>
-                      {user.usertag} (ID: {user.id})
+                      {user.usertag}
                     </MenuItem>
                   ))}
                    {!isLoadingUsers && users.length === 0 && selectedChampionshipId && 

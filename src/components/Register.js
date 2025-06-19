@@ -4,6 +4,7 @@ import { Localized } from '@fluent/react';
 import { Container, Typography, TextField, Button, Box, Alert, CircularProgress, Paper, Avatar, Grid, Link } from '@mui/material';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import axiosInstance from '../utils/axiosInstance';
+import RecoveryCodesDisplay from './RecoveryCodesDisplay';
 
 // Simple debounce function
 const debounce = (func, delay) => {
@@ -28,6 +29,7 @@ function Register() {
   const [isLoading, setIsLoading] = useState(false); // General loading state for submission
   const [message, setMessage] = useState(''); // For general success/error messages
   const [success, setSuccess] = useState(false); // To determine Alert severity
+  const [recoveryCodes, setRecoveryCodes] = useState([]);
   const navigate = useNavigate();
 
   // --- Driver Number Validation --- 
@@ -121,8 +123,13 @@ function Register() {
       if (response.data.success) {
         setMessage(response.data.message || 'register-success'); // Use success message from backend
         setSuccess(true);
-        // Redirect after a delay
-        setTimeout(() => navigate('/login'), 2000);
+        // Assuming the backend now returns recovery codes on successful registration
+        if (response.data.recoveryCodes) {
+            setRecoveryCodes(response.data.recoveryCodes);
+        } else {
+            // If no recovery codes are returned, redirect to login after a delay.
+            setTimeout(() => navigate('/login'), 2000);
+        }
       } else {
         // Use error message from backend if available
         setMessage(response.data.message || 'registration-failed'); 
@@ -135,6 +142,10 @@ function Register() {
       setIsLoading(false);
     }
   };
+
+  if (recoveryCodes.length > 0) {
+    return <RecoveryCodesDisplay recoveryCodes={recoveryCodes} />;
+  }
 
   return (
     <Container component="main" maxWidth="xs" sx={{ mt: 8, mb: 4 }}>

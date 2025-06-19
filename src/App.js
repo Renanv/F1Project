@@ -9,6 +9,7 @@ import axiosInstance from './utils/axiosInstance';
 import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
+import ResetPassword from './components/ResetPassword';
 import Config from './components/Config';
 import DriverRankings from './components/RankingsPage';
 import AccountPage from './components/AccountPage';
@@ -135,6 +136,7 @@ function App() {
             <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} />} />
             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<ProtectedRoute isLoggedIn={isLoggedIn} />}>
               <Route path="/drivers" element={<DriverRankings isAdmin={isAdmin} />} />
               <Route path="/account" element={<AccountPage />} />

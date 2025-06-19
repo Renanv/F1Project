@@ -7,6 +7,7 @@ import { Localized } from '@fluent/react';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import PhotoCamera from '@mui/icons-material/PhotoCamera';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
+import RecoveryCodesDisplay from './RecoveryCodesDisplay';
 
 // Simple debounce function (reuse from Register? Consider moving to a utils file)
 const debounce = (func, delay) => {
@@ -41,6 +42,11 @@ function AccountPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [error, setError] = useState(null); // General form errors
   const [successMessage, setSuccessMessage] = useState(''); // General form success
+
+  // Recovery Code States
+  const [hasActiveCodes, setHasActiveCodes] = useState(true); // Assume they have codes initially to avoid flash of button
+  const [newlyGeneratedCodes, setNewlyGeneratedCodes] = useState([]);
+  const [isLoadingCodes, setIsLoadingCodes] = useState(false);
 
   // Driver number specific states
   const [driverNumberError, setDriverNumberError] = useState('');
@@ -78,6 +84,10 @@ function AccountPage() {
         setDriverPictureUrl(fetchedUser.driver_picture_url || null);
         console.log("State driverPictureUrl after set:", fetchedUser.driver_picture_url || null); // Log what was set
         setPaymentConfirmationUrl(fetchedUser.payment_confirmation_url || null);
+
+        // Fetch recovery code status
+        const recoveryStatusResponse = await axiosInstance.get('/api/users/me/recovery-status');
+        setHasActiveCodes(recoveryStatusResponse.data.hasActiveCodes);
 
         // If a payment confirmation URL/pathname exists, fetch its signed URL for viewing
         if (fetchedUser.payment_confirmation_url) {
@@ -256,6 +266,25 @@ function AccountPage() {
       setError(err.response?.data?.message || 'payment-confirmation-upload-error');
     } finally {
       setUploadingPaymentConfirmation(false);
+    }
+  };
+
+  const handleGenerateCodes = async () => {
+    setIsLoadingCodes(true);
+    setError(null);
+    setSuccessMessage('');
+    try {
+      const response = await axiosInstance.post('/api/users/me/generate-recovery-codes');
+      if (response.data.success) {
+        setNewlyGeneratedCodes(response.data.recoveryCodes);
+        setHasActiveCodes(true); // They now have active codes
+        setSuccessMessage('recovery-codes-generated-success');
+      }
+    } catch (err) {
+      console.error("Error generating recovery codes:", err);
+      setError(err.response?.data?.message || 'generate-codes-error');
+    } finally {
+      setIsLoadingCodes(false);
     }
   };
 
@@ -631,9 +660,53 @@ function AccountPage() {
             </Box>
           </Paper>
         </Grid>
+
+        {/* Recovery Codes Section */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              <Localized id="account-recovery-codes-heading" />
+            </Typography>
+            
+            {newlyGeneratedCodes.length > 0 ? (
+              <>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  <Localized id="recovery-codes-save-warning" />
+                </Alert>
+                <RecoveryCodesDisplay recoveryCodes={newlyGeneratedCodes} showLoginButton={false} />
+                <Button
+                  variant="contained"
+                  sx={{ mt: 2 }}
+                  onClick={() => setNewlyGeneratedCodes([])}
+                >
+                  <Localized id="recovery-codes-done-button" />
+                </Button>
+              </>
+            ) : (
+              <>
+                {hasActiveCodes ? (
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    <Localized id="account-has-active-codes-prompt" />
+                  </Typography>
+                ) : (
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    <Localized id="account-no-active-codes-prompt" />
+                  </Typography>
+                )}
+                <Button
+                  variant="contained"
+                  onClick={handleGenerateCodes}
+                  disabled={isLoadingCodes}
+                >
+                  {isLoadingCodes ? <CircularProgress size={24} /> : <Localized id="generate-recovery-codes-button" />}
+                </Button>
+              </>
+            )}
+          </Paper>
+        </Grid>
       </Grid>
     </Container>
   );
 }
 
-export default AccountPage; 
+export default AccountPage;

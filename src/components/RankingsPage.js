@@ -7,25 +7,28 @@ import PersonIcon from '@mui/icons-material/Person';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import GroupWorkIcon from '@mui/icons-material/GroupWork';
+import { constructorTiers } from '../utils/constructors'; // Import from new location
 
 // Import the new view components
 import DriverRankingsView from './rankings/DriverRankingsView';
 import TeamRankingsView from './rankings/TeamRankingsView';
 import ConstructorsRankingsView from './rankings/ConstructorsRankingsView';
+import ClashesView from './rankings/ClashesView';
 
 // Define Constructor Tiers for Score-based ranking
-const constructorTiers = [
-    { ranks: [1, 2], name: "Red Bull", color: '#0600EF' },
-    { ranks: [3, 4], name: "McLaren", color: '#FF8700' },
-    { ranks: [5, 6], name: "Ferrari", color: '#DC0000' },
-    { ranks: [7, 8], name: "Mercedes", color: '#00D2BE' },
-    { ranks: [9, 10], name: "Aston Martin", color: '#006F62' },
-    { ranks: [11, 12], name: "Alpine", color: '#0090FF' },
-    { ranks: [13, 14], name: "VCARB", color: '#00BFFF' }, // Visa Cash App RB
-    { ranks: [15, 16], name: "Haas", color: '#FFFFFF', textColor: '#000000' },
-    { ranks: [17, 18], name: "Williams", color: '#005AFF' },
-    { ranks: [19, 20], name: "Sauber", color: '#00E100' } // Kick Sauber
-];
+// const constructorTiers = [
+//     { ranks: [1, 2], name: "Red Bull", color: '#0600EF' },
+//     { ranks: [3, 4], name: "McLaren", color: '#FF8700' },
+//     { ranks: [5, 6], name: "Ferrari", color: '#DC0000' },
+//     { ranks: [7, 8], name: "Mercedes", color: '#00D2BE' },
+//     { ranks: [9, 10], name: "Aston Martin", color: '#006F62' },
+//     { ranks: [11, 12], name: "Alpine", color: '#0090FF' },
+//     { ranks: [13, 14], name: "VCARB", color: '#00BFFF' }, // Visa Cash App RB
+//     { ranks: [15, 16], name: "Haas", color: '#FFFFFF', textColor: '#000000' },
+//     { ranks: [17, 18], name: "Williams", color: '#005AFF' },
+//     { ranks: [19, 20], name: "Sauber", color: '#00E100' } // Kick Sauber
+// ];
 
 function RankingsPage({ isAdmin }) {
   const queryClient = useQueryClient();
@@ -177,6 +180,8 @@ function RankingsPage({ isAdmin }) {
         return <TeamRankingsView teamRankings={teamRankings} isMobile={isMobile} />;
     } else if (rankingType === 'constructors') {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} constructorTiers={constructorTiers} />;
+    } else if (rankingType === 'clashes') {
+        return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} />;
     }
 
     if ((rankingType === 'driver' && drivers.length === 0 && !isLoadingDriverRankings) || 
@@ -213,6 +218,10 @@ function RankingsPage({ isAdmin }) {
           <ToggleButton value="constructors" aria-label="Constructors Rankings">
             <AssignmentIcon sx={{ mr: isMobile ? 0 : 1}} />
             {!isMobile && <Localized id="ranking-type-constructors" fallback="Constructors"/>}
+          </ToggleButton>
+          <ToggleButton value="clashes" aria-label="Clashes Rankings">
+            <GroupWorkIcon sx={{ mr: isMobile ? 0 : 1}} /> 
+            {!isMobile && <Localized id="rankings-clashes-tab" />}
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>

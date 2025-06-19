@@ -512,3 +512,66 @@ admin-no-payment-confirmations = Nenhum comprovante de pagamento encontrado.
 admin-view-payment-confirmation-link = Ver Comprovante
 admin-uploaded-files-nav-link = Arquivos Carregados
 admin-desc-uploaded-files = Revise e gerencie as fotos dos pilotos e os comprovantes de pagamento carregados pelos usuários.
+
+# Recuperação de Senha
+register-success-title = Cadastro Realizado com Sucesso!
+recovery-codes-warning = Por favor, salve estes códigos de recuperação em um lugar seguro. Você não poderá vê-los novamente. Esta é a única forma de recuperar sua conta se você perder sua senha.
+copy-codes-button = Copiar Códigos
+proceed-to-login-button = Eu salvei meus códigos. Prosseguir para o Login.
+forgot-password-link = Esqueceu a senha?
+reset-password-title = Redefinir Senha
+recovery-code-label = Código de Recuperação
+verify-code-button = Verificar Código
+new-password-label = Nova Senha
+confirm-new-password-label = Confirmar Nova Senha
+reset-password-button = Redefinir Senha
+verify-code-failed = Falha ao verificar o código de recuperação. Por favor, verifique seu nome de usuário e código.
+password-reset-success = Sua senha foi redefinida com sucesso. Você será redirecionado para a página de login.
+password-reset-failed = Falha ao redefinir a senha. Por favor, tente novamente.
+password-mismatch = As senhas não correspondem.
+register-link = Não tem uma conta? Cadastre-se
+
+# Account Page - Recovery Codes
+account-recovery-codes-heading = Recuperação de Conta
+account-has-active-codes = Você possui códigos de recuperação ativos e não utilizados. Mantenha-os em segurança.
+account-no-active-codes-prompt = Você não possui códigos de recuperação ativos. Gere um conjunto agora para proteger sua conta.
+generate-recovery-codes-button = Gerar Novos Códigos de Recuperação
+recovery-codes-generated-success = Novos códigos gerados com sucesso! Por favor, guarde-os em um lugar seguro.
+recovery-codes-save-warning = Por favor, salve estes novos códigos em um lugar seguro. Você não poderá vê-los novamente.
+recovery-codes-done-button = Eu salvei meus códigos
+account-has-active-codes-prompt = Você possui códigos de recuperação ativos e não utilizados. Você pode gerar um novo conjunto, mas isso invalidará todos os seus códigos antigos.
+
+# --- Penalidades ---
+penalties-page-title = Penalidades
+penalties-list-title = Penalidades Enviadas
+submit-penalty-title = Enviar Penalidade
+select-accused-user-label = Piloto Acusado
+
+# --- Rankings de Equipes ---
+team-rankings-title = Classificação de Equipes
+team-rankings-header-position = Pos
+team-rankings-header-team = Equipe
+team-rankings-header-points = Pontos
+
+# --- Vista de Embates ---
+rankings-clashes-tab = Embates
+clashes-select-race = Selecione uma corrida para ver os embates
+clashes-no-race-selected = Por favor, selecione uma corrida para ver os resultados dos embates.
+clashes-no-matchups-configured = Os embates ainda não foram configurados para este campeonato.
+clashes-loading-error = Ocorreu um erro ao carregar os dados dos embates.
+clashes-qualy = Qualy
+clashes-fastest-lap = Melhor Volta
+clashes-race-finish = Posição Final
+clashes-select-driver = Selecionar Piloto
+clashes-save-button = Salvar
+clashes-save-success = Resultado do embate salvo com sucesso.
+clashes-save-error = Ocorreu um erro ao salvar o resultado do embate.
+
+# --- Configurador de Embates ---
+clashes-config-title = Configurar Embates
+clashes-config-instructions = Defina os 10 embates de equipes fixas para este campeonato. Esta configuração será aplicada a todas as corridas deste campeonato.
+clashes-config-load-teams-error = Falha ao carregar as equipes para configuração.
+clashes-config-all-fields-required = Todos os 10 embates devem ser totalmente configurados com duas equipes cada.
+clashes-config-teams-must-be-different = Uma equipe não pode ser confrontada contra si mesma.
+clashes-config-save-error = Ocorreu um erro ao salvar os embates.
+clashes-config-save-button = Salvar Embates

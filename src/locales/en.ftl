@@ -515,3 +515,77 @@ admin-no-payment-confirmations = No payment confirmations found.
 admin-view-payment-confirmation-link = View Confirmation
 admin-uploaded-files-nav-link = Uploaded Files
 admin-desc-uploaded-files = Review and manage user-uploaded driver pictures and payment confirmations.
+
+# Password Recovery
+register-success-title = Registration Successful!
+recovery-codes-warning = Please save these recovery codes in a safe place. You will not be able to see them again. These are the only way to recover your account if you lose your password.
+copy-codes-button = Copy Codes
+proceed-to-login-button = I have saved my codes. Proceed to Login.
+forgot-password-link = Forgot Password?
+reset-password-title = Reset Password
+recovery-code-label = Recovery Code
+verify-code-button = Verify Code
+new-password-label = New Password
+confirm-new-password-label = Confirm New Password
+reset-password-button = Reset Password
+verify-code-failed = Failed to verify recovery code. Please check your username and code.
+password-reset-success = Your password has been reset successfully. You will be redirected to the login page.
+password-reset-failed = Failed to reset password. Please try again.
+password-mismatch = Passwords do not match.
+register-link = Don't have an account? Sign Up
+
+# Account Page - Recovery Codes
+account-recovery-codes-heading = Account Recovery
+account-has-active-codes = You have active, unused recovery codes. Keep them safe.
+account-no-active-codes-prompt = You do not have any active recovery codes. Generate a set now to protect your account.
+generate-recovery-codes-button = Generate New Recovery Codes
+recovery-codes-generated-success = New codes generated successfully! Please save them in a safe place.
+recovery-codes-save-warning = Please save these new codes in a safe place. You will not be able to see them again.
+recovery-codes-done-button = I have saved my codes
+account-has-active-codes-prompt = You have active, unused recovery codes. You can generate a new set, but this will invalidate all of your old codes.
+
+# Account Page - Recovery Codes
+account-recovery-codes-heading = Account Recovery
+account-has-active-codes = You have active, unused recovery codes. Keep them safe.
+account-no-active-codes-prompt = You do not have any active recovery codes. Generating new codes will invalidate any old ones you might have saved.
+generate-recovery-codes-button = Generate New Recovery Codes
+recovery-codes-generated-success = New recovery codes generated successfully. Please save them in a safe place.
+generate-codes-error = An error occurred while generating new recovery codes. Please try again.
+
+# --- Team Rankings ---
+team-rankings-title = Team Rankings
+team-rankings-header-position = Pos
+team-rankings-header-team = Team
+team-rankings-header-points = Points
+
+# --- Clashes View ---
+rankings-clashes-tab = Clashes
+clashes-select-race = Select a race to view clashes
+clashes-no-race-selected = Please select a race to see the clash results.
+clashes-no-matchups-configured = Clash matchups have not been configured for this championship yet.
+clashes-loading-error = An error occurred while loading the clash data.
+clashes-qualy = Qualy
+clashes-fastest-lap = Fastest Lap
+clashes-race-finish = Race Finish
+clashes-select-driver = Select Driver
+clashes-save-button = Save
+clashes-save-success = Clash result saved successfully.
+clashes-save-error = An error occurred while saving the clash result.
+
+# --- Clash Matchup Configurator ---
+clashes-config-title = Configure Clash Matchups
+clashes-config-instructions = Define the 10 fixed team matchups for this championship. This configuration will apply to all races within this championship.
+clashes-config-load-teams-error = Failed to load teams for configuration.
+clashes-config-all-fields-required = All 10 matchups must be fully configured with two teams each.
+clashes-config-teams-must-be-different = A team cannot be matched against itself.
+clashes-config-save-error = An error occurred while saving the matchups.
+clashes-config-save-button = Save Matchups
+
+# --- Penalties ---
+penalties-page-title = Penalties
+penalties-list-title = Submitted Penalties
+submit-penalty-title = Submit Penalty
+select-accused-user-label = Accused User
+
+# --- Penalty Details ---
+penalty-details-title = Penalty Details

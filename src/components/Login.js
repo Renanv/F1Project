@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Container, Typography, Box, TextField, Button, Alert, CircularProgress, Paper } from '@mui/material';
+import { Container, Typography, Box, TextField, Button, Alert, CircularProgress, Paper, Grid, Link } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { Localized } from '@fluent/react';
 import { Avatar } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -74,7 +75,18 @@ function Login({ onLoginSuccess }) {
                 >
                     {isLoading ? <CircularProgress size={24} /> : <Localized id="login-button" />}
                 </Button>
-                 {/* Link to Register can be added back if needed and key exists */}
+                <Grid container justifyContent="flex-end">
+                    <Grid item>
+                        <Link component={RouterLink} to="/register" variant="body2">
+                            <Localized id="register-link" />
+                        </Link>
+                    </Grid>
+                    <Grid item>
+                        <Link component={RouterLink} to="/reset-password" variant="body2" sx={{ ml: 2 }}>
+                             <Localized id="forgot-password-link" />
+                        </Link>
+                    </Grid>
+                </Grid>
             </Box>
         </Paper>
     </Container>
