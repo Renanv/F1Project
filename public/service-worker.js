@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.5'; // Increment this with each app update that needs cache busting
+const CACHE_VERSION = 'v1.0.6'; // Increment this with each app update that needs cache busting
 const CURRENT_CACHE_NAME = `f1project-cache-${CACHE_VERSION}`;
 
 // Add main application shell files here.
