@@ -46,6 +46,16 @@ export default function PenaltySubmissionForm() {
     },
   });
 
+  useEffect(() => {
+    if (championships && championships.length > 0) {
+      if (!selectedChampionshipId || !championships.find(c => c.id === selectedChampionshipId)) {
+        setSelectedChampionshipId(championships[0].id);
+      }
+    } else if (!isLoadingChampionships && (!championships || championships.length === 0)) {
+      setSelectedChampionshipId('');
+    }
+  }, [championships, isLoadingChampionships, selectedChampionshipId]);
+
   // Fetch races for the selected championship
   const {
     data: races = [],

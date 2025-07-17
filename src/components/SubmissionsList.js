@@ -5,7 +5,15 @@ import axiosInstance from '../utils/axiosInstance';
 import SubmissionCard from './SubmissionCard';
 
 function SubmissionsList({ type, isAdmin }) {
-    const [statusFilter, setStatusFilter] = useState(isAdmin ? 'PENDING' : 'ALL');
+    const [statusFilter, setStatusFilter] = useState(() => {
+        if (type === 'CHANNEL') {
+            // Channels are auto-approved, so default to showing them.
+            return 'APPROVED';
+        }
+        // For videos, admins default to the moderation queue.
+        // Non-admins will have the backend filter for them (approved + their own).
+        return isAdmin ? 'PENDING' : 'ALL';
+    });
     const [submissions, setSubmissions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);

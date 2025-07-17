@@ -55,19 +55,20 @@ function RankingsPage({ isAdmin }) {
       const res = await axiosInstance.get('/api/championships');
       return res.data;
     },
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        if (!selectedChampionshipId || !data.find(c => c.id === selectedChampionshipId)) {
-          setSelectedChampionshipId(data[0].id);
-        }
-      } else {
-        setSelectedChampionshipId('');
-      }
-    },
     onError: (err) => {
       console.error('Error fetching championships:', err);
     }
   });
+
+  useEffect(() => {
+    if (championshipsList && championshipsList.length > 0) {
+      if (!selectedChampionshipId || !championshipsList.find(c => c.id === selectedChampionshipId)) {
+        setSelectedChampionshipId(championshipsList[0].id);
+      }
+    } else if (!isLoadingChampionships && (!championshipsList || championshipsList.length === 0)) {
+      setSelectedChampionshipId('');
+    }
+  }, [championshipsList, isLoadingChampionships, selectedChampionshipId]);
 
   // Fetch driver rankings using React Query
   const {

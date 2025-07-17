@@ -78,17 +78,22 @@ function Home({ isLoggedIn, isAdmin }) {
       const response = await axiosInstance.get('/api/users/me/participated-championships');
       return response.data;
     },
-    enabled: !!isLoggedIn, 
-    onSuccess: (data) => {
-      if (data && data.length > 0) {
-        if (!selectedChampionshipId || !data.find(c => c.id === selectedChampionshipId)){
-            setSelectedChampionshipId(data[0].id);
-        }
-      } else {
-        setSelectedChampionshipId('');
-      }
-    },
+    enabled: !!isLoggedIn,
   });
+
+  useEffect(() => {
+    // This effect runs when the list of championships is successfully fetched or changes.
+    if (championshipsList && championshipsList.length > 0) {
+      // If no championship is currently selected, or if the selected one is no longer in the list,
+      // default to the first available championship.
+      if (!selectedChampionshipId || !championshipsList.find(c => c.id === selectedChampionshipId)) {
+        setSelectedChampionshipId(championshipsList[0].id);
+      }
+    } else if (!isLoadingChampionshipsList && (!championshipsList || championshipsList.length === 0)) {
+      // If loading is finished and the list is empty, ensure no championship is selected.
+      setSelectedChampionshipId('');
+    }
+  }, [championshipsList, isLoadingChampionshipsList, selectedChampionshipId]);
 
   // Memoize the current championship data from the query result
   const currentChampionship = useMemo(() => 

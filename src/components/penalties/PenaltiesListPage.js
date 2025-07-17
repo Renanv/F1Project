@@ -75,12 +75,17 @@ export default function PenaltiesListPage() {
       const response = await axiosInstance.get('/api/championships');
       return response.data;
     },
-    onSuccess: (data) => {
-      if (data && data.length > 0 && !selectedChampionshipId) {
-        setSelectedChampionshipId(data[0].id);
-      }
-    },
   });
+
+  useEffect(() => {
+    if (championships && championships.length > 0) {
+      if (!selectedChampionshipId || !championships.find(c => c.id === selectedChampionshipId)) {
+        setSelectedChampionshipId(championships[0].id);
+      }
+    } else if (!isLoadingChampionships && (!championships || championships.length === 0)) {
+      setSelectedChampionshipId('');
+    }
+  }, [championships, isLoadingChampionships, selectedChampionshipId]);
 
   // Fetch penalties based on selected championship and pagination
   const {
