@@ -37,6 +37,7 @@ function CommunityPage({ isAdmin }) {
                     >
                         <Tab label={<Localized id="community-tab-channels" />} value="channels" />
                         <Tab label={<Localized id="community-tab-videos" />} value="videos" />
+                        <Tab label={<Localized id="community-tab-live" />} value="live" />
                     </Tabs>
                 </Box>
                 
@@ -46,6 +47,10 @@ function CommunityPage({ isAdmin }) {
 
                 {currentTab === 'videos' && (
                     <SubmissionsList type="VIDEO" isAdmin={isAdmin} key={`videos-${submissionCount}`} />
+                )}
+
+                {currentTab === 'live' && (
+                    <SubmissionsList type="VIDEO" category="LIVE" isAdmin={isAdmin} key={`live-${submissionCount}`} />
                 )}
             </Paper>
         </Container>

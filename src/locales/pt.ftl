@@ -307,6 +307,8 @@ community-page-title = Canais & Vídeos
 community-page-description = Compartilhe o seu canal Twitch ou YouTube, ou um vídeo de um grande momento do Joga Bonito.
 community-tab-channels = Canais
 community-tab-videos = Vídeos
+community-tab-live = Live
+no-submissions-found = Nenhum envio encontrado.
 
 # Submission Form
 submission-form-title = Envie Seu Conteúdo

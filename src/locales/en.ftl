@@ -308,6 +308,8 @@ community-page-title = Channels & Videos
 community-page-description = Share your Twitch or YouTube channel, or a video of a great moment.
 community-tab-channels = Channels
 community-tab-videos = Videos
+community-tab-live = Live
+no-submissions-found = No submissions found.
 
 # Submission Form
 submission-form-title = Submit Your Content

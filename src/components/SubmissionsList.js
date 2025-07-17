@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup, Stack, Grid } from '@mui/material';
 import { Localized } from '@fluent/react';
 import axiosInstance from '../utils/axiosInstance';
 import SubmissionCard from './SubmissionCard';
 
-function SubmissionsList({ type, isAdmin }) {
+function SubmissionsList({ type, isAdmin, category = null }) {
     const [statusFilter, setStatusFilter] = useState(() => {
         if (type === 'CHANNEL') {
             // Channels are auto-approved, so default to showing them.
@@ -23,7 +23,10 @@ function SubmissionsList({ type, isAdmin }) {
             setIsLoading(true);
             setError(null);
             try {
-                const params = { type, ...(statusFilter !== 'ALL' && { status: statusFilter }) };
+                const params = { type, ...(isAdmin && statusFilter !== 'ALL' && { status: statusFilter }) };
+                if (category) {
+                    params.category = category;
+                }
                 const response = await axiosInstance.get('/api/community-submissions', { params });
                 setSubmissions(response.data.data);
             } catch (err) {
@@ -34,15 +37,15 @@ function SubmissionsList({ type, isAdmin }) {
         };
 
         fetchSubmissions();
-    }, [type, statusFilter]);
+    }, [type, statusFilter, isAdmin, category]);
 
-    const handleStatusChange = async (submissionId, newStatus) => {
+    const handleStatusUpdate = async (submissionId, newStatus) => {
         try {
             await axiosInstance.put(`/api/community-submissions/${submissionId}/status`, { status: newStatus });
-            // Refresh the list
-            const params = { type, ...(statusFilter !== 'ALL' && { status: statusFilter }) };
-            const response = await axiosInstance.get('/api/community-submissions', { params });
-            setSubmissions(response.data.data);
+            // Refresh the list to show the updated status
+            setSubmissions(prev => 
+                prev.map(s => s.id === submissionId ? { ...s, status: newStatus } : s)
+            );
         } catch (err) {
             console.error("Failed to update submission status", err);
             // Optionally set an error message to display to the user
@@ -55,13 +58,6 @@ function SubmissionsList({ type, isAdmin }) {
         }
     };
 
-    if (isLoading) {
-        return <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box>;
-    }
-
-    if (error) {
-        return <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>;
-    }
 
     return (
         <Box sx={{ mt: 2 }}>
@@ -82,18 +78,27 @@ function SubmissionsList({ type, isAdmin }) {
                 </Box>
             )}
 
-            {submissions && submissions.length > 0 ? (
-                submissions.map(submission => (
-                    <SubmissionCard
-                        key={submission.id}
-                        submission={submission}
-                        onStatusChange={handleStatusChange}
-                        isAdmin={isAdmin}
-                    />
-                ))
+            {isLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                    <CircularProgress />
+                </Box>
+            ) : error ? (
+                <Alert severity="error">{error}</Alert>
+            ) : submissions.length > 0 ? (
+                <Grid container spacing={2}>
+                    {submissions.map((submission) => (
+                        <Grid item xs={12} sm={6} md={4} key={submission.id}>
+                            <SubmissionCard 
+                                submission={submission} 
+                                onStatusChange={handleStatusUpdate} 
+                                isAdmin={isAdmin}
+                            />
+                        </Grid>
+                    ))}
+                </Grid>
             ) : (
-                <Typography sx={{ textAlign: 'center', my: 4 }} color="text.secondary">
-                    <Localized id="community-no-submissions" />
+                <Typography variant="subtitle1" align="center" sx={{ p: 3 }}>
+                    <Localized id="no-submissions-found" />
                 </Typography>
             )}
         </Box>

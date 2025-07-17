@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typography, CircularProgress, Alert } from '@mui/material';
+import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typography, CircularProgress, Alert, Grid } from '@mui/material';
 import { Localized } from '@fluent/react';
 import axiosInstance from '../utils/axiosInstance';
 
@@ -81,20 +81,24 @@ function SubmissionForm({ onSubmissionSuccess }) {
             />
 
             {type === 'VIDEO' && (
-                <FormControl fullWidth margin="normal" required>
-                    <InputLabel id="video-category-label"><Localized id="submission-category-label" /></InputLabel>
-                    <Select
-                        labelId="video-category-label"
-                        value={category}
-                        label={<Localized id="submission-category-label" />}
-                        onChange={(e) => setCategory(e.target.value)}
-                    >
-                        <MenuItem value="LIVE"><Localized id="submission-category-live" /></MenuItem>
-                        <MenuItem value="SWITCHBACK"><Localized id="submission-category-switchback" /></MenuItem>
-                        <MenuItem value="DOUBLE_OVERTAKE"><Localized id="submission-category-double-overtake" /></MenuItem>
-                        <MenuItem value="TRIPLE_OVERTAKE"><Localized id="submission-category-triple-overtake" /></MenuItem>
-                    </Select>
-                </FormControl>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                    <Grid item xs={12}>
+                        <FormControl fullWidth margin="normal" required>
+                            <InputLabel id="video-category-label"><Localized id="submission-category-label" /></InputLabel>
+                            <Select
+                                labelId="video-category-label"
+                                value={category}
+                                label={<Localized id="submission-category-label" />}
+                                onChange={(e) => setCategory(e.target.value)}
+                            >
+                                <MenuItem value="LIVE"><Localized id="submission-category-live" /></MenuItem>
+                                <MenuItem value="SWITCHBACK"><Localized id="submission-category-switchback" /></MenuItem>
+                                <MenuItem value="DOUBLE_OVERTAKE"><Localized id="submission-category-double-overtake" /></MenuItem>
+                                <MenuItem value="TRIPLE_OVERTAKE"><Localized id="submission-category-triple-overtake" /></MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                </Grid>
             )}
 
             <Button
