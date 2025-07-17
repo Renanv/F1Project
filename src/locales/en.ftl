@@ -297,11 +297,52 @@ no-data-for-ranking = No data available for the selected ranking type.
 
 # Admin LSF Score Reveal Race
 admin-lsf-score-reveal-race-label = LSF Score Display Point
-no-participated-championships = No participated championship found.
+admin-lsf-score-reveal-race-live-option = Show Current Score (Live)
+no-participated-championships = No participated championships found
 
-clear-cache-reload = Clear Cache & Reload
+clear-cache-reload = Clear Cache and Reload
 
-# Penalty System
+# Community Page
+community-page-link = Channels & Videos
+community-page-title = Channels & Videos
+community-page-description = Share your Twitch or YouTube channel, or a video of a great moment.
+community-tab-channels = Channels
+community-tab-videos = Videos
+
+# Submission Form
+submission-form-title = Submit Your Content
+submission-type-label = Content Type
+submission-type-channel = Channel
+submission-type-video = Video
+submission-url-label = YouTube or Twitch URL
+submission-category-label = Video Category
+submission-category-live = Live Stream Highlight
+submission-category-switchback = Switchback (X)
+submission-category-double-overtake = Double Overtake
+submission-category-triple-overtake = Triple Overtake
+submission-submit-button = Submit
+submission-success-message = Your content has been submitted for review!
+submission-error-message = There was an error submitting your content. Please try again.
+submission-error-url = Please enter a valid YouTube or Twitch URL.
+
+# Submission Card
+submission-status-pending = Pending Review
+submission-status-approved = Approved
+submission-status-rejected = Rejected
+submission-by-label = Submitted by
+submission-reviewed-by-label = Reviewed by
+submission-approve-button = Approve
+submission-reject-button = Reject
+
+
+# Filter Toggles
+filter-all = All
+filter-pending = Pending
+filter-approved = Approved
+filter-rejected = Rejected
+
+
+# System de Penalidades
 penalties-list-title = Penalties List
 submit-new-penalty-button = Submit New Penalty
 filter-by-championship-label = Filter by Championship

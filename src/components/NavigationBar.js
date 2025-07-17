@@ -14,6 +14,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import GavelIcon from '@mui/icons-material/Gavel';
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 
 // Import additional icons for mobile menu
 import HomeIcon from '@mui/icons-material/Home';
@@ -121,6 +122,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                   <MenuItem onClick={handleClose} component={Link} to="/penalties">
                     <GavelIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="penalties-list-link" />
                   </MenuItem>
+                  <MenuItem onClick={handleClose} component={Link} to="/community">
+                    <OndemandVideoIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="community-page-link" />
+                  </MenuItem>
                   <MenuItem onClick={handleClose} component={Link} to="/account">
                     <AccountCircleIcon sx={{ mr: 1, verticalAlign: 'middle' }} fontSize="small" /> <Localized id="account-link" />
                   </MenuItem>
@@ -163,6 +167,9 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                  </Button>
                  <Button color="inherit" component={Link} to="/penalties">
                    <Localized id="penalties-list-link" />
+                 </Button>
+                 <Button color="inherit" component={Link} to="/community">
+                    <Localized id="community-page-link" />
                  </Button>
                  <Button color="inherit" component={Link} to="/account">
                    <Localized id="account-link" />

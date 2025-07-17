@@ -28,6 +28,7 @@ import PenaltiesListPage from './components/penalties/PenaltiesListPage';
 import PenaltyDetailPage from './components/penalties/PenaltyDetailPage';
 import MyJuryTasksPage from './components/penalties/MyJuryTasksPage';
 import AdminPenaltyManager from './components/admin/AdminPenaltyManager';
+import CommunityPage from './components/CommunityPage'; // Import the new page
 
 // Create a client
 const queryClient = new QueryClient();
@@ -145,6 +146,7 @@ function App() {
               <Route path="/penalties/submit" element={<PenaltySubmissionForm />} />
               <Route path="/penalties/:penaltyId" element={<PenaltyDetailPage />} />
               <Route path="/jury/tasks" element={<MyJuryTasksPage />} />
+              <Route path="/community" element={<CommunityPage isAdmin={isAdmin} />} />
             </Route>
             <Route element={<AdminRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin} />}>
               <Route path="/admin" element={<AdminPanel />} />

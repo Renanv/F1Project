@@ -39,7 +39,11 @@ const TeamRankingsView = ({ teamRankings, isMobile }) => {
         </TableHead>
         <TableBody>
           {teamRankings.map((team, index) => (
-            <TableRow hover key={team.team_id}>
+            <TableRow 
+              hover 
+              key={team.team_id}
+              sx={{ '&:nth-of-type(odd)': { backgroundColor: theme.palette.action.hover } }}
+            >
               <TableCell component="th" scope="row">{index + 1}</TableCell>
               <TableCell>{team.team_name}</TableCell>
               <TableCell>{team.total_team_points}</TableCell>

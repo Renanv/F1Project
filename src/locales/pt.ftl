@@ -301,6 +301,45 @@ no-participated-championships = Campeonato participante não encontrado
 
 clear-cache-reload = Limpar Cache e Recarregar
 
+# Community Page
+community-page-link = Canais & Vídeos
+community-page-title = Canais & Vídeos
+community-page-description = Compartilhe o seu canal Twitch ou YouTube, ou um vídeo de um grande momento do Joga Bonito.
+community-tab-channels = Canais
+community-tab-videos = Vídeos
+
+# Submission Form
+submission-form-title = Envie Seu Conteúdo
+submission-type-label = Tipo de Conteúdo
+submission-type-channel = Canal
+submission-type-video = Vídeo
+submission-url-label = URL do YouTube ou Twitch
+submission-category-label = Categoria do Vídeo
+submission-category-live = Destaque de Live
+submission-category-switchback = Manobra (X)
+submission-category-double-overtake = Ultrapassagem Dupla
+submission-category-triple-overtake = Ultrapassagem Tripla
+submission-submit-button = Enviar
+submission-success-message = Seu conteúdo foi enviado para análise!
+submission-error-message = Ocorreu um erro ao enviar seu conteúdo. Por favor, tente novamente.
+submission-error-url = Por favor, insira uma URL válida do YouTube ou Twitch.
+
+# Submission Card
+submission-status-pending = Pendente
+submission-status-approved = Aprovado
+submission-status-rejected = Rejeitado
+submission-by-label = Enviado por
+submission-reviewed-by-label = Revisado por
+submission-approve-button = Aprovar
+submission-reject-button = Rejeitar
+community-no-submissions = Nenhum envio encontrado.
+
+# Filter Toggles
+filter-all = Todos
+filter-pending = Pendente
+filter-approved = Aprovado
+filter-rejected = Rejeitado
+
 # Sistema de Penalidades
 penalties-list-title = Lista de Penalidades
 submit-new-penalty-button = Submeter Nova Penalidade

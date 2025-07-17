@@ -72,7 +72,11 @@ const DriverRankingsView = ({ drivers, isMobile }) => {
             const teamName = driver.team_name || 'N/A';
 
             return (
-              <TableRow hover key={driver.user_id || driver.id}> 
+              <TableRow 
+                hover 
+                key={driver.user_id || driver.id}
+                sx={{ '&:nth-of-type(odd)': { backgroundColor: theme.palette.action.hover } }}
+              > 
                 <TableCell component="th" scope="row">{index + 1}</TableCell>
                 <TableCell>{driver.name}</TableCell>
                 <TableCell>{driver.driver_number}</TableCell>
