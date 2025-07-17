@@ -329,7 +329,9 @@ submission-status-pending = Pendente
 submission-status-approved = Aprovado
 submission-status-rejected = Rejeitado
 submission-by-label = Enviado por
-submission-reviewed-by-label = Revisado por
+submission-reviewed-by-label = Revisado por { $name }
+
+# Ações do Admin
 submission-approve-button = Aprovar
 submission-reject-button = Rejeitar
 community-no-submissions = Nenhum envio encontrado.

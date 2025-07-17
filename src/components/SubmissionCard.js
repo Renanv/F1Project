@@ -87,7 +87,9 @@ function SubmissionCard({ submission, onStatusChange, isAdmin }) {
 
                 {submission.status !== 'PENDING' && submission.reviewer_username && (
                     <Typography variant="caption" display="block" sx={{ mt: 1, textAlign: 'right', fontStyle: 'italic' }}>
-                        <Localized id="submission-reviewed-by-label" vars={{ name: submission.reviewer_username}} />
+                        <Localized id="submission-reviewed-by-label" vars={{ name: submission.reviewer_username }}>
+                            <span>Revisado por {submission.reviewer_username}</span>
+                        </Localized>
                     </Typography>
                 )}
             </CardContent>

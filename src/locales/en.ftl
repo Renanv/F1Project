@@ -329,11 +329,11 @@ submission-error-url = Please enter a valid YouTube or Twitch URL.
 submission-status-pending = Pending Review
 submission-status-approved = Approved
 submission-status-rejected = Rejected
-submission-by-label = Submitted by
-submission-reviewed-by-label = Reviewed by
+submission-type-label = Type: { $type }
+submission-status-label = Status: { $status }
+submission-reviewed-by-label = Reviewed by { $name }
 submission-approve-button = Approve
 submission-reject-button = Reject
-
 
 # Filter Toggles
 filter-all = All
