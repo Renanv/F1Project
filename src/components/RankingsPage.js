@@ -4,6 +4,7 @@ import { Container, Typography, Table, TableBody, TableCell, TableContainer, Tab
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ import DriverRankingsView from './rankings/DriverRankingsView';
 import TeamRankingsView from './rankings/TeamRankingsView';
 import ConstructorsRankingsView from './rankings/ConstructorsRankingsView';
 import ClashesView from './rankings/ClashesView';
+import PointsByRaceView from './rankings/PointsByRaceView';
 
 // Define Constructor Tiers for Score-based ranking
 // const constructorTiers = [
@@ -183,6 +185,8 @@ function RankingsPage({ isAdmin }) {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} constructorTiers={constructorTiers} />;
     } else if (rankingType === 'clashes') {
         return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} />;
+    } else if (rankingType === 'points-by-race') {
+        return <PointsByRaceView championshipId={selectedChampionshipId} />;
     }
 
     if ((rankingType === 'driver' && drivers.length === 0 && !isLoadingDriverRankings) || 
@@ -215,6 +219,10 @@ function RankingsPage({ isAdmin }) {
           <ToggleButton value="team" aria-label="Team Rankings">
             <GroupIcon sx={{ mr: isMobile ? 0 : 1}} />
             {!isMobile && <Localized id="ranking-type-team" fallback="Teams"/>}
+          </ToggleButton>
+          <ToggleButton value="points-by-race" aria-label="Points by Race Rankings">
+            <LeaderboardIcon sx={{ mr: isMobile ? 0 : 1}} />
+            {!isMobile && <Localized id="ranking-type-points-by-race" fallback="Points by Race"/>}
           </ToggleButton>
           <ToggleButton value="constructors" aria-label="Constructors Rankings">
             <AssignmentIcon sx={{ mr: isMobile ? 0 : 1}} />

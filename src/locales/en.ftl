@@ -632,3 +632,14 @@ select-accused-user-label = Accused User
 
 # --- Penalty Details ---
 penalty-details-title = Penalty Details
+
+# Points by Race View
+total-race-points = Total Race Points
+bonus-points = Bonus
+total-points = Total
+show-race-details = Show Race Details
+race = Race
+points = Points
+no-rankings-found = No rankings found for this championship.
+ranking-type-points-by-race = Points by Race
+pts = pts

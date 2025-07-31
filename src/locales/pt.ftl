@@ -618,3 +618,14 @@ clashes-config-all-fields-required = Todos os 10 embates devem ser totalmente co
 clashes-config-teams-must-be-different = Uma equipe não pode ser confrontada contra si mesma.
 clashes-config-save-error = Ocorreu um erro ao salvar os embates.
 clashes-config-save-button = Salvar Embates
+
+# Points by Race View
+total-race-points = Pontos Totais (Corridas)
+bonus-points = Bônus
+total-points = Total
+show-race-details = Mostrar Detalhes das Corridas
+race = Corrida
+points = Pontos
+no-rankings-found = Nenhuma classificação encontrada para este campeonato.
+ranking-type-points-by-race = Pontos por Corrida
+pts = pts
