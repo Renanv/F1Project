@@ -106,6 +106,31 @@ admin-link-teams = Equipes
 admin-desc-teams = Gerenciar equipes e atribuições de usuários.
 admin-link-config = Configuração
 admin-desc-config = Ajustar configurações da aplicação.
+admin-link-awards = Prêmios
+admin-desc-awards = Visualizar prêmios do pódio e troféus para cada corrida.
+
+# Página de Prêmios
+awards-page-title = Prêmios
+podium-awards-title = Prêmios do Pódio
+no-podium-data = Nenhum dado de pódio disponível para esta corrida
+no-races-in-championship = Nenhuma corrida encontrada neste campeonato
+
+# Beautiful Play Rankings
+ranking-type-beautiful-play = Joga Bonito
+no-beautiful-play-data = Nenhum dado de Joga Bonito encontrado para este campeonato
+beautiful-play-description = Rankings baseados em momentos do programa "Joga Bonito"
+beautiful-play-breakdown = Detalhamento do Joga Bonito
+switchback-plays = Jogadas de Switchback
+double-overtake-plays = Jogadas de Ultrapassagem Dupla
+triple-overtake-plays = Jogadas de Ultrapassagem Tripla
+switchback-short = X
+double-overtake-short = 2x
+triple-overtake-short = 3x
+fetch-beautiful-play-rankings-error = Erro ao buscar rankings de Jogada Bonita
+
+# Common table headers (if not already defined)
+driver = Piloto
+team = Equipe
 
 # Gerenciador de Campeonatos - Modais Editar/Excluir
 admin-edit-championship-title = Editar Campeonato

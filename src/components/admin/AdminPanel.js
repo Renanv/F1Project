@@ -7,6 +7,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'; 
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; // Import for title
 import CollectionsIcon from '@mui/icons-material/Collections'; // Import for Uploaded Files
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium'; // Import for Awards
 import { Localized } from '@fluent/react';
 
 function AdminPanel() {
@@ -36,6 +37,12 @@ function AdminPanel() {
       descriptionId: 'admin-desc-uploaded-files', // New ID for description
       link: '/admin/uploaded-files',
       icon: <CollectionsIcon fontSize="large" />
+    },
+    {
+      titleId: 'admin-link-awards',
+      descriptionId: 'admin-desc-awards',
+      link: '/admin/awards',
+      icon: <WorkspacePremiumIcon fontSize="large" />
     }
     // Add more admin sections here by following the same structure
   ];

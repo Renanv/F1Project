@@ -5,6 +5,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +17,7 @@ import DriverRankingsView from './rankings/DriverRankingsView';
 import TeamRankingsView from './rankings/TeamRankingsView';
 import ConstructorsRankingsView from './rankings/ConstructorsRankingsView';
 import ClashesView from './rankings/ClashesView';
-import PointsByRaceView from './rankings/PointsByRaceView';
+import BeautifulPlayRankingsView from './rankings/BeautifulPlayRankingsView';
 
 // Define Constructor Tiers for Score-based ranking
 // const constructorTiers = [
@@ -90,6 +91,24 @@ function RankingsPage({ isAdmin }) {
     }
   });
 
+  // Fetch points by race data for driver rankings
+  const {
+    data: pointsByRaceData = null,
+    isLoading: isLoadingPointsByRace,
+    error: pointsByRaceError,
+  } = useQuery({
+    queryKey: ['pointsByRace', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return null;
+      const response = await axiosInstance.get(`/api/championships/${selectedChampionshipId}/points-by-race`);
+      return response.data.success ? response.data.data : null;
+    },
+    enabled: !!selectedChampionshipId && rankingType === 'driver',
+    onError: (err) => {
+      console.error('Error fetching points by race data:', err);
+    }
+  });
+
   // Fetch team rankings using React Query
   const {
     data: teamRankings = [],
@@ -105,6 +124,24 @@ function RankingsPage({ isAdmin }) {
     enabled: !!selectedChampionshipId && rankingType === 'team',
     onError: (err) => {
       console.error('Error fetching team rankings:', err);
+    }
+  });
+
+  // Fetch Beautiful Play rankings using React Query
+  const {
+    data: beautifulPlayRankings = [],
+    isLoading: isLoadingBeautifulPlayRankings,
+    error: beautifulPlayRankingsError,
+  } = useQuery({
+    queryKey: ['beautifulPlayRankings', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return [];
+      const response = await axiosInstance.get(`/api/beautiful-play-rankings?championshipId=${selectedChampionshipId}`);
+      return response.data.success ? response.data.data : [];
+    },
+    enabled: !!selectedChampionshipId && rankingType === 'beautiful-play',
+    onError: (err) => {
+      console.error('Error fetching Beautiful Play rankings:', err);
     }
   });
 
@@ -151,7 +188,9 @@ function RankingsPage({ isAdmin }) {
     // Consolidated loading check for all relevant queries
     const overallLoading = isLoadingChampionships || 
                          (rankingType === 'driver' || rankingType === 'constructors' ? isLoadingDriverRankings : false) || 
-                         (rankingType === 'team' ? isLoadingTeamRankings : false);
+                         (rankingType === 'driver' ? isLoadingPointsByRace : false) ||
+                         (rankingType === 'team' ? isLoadingTeamRankings : false) ||
+                         (rankingType === 'beautiful-play' ? isLoadingBeautifulPlayRankings : false);
 
     if (overallLoading) {
       return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}><CircularProgress /></Box>;
@@ -167,9 +206,16 @@ function RankingsPage({ isAdmin }) {
       if (driverRankingsError) {
         return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['driverRankings', selectedChampionshipId] })}><Localized id={'fetch-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
       }
+      if (rankingType === 'driver' && pointsByRaceError) {
+        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['pointsByRace', selectedChampionshipId] })}><Localized id={'fetch-points-by-race-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+      }
     } else if (rankingType === 'team') {
       if (teamRankingsError) {
         return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['teamRankings', selectedChampionshipId] })}><Localized id={'fetch-team-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+      }
+    } else if (rankingType === 'beautiful-play') {
+      if (beautifulPlayRankingsError) {
+        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['beautifulPlayRankings', selectedChampionshipId] })}><Localized id={'fetch-beautiful-play-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
       }
     }
     
@@ -178,20 +224,26 @@ function RankingsPage({ isAdmin }) {
     }
 
     if (rankingType === 'driver') {
-        return <DriverRankingsView drivers={drivers} isMobile={isMobile} />;
+        return <DriverRankingsView 
+          drivers={drivers} 
+          isMobile={isMobile} 
+          races={pointsByRaceData?.races || []}
+          pointsByRaceData={pointsByRaceData}
+        />;
     } else if (rankingType === 'team') {
         return <TeamRankingsView teamRankings={teamRankings} isMobile={isMobile} />;
     } else if (rankingType === 'constructors') {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} constructorTiers={constructorTiers} />;
     } else if (rankingType === 'clashes') {
         return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} />;
-    } else if (rankingType === 'points-by-race') {
-        return <PointsByRaceView championshipId={selectedChampionshipId} />;
+    } else if (rankingType === 'beautiful-play') {
+        return <BeautifulPlayRankingsView beautifulPlayData={beautifulPlayRankings} isMobile={isMobile} />;
     }
 
     if ((rankingType === 'driver' && drivers.length === 0 && !isLoadingDriverRankings) || 
         (rankingType === 'team' && teamRankings.length === 0 && !isLoadingTeamRankings) ||
-        (rankingType === 'constructors' && drivers.length === 0 && !isLoadingDriverRankings) // Also check for constructors
+        (rankingType === 'constructors' && drivers.length === 0 && !isLoadingDriverRankings) || // Also check for constructors
+        (rankingType === 'beautiful-play' && beautifulPlayRankings.length === 0 && !isLoadingBeautifulPlayRankings)
         ) {
         return <Typography sx={{mt: 2}}><Localized id="no-data-for-ranking" fallback="No data available for the selected ranking type."/></Typography>;
     }
@@ -220,10 +272,6 @@ function RankingsPage({ isAdmin }) {
             <GroupIcon sx={{ mr: isMobile ? 0 : 1}} />
             {!isMobile && <Localized id="ranking-type-team" fallback="Teams"/>}
           </ToggleButton>
-          <ToggleButton value="points-by-race" aria-label="Points by Race Rankings">
-            <LeaderboardIcon sx={{ mr: isMobile ? 0 : 1}} />
-            {!isMobile && <Localized id="ranking-type-points-by-race" fallback="Points by Race"/>}
-          </ToggleButton>
           <ToggleButton value="constructors" aria-label="Constructors Rankings">
             <AssignmentIcon sx={{ mr: isMobile ? 0 : 1}} />
             {!isMobile && <Localized id="ranking-type-constructors" fallback="Constructors"/>}
@@ -231,6 +279,10 @@ function RankingsPage({ isAdmin }) {
           <ToggleButton value="clashes" aria-label="Clashes Rankings">
             <GroupWorkIcon sx={{ mr: isMobile ? 0 : 1}} /> 
             {!isMobile && <Localized id="rankings-clashes-tab" />}
+          </ToggleButton>
+          <ToggleButton value="beautiful-play" aria-label="Beautiful Play Rankings">
+            <EmojiEventsIcon sx={{ mr: isMobile ? 0 : 1}} /> 
+            {!isMobile && <Localized id="ranking-type-beautiful-play" fallback="Beautiful Play"/>}
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>
@@ -305,9 +357,13 @@ function RankingsPage({ isAdmin }) {
                             if (!selectedChampionshipId) return;
                             if (rankingType === 'driver' || rankingType === 'constructors') {
                                 queryClient.invalidateQueries({ queryKey: ['driverRankings', selectedChampionshipId] });
+                                queryClient.invalidateQueries({ queryKey: ['pointsByRace', selectedChampionshipId] });
                             }
                             if (rankingType === 'team') {
                                 queryClient.invalidateQueries({ queryKey: ['teamRankings', selectedChampionshipId] });
+                            }
+                            if (rankingType === 'beautiful-play') {
+                                queryClient.invalidateQueries({ queryKey: ['beautifulPlayRankings', selectedChampionshipId] });
                             }
                         }} 
                         selectedRaceId={selectedRaceId}

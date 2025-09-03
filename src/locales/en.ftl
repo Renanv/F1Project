@@ -106,6 +106,31 @@ admin-link-teams = Teams
 admin-desc-teams = Manage teams and user assignments.
 admin-link-config = Configuration
 admin-desc-config = Adjust application settings.
+admin-link-awards = Awards
+admin-desc-awards = View podium awards and trophies for each race.
+
+# Awards Page
+awards-page-title = Awards
+podium-awards-title = Podium Awards
+no-podium-data = No podium data available for this race
+no-races-in-championship = No races found in this championship
+
+# Beautiful Play Rankings
+ranking-type-beautiful-play = Beautiful Play
+no-beautiful-play-data = No beautiful play submissions found for this championship
+beautiful-play-description = Rankings based on approved community submissions for exceptional driving moments
+beautiful-play-breakdown = Beautiful Play Breakdown
+switchback-plays = Switchback Plays
+double-overtake-plays = Double Overtake Plays
+triple-overtake-plays = Triple Overtake Plays
+switchback-short = SB
+double-overtake-short = 2x
+triple-overtake-short = 3x
+fetch-beautiful-play-rankings-error = Error fetching Beautiful Play rankings
+
+# Common table headers (if not already defined)
+driver = Driver
+team = Team
 
 # Championship Manager Edit/Delete Modals
 admin-edit-championship-title = Edit Championship
