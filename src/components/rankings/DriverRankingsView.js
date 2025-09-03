@@ -234,7 +234,7 @@ const DriverRankingsView = ({ drivers, isMobile, races = [], pointsByRaceData = 
             <TableCell align="center"><Localized id="total-race-points" fallback="Total Race Points" /></TableCell>
             <TableCell align="center"><Localized id="bonus-points" fallback="Bonus" /></TableCell>
             <TableCell><Localized id="driver-table-score" /></TableCell>
-            <TableCell><Localized id="driver-table-points" /></TableCell>
+            <TableCell><Localized id="points" /></TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

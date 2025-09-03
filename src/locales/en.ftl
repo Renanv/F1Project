@@ -49,10 +49,7 @@ validation-check-failed = Could not verify driver number. Please try again.
 driver-score-value = { $score } pts
 
 # Driver Points Display
-driver-table-points = Points
 
-# Driver Team Display
-driver-team = Team
 
 # Admin Section Titles & Links
 admin-championship-manager-title = Championship & Race Manager
@@ -240,7 +237,7 @@ no-championships-for-status = No championship data available to display status.
 my-current-standing = My Current Standing
 team-label = Team
 not-ranked = Not Ranked
-points-label = Points
+
 teammate-points-label = Teammate(s) Points
 last-race-result-title = Last Race: { $raceName }
 race-event-label = Race
@@ -277,7 +274,7 @@ add-bonus-points-success = Bonus points added successfully for { $userName }.
 admin-bonus-points-log-title = Bonus Points Log for { $userName }
 fetch-bonus-log-error = Error: Could not fetch bonus points log.
 admin-no-bonus-log-entries = No bonus point entries found for this attendee.
-bonus-log-points-header = Points
+
 bonus-log-source-header = Source
 bonus-log-reason-header = Reason
 bonus-log-awarded-at-header = Date Awarded
@@ -429,6 +426,8 @@ penalty-jury-assignments = Jury Panel
 # Jury Assignment & Judgment Statuses
 jury-judgment-status-pending-judgment = Pending Judgment
 jury-judgment-status-judgment-submitted = Judgment Submitted
+jury-judgment-status-pending_judgment = Pending Judgment
+jury-judgment-status-judgment_submitted = Judgment Submitted
 
 no-jury-assigned = No jury has been assigned to this penalty yet.
 penalty-judgments-title = Jury Judgments
@@ -473,7 +472,7 @@ judgment-option-no-penalty = No Penalty
 # My Jury Tasks Page
 my-jury-tasks-title = My Jury Tasks
 assigned-penalty-id = Penalty ID
-assigned-championship = Championship
+
 assigned-race = Race
 assigned-accused = Accused User
 juror-slot-header = Your Slot
@@ -506,7 +505,7 @@ user-status-card-not-participant = You are not a participant in this championshi
 user-status-card-rank-label = Rank
 user-status-card-points-label = Total Points
 user-status-card-bonus-points-label = Bonus Points
-user-status-card-team-label = Team
+
 user-status-card-teammate-points-label = Teammate Points
 user-status-card-last-race-title = Last Race ({ $raceName })
 user-status-card-position-label = Position
@@ -550,7 +549,7 @@ no-users-for-championship = No users found for this championship
 penalty-header-jurors = Jurors Assigned
 penalty-header-judgments = Judgments In
 race-title-date-required = Race title and date are required
-select-team-label = Select Team
+
 submit-judgment-title = Submit Your Judgment
 submit-your-judgment-link = Submit Your Judgment
 view-and-judge-button = View & Judge
@@ -623,8 +622,8 @@ generate-codes-error = An error occurred while generating new recovery codes. Pl
 # --- Team Rankings ---
 team-rankings-title = Team Rankings
 team-rankings-header-position = Pos
-team-rankings-header-team = Team
-team-rankings-header-points = Points
+
+
 
 # --- Clashes View ---
 rankings-clashes-tab = Clashes
@@ -666,5 +665,10 @@ show-race-details = Show Race Details
 race = Race
 points = Points
 no-rankings-found = No rankings found for this championship.
-ranking-type-points-by-race = Points by Race
+
+# Missing translations found in components
+loading-championships = Loading championships...
+fetch-points-by-race-error = Error fetching points by race data
+generic-error-fallback = An unexpected error occurred
+
 pts = pts

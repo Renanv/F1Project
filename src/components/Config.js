@@ -166,7 +166,7 @@ const Config = () => {
                             <TableHead>
                                 <TableRow>
                                     <TableCell><Localized id="driver-position" /></TableCell>
-                                    <TableCell align="right"><Localized id="driver-table-points" /></TableCell>
+                                    <TableCell align="right"><Localized id="points" /></TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

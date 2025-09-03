@@ -49,7 +49,7 @@ validation-check-failed = Não foi possível verificar o número do piloto. Tent
 driver-score-value = { $score } pts 
 
 # Exibição dos Pontos do Piloto
-driver-table-points = Pontos
+
 
 # Exibição da Equipe do Piloto
 driver-team = Equipe
@@ -242,7 +242,6 @@ no-championships-for-status = Nenhum dado de campeonato disponível para exibir 
 my-current-standing = Minha Classificação Atual
 team-label = Equipe
 not-ranked = Não Classificado
-points-label = Pontos
 teammate-points-label = Pontos do companheiro de Equipe
 race-event-label = Corrida
 position-label = Posição
@@ -429,6 +428,8 @@ penalty-jury-assignments = Painel da comissão
 # Status de Atribuição e Julgamento do Júri
 jury-judgment-status-pending-judgment = Analise Pendente
 jury-judgment-status-judgment-submitted = Analise Submetido
+jury-judgment-status-pending_judgment = Analise Pendente
+jury-judgment-status-judgment_submitted = Analise Submetido
 
 no-jury-assigned = Nenhum comissário foi atribuído a esta penalidade ainda.
 penalty-judgments-title = Analises da comissão
@@ -509,7 +510,7 @@ user-status-card-not-participant = Você não é participante deste campeonato.
 user-status-card-rank-label = Classificação
 user-status-card-points-label = Pontos Totais
 user-status-card-bonus-points-label = Pontos Bônus
-user-status-card-team-label = Equipe
+
 user-status-card-teammate-points-label = Pontos do Colega
 user-status-card-last-race-title = Última Corrida ({ $raceName })
 user-status-card-position-label = Posição
@@ -547,7 +548,7 @@ no-users-for-championship = Nenhum usuário encontrado para este campeonato
 penalty-header-jurors = Jurados Designados
 penalty-header-judgments = Julgamentos Recebidos
 race-title-date-required = Título e data da corrida são obrigatórios
-select-team-label = Selecionar Equipe
+
 submit-judgment-title = Submeter Julgamento
 submit-your-judgment-link = Submeter seu julgamento
 view-and-judge-button = Ver e Julgar
@@ -652,5 +653,10 @@ show-race-details = Mostrar Detalhes das Corridas
 race = Corrida
 points = Pontos
 no-rankings-found = Nenhuma classificação encontrada para este campeonato.
-ranking-type-points-by-race = Pontos por Corrida
+
+# Missing translations found in components
+loading-championships = Carregando campeonatos...
+fetch-points-by-race-error = Erro ao buscar dados de pontos por corrida
+generic-error-fallback = Ocorreu um erro inesperado
+
 pts = pts

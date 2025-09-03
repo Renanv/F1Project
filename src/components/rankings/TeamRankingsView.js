@@ -33,7 +33,7 @@ const TeamRankingsView = ({ teamRankings, isMobile }) => {
         <TableHead>
           <TableRow>
             <TableCell><Localized id="team-position" fallback="Rank" /></TableCell>
-            <TableCell><Localized id="team-name" fallback="Team" /></TableCell>
+            <TableCell><Localized id="team" /></TableCell>
             <TableCell><Localized id="team-total-points" fallback="Total Points" /></TableCell>
           </TableRow>
         </TableHead>

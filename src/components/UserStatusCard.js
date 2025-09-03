@@ -36,7 +36,7 @@ function UserStatusCard({ status, teamData, raceData, onOpenBonusLog }) {
               </ListItem>
               <ListItem>
                 <ListItemIcon><SportsScoreIcon color="primary" /></ListItemIcon>
-                <ListItemText primary={<Localized id="points-label" />} secondary={status.points !== null ? status.points : '0'} />
+                <ListItemText primary={<Localized id="points" />} secondary={status.points !== null ? status.points : '0'} />
               </ListItem>
               <ListItem>
                 <ListItemIcon><StarIcon color="primary" /></ListItemIcon>
