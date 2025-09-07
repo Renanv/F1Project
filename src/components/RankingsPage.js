@@ -41,27 +41,45 @@ function RankingsPage({ isAdmin }) {
 
   const [rankingType, setRankingType] = useState('driver');
 
-  // Keep selectedChampionshipObject as it might be useful for other features
-  const [selectedChampionshipObject, setSelectedChampionshipObject] = useState(null);
+  // selectedChampionshipObject is now computed with useMemo below
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Fetch championships using React Query
+  // Fetch championships using React Query with grouping
   const {
-    data: championshipsList = [],
+    data: championshipsData = [],
     isLoading: isLoadingChampionships,
     error: championshipsError
   } = useQuery({
-    queryKey: ['championships'],
+    queryKey: ['championships', 'grouped'],
     queryFn: async () => {
-      const res = await axiosInstance.get('/api/championships');
+      const res = await axiosInstance.get('/api/championships?groupByStatus=true');
       return res.data;
     },
     onError: (err) => {
       console.error('Error fetching championships:', err);
     }
   });
+
+  // Process grouped data for dropdown
+  const championshipsList = React.useMemo(() => {
+    if (!championshipsData.grouped) {
+      return championshipsData; // Fallback to flat list
+    }
+    
+    // Convert grouped data to flat list for compatibility
+    const flatList = [];
+    const statusOrder = ['RUNNING', 'FINISHED', 'HIDDEN'];
+    
+    statusOrder.forEach(status => {
+      if (championshipsData.data[status]) {
+        flatList.push(...championshipsData.data[status]);
+      }
+    });
+    
+    return flatList;
+  }, [championshipsData]);
 
   useEffect(() => {
     if (championshipsList && championshipsList.length > 0) {
@@ -72,6 +90,29 @@ function RankingsPage({ isAdmin }) {
       setSelectedChampionshipId('');
     }
   }, [championshipsList, isLoadingChampionships, selectedChampionshipId]);
+
+  // Fetch championship winners for finished championships using React Query
+  const {
+    data: championshipWinners = null,
+    isLoading: isLoadingWinners,
+    error: winnersError
+  } = useQuery({
+    queryKey: ['championshipWinners', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return null;
+      const res = await axiosInstance.get(`/api/championships/${selectedChampionshipId}/winners`);
+      return res.data.data;
+    },
+    enabled: !!selectedChampionshipId,
+    onError: (err) => {
+      console.error('Error fetching championship winners:', err);
+    }
+  });
+
+  // Get the selected championship object to check status
+  const selectedChampionshipObject = useMemo(() => {
+    return championshipsList.find(c => c.id === selectedChampionshipId) || null;
+  }, [championshipsList, selectedChampionshipId]);
 
   // Fetch driver rankings using React Query
   const {
@@ -163,12 +204,7 @@ function RankingsPage({ isAdmin }) {
     }
   });
 
-  useEffect(() => {
-    const currentChamp = championshipsList.find(c => c.id === selectedChampionshipId);
-    setSelectedChampionshipObject(currentChamp || null);
-
-    // Data fetching is now handled by useQuery hooks based on selectedChampionshipId and rankingType
-  }, [selectedChampionshipId, championshipsList, rankingType]);
+  // selectedChampionshipObject is now computed with useMemo - no useEffect needed
 
   const handleChampionshipChange = (event) => {
     setSelectedChampionshipId(event.target.value);
@@ -306,18 +342,123 @@ function RankingsPage({ isAdmin }) {
                          <em><Localized id="no-championships-available" /></em>
                      </MenuItem>
                 )}
-                {championshipsList.map((champ) => (
+                {!isLoadingChampionships && championshipsData.grouped && (() => {
+                    const statusOrder = ['RUNNING', 'FINISHED', 'HIDDEN'];
+                    const items = [];
+                    
+                    statusOrder.forEach(status => {
+                        if (championshipsData.data[status] && championshipsData.data[status].length > 0) {
+                            // Add status header
+                            items.push(
+                                <MenuItem key={`header-${status}`} disabled sx={{ 
+                                    fontWeight: 'bold', 
+                                    backgroundColor: 'action.hover',
+                                    '&.Mui-disabled': { opacity: 1 }
+                                }}>
+                                    <Localized id={`championship-status-${status.toLowerCase()}`} fallback={status} />
+                                </MenuItem>
+                            );
+                            
+                            // Add championships for this status
+                            championshipsData.data[status].forEach(champ => {
+                                items.push(
+                                    <MenuItem key={champ.id} value={champ.id} sx={{ pl: 3 }}>
+                                        {champ.name}
+                                    </MenuItem>
+                                );
+                            });
+                        }
+                    });
+                    
+                    return items;
+                })()}
+                {!isLoadingChampionships && !championshipsData.grouped && championshipsList.map((champ) => (
                     <MenuItem key={champ.id} value={champ.id}>{champ.name}</MenuItem>
                 ))}
             </Select>
         </FormControl>
       </Box>
+
+      {/* Winner Cards for Finished Championships */}
+      {selectedChampionshipObject?.status === 'FINISHED' && championshipWinners && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h2" gutterBottom sx={{ textAlign: 'center', mb: 3 }}>
+            <Localized id="championship-winners-title" />
+          </Typography>
+          
+          {/* Driver Winners */}
+          {(rankingType === 'driver' || rankingType === 'constructors') && championshipWinners.topDrivers && championshipWinners.topDrivers.length > 0 && (
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {championshipWinners.topDrivers.slice(0, 3).map((driver, index) => (
+                <Grid item xs={12} sm={4} key={driver.user_id}>
+                  <Card sx={{ 
+                    textAlign: 'center',
+                    background: index === 0 ? 'linear-gradient(45deg, #FFD700 30%, #FFA500 90%)' :
+                               index === 1 ? 'linear-gradient(45deg, #C0C0C0 30%, #A0A0A0 90%)' :
+                               'linear-gradient(45deg, #CD7F32 30%, #B8860B 90%)',
+                    color: 'white',
+                    boxShadow: 3
+                  }}>
+                    <CardContent>
+                      <Typography variant="h6" component="h3">
+                        <Localized 
+                          id={`championship-position-${index === 0 ? '1st' : index === 1 ? '2nd' : '3rd'}`} 
+                        />
+                      </Typography>
+                      <Typography variant="h5" component="h2" sx={{ my: 1 }}>
+                        {driver.name}
+                      </Typography>
+                      <Typography variant="body1">
+                        #{driver.driver_number}
+                      </Typography>
+                      {driver.team_name && (
+                        <Typography variant="body2">
+                          {driver.team_name}
+                        </Typography>
+                      )}
+                      <Typography variant="h6" sx={{ mt: 1 }}>
+                        {driver.total_points} pts
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          {/* Team Winner */}
+          {rankingType === 'team' && championshipWinners.winningTeam && (
+            <Grid container justifyContent="center" sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={4}>
+                <Card sx={{ 
+                  textAlign: 'center',
+                  background: 'linear-gradient(45deg, #FFD700 30%, #FFA500 90%)',
+                  color: 'white',
+                  boxShadow: 3
+                }}>
+                  <CardContent>
+                    <Typography variant="h6" component="h3">
+                      <Localized id="championship-constructors-champion" />
+                    </Typography>
+                    <Typography variant="h4" component="h2" sx={{ my: 2 }}>
+                      {championshipWinners.winningTeam.team_name}
+                    </Typography>
+                    <Typography variant="h6">
+                      {championshipWinners.winningTeam.total_team_points} pts
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          )}
+        </Box>
+      )}
       
       <Grid container spacing={4}>
-          <Grid item xs={12} md={isAdmin && !isMobile ? 8 : 12}> 
+          <Grid item xs={12} md={isAdmin && !isMobile && selectedChampionshipObject?.status !== 'FINISHED' ? 8 : 12}> 
             {renderRankingsDisplay()} 
           </Grid>
-          {isAdmin && !isMobile && (
+          {isAdmin && !isMobile && selectedChampionshipObject?.status !== 'FINISHED' && (
             <Grid item xs={12} md={4}>
                 <Paper sx={{p: 2}} elevation={1}>
                     <Box sx={{ mb: 2 }}>

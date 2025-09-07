@@ -660,3 +660,46 @@ fetch-points-by-race-error = Erro ao buscar dados de pontos por corrida
 generic-error-fallback = Ocorreu um erro inesperado
 
 pts = pts
+
+# Sistema de Status de Campeonato
+championship-status-registering = Inscrevendo
+championship-status-running = Em Andamento
+championship-status-finished = Finalizado
+championship-status-hidden = Oculto
+
+# Inscrição em Campeonatos
+championship-registration-open = Inscrições Abertas
+championship-registration-open-portuguese = Inscrições Abertas
+championship-register-button = Inscrever-se
+championship-registered-drivers = Pilotos Inscritos
+championship-reserve-drivers = Pilotos Reservas
+championship-register-success = Inscrito com sucesso no campeonato!
+championship-register-success-reserve = Inscrito como piloto reserva.
+championship-already-registered = Você já está inscrito neste campeonato.
+championship-registration-closed = Campeonato não está aberto para inscrições.
+championship-registration-error = Erro durante a inscrição. Tente novamente.
+
+# Vencedores do Campeonato
+championship-winners-title = Vencedores do Campeonato
+championship-drivers-champion = Campeão de Pilotos
+championship-constructors-champion = Campeão de Construtores
+championship-position-1st = 1º Lugar
+championship-position-2nd = 2º Lugar
+championship-position-3rd = 3º Lugar
+
+# Gerenciamento de Status do Campeonato (Admin)
+admin-status-management = Gerenciamento de Status
+admin-change-status = Alterar Status
+admin-status-updated = Status do campeonato atualizado com sucesso
+admin-status-update-error = Erro ao atualizar status do campeonato
+
+# Agrupamento de Dropdown de Campeonatos
+championship-group-running = Campeonatos Em Andamento
+championship-group-finished = Campeonatos Finalizados
+championship-group-hidden = Campeonatos Ocultos
+
+# Restrições de Upload
+upload-not-available-finished = Upload não disponível para campeonatos finalizados
+
+# Labels de status do campeonato
+championship-status-label = Status

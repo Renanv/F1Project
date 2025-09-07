@@ -114,7 +114,7 @@ function ChampionshipManager() {
     } = useQuery({
         queryKey: ['championships'], 
         queryFn: async () => {
-            const response = await axiosInstance.get('/api/championships');
+            const response = await axiosInstance.get('/api/championships?includeHidden=true&includeRegistering=true');
             return response.data;
         },
         onError: (err) => {
@@ -284,10 +284,11 @@ function ChampionshipManager() {
     
     // --- React Query Mutation for editing a championship ---
     const editChampionshipMutation = useMutation({
-        mutationFn: async (champData) => { // champData: { id, name, lsf_score_reveal_race_id }
+        mutationFn: async (champData) => { // champData: { id, name, lsf_score_reveal_race_id, status }
             const payload = {
                 name: champData.name,
-                lsf_score_reveal_race_id: champData.lsf_score_reveal_race_id
+                lsf_score_reveal_race_id: champData.lsf_score_reveal_race_id,
+                status: champData.status
             };
             const response = await axiosInstance.put(`/api/championships/${champData.id}`, payload);
             return response.data.championship; // Return the updated championship
@@ -564,7 +565,12 @@ function ChampionshipManager() {
                                                 </>
                                             }
                                         >
-                                            <ListItemText primary={champ.name} />
+                                            <ListItemText 
+                                                primary={champ.name} 
+                                                secondary={
+                                                    <Localized id={`championship-status-${champ.status?.toLowerCase()}`} fallback={champ.status} />
+                                                }
+                                            />
                                         </ListItem>
                                         {index < championships.length - 1 && <Divider component="li" />} 
                                     </React.Fragment>

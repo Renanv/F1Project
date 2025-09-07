@@ -672,3 +672,46 @@ fetch-points-by-race-error = Error fetching points by race data
 generic-error-fallback = An unexpected error occurred
 
 pts = pts
+
+# Championship Status System
+championship-status-registering = Registering
+championship-status-running = Running
+championship-status-finished = Finished
+championship-status-hidden = Hidden
+
+# Championship Registration
+championship-registration-open = Registrations Open
+championship-registration-open-portuguese = Inscrições Abertas
+championship-register-button = Register
+championship-registered-drivers = Registered Drivers
+championship-reserve-drivers = Reserve Drivers
+championship-register-success = Successfully registered for championship!
+championship-register-success-reserve = Registered as reserve driver.
+championship-already-registered = You are already registered for this championship.
+championship-registration-closed = Championship is not open for registration.
+championship-registration-error = Error during registration. Please try again.
+
+# Championship Winners
+championship-winners-title = Championship Winners
+championship-drivers-champion = Drivers' Champion
+championship-constructors-champion = Constructors' Champion
+championship-position-1st = 1st Place
+championship-position-2nd = 2nd Place
+championship-position-3rd = 3rd Place
+
+# Admin Championship Status Management
+admin-status-management = Status Management
+admin-change-status = Change Status
+admin-status-updated = Championship status updated successfully
+admin-status-update-error = Error updating championship status
+
+# Championship Dropdown Grouping
+championship-group-running = Running Championships
+championship-group-finished = Finished Championships
+championship-group-hidden = Hidden Championships
+
+# Upload restrictions
+upload-not-available-finished = Upload not available for finished championships
+
+# Championship status labels
+championship-status-label = Status

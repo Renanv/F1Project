@@ -35,16 +35,35 @@ export default function PenaltySubmissionForm() {
 
   // Fetch championships
   const {
-    data: championships = [],
+    data: championshipsData = [],
     isLoading: isLoadingChampionships,
     error: championshipsError,
   } = useQuery({
-    queryKey: ['championships'],
+    queryKey: ['championships', 'penalties', 'grouped'],
     queryFn: async () => {
-      const response = await axiosInstance.get('/api/championships');
+      const response = await axiosInstance.get('/api/championships?forPenalties=true&groupByStatus=true');
       return response.data;
     },
   });
+
+  // Process grouped data for dropdown
+  const championships = React.useMemo(() => {
+    if (!championshipsData.grouped) {
+      return championshipsData; // Fallback to flat list
+    }
+    
+    // Convert grouped data to flat list for compatibility
+    const flatList = [];
+    const statusOrder = ['RUNNING', 'FINISHED']; // Penalties exclude FINISHED, so mainly RUNNING
+    
+    statusOrder.forEach(status => {
+      if (championshipsData.data[status]) {
+        flatList.push(...championshipsData.data[status]);
+      }
+    });
+    
+    return flatList;
+  }, [championshipsData]);
 
   useEffect(() => {
     if (championships && championships.length > 0) {

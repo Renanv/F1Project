@@ -10,7 +10,7 @@ function EditChampionshipDialog({
     open,
     onClose,
     onSubmit,
-    championshipData, // { id, name, lsf_score_reveal_race_id }
+    championshipData, // { id, name, lsf_score_reveal_race_id, status }
     isLoading, // Parent loading state for submission
     // Pass a general error from parent if API call in parent fails
     // Or let dialog handle its own errors for race fetching, parent for submission error
@@ -18,6 +18,7 @@ function EditChampionshipDialog({
 }) {
     const [editedName, setEditedName] = useState('');
     const [editedLsfRevealRaceId, setEditedLsfRevealRaceId] = useState('');
+    const [editedStatus, setEditedStatus] = useState('');
     const [racesForDropdown, setRacesForDropdown] = useState([]);
     const [loadingRaces, setLoadingRaces] = useState(false);
     const [dialogError, setDialogError] = useState(null);
@@ -28,6 +29,7 @@ function EditChampionshipDialog({
             setEditedLsfRevealRaceId(championshipData.lsf_score_reveal_race_id === null || championshipData.lsf_score_reveal_race_id === undefined 
                 ? '' 
                 : String(championshipData.lsf_score_reveal_race_id));
+            setEditedStatus(championshipData.status || 'REGISTERING');
             setDialogError(null); // Clear previous dialog-specific errors
             
             // Fetch races for this specific championship
@@ -50,6 +52,7 @@ function EditChampionshipDialog({
             // Reset when dialog closes
             setEditedName('');
             setEditedLsfRevealRaceId('');
+            setEditedStatus('');
             setRacesForDropdown([]);
             setDialogError(null);
         }
@@ -64,7 +67,8 @@ function EditChampionshipDialog({
         onSubmit({
             id: championshipData.id,
             name: editedName,
-            lsf_score_reveal_race_id: editedLsfRevealRaceId === '' ? null : parseInt(editedLsfRevealRaceId, 10)
+            lsf_score_reveal_race_id: editedLsfRevealRaceId === '' ? null : parseInt(editedLsfRevealRaceId, 10),
+            status: editedStatus
         });
     };
 
@@ -89,6 +93,30 @@ function EditChampionshipDialog({
                     required
                     disabled={isLoading}
                 />
+                <FormControl fullWidth margin="normal" disabled={isLoading}>
+                    <InputLabel id="status-label">
+                        <Localized id="championship-status-label" />
+                    </InputLabel>
+                    <Select
+                        labelId="status-label"
+                        value={editedStatus}
+                        label={<Localized id="championship-status-label" />}
+                        onChange={(e) => setEditedStatus(e.target.value)}
+                    >
+                        <MenuItem value="REGISTERING">
+                            <Localized id="championship-status-registering" />
+                        </MenuItem>
+                        <MenuItem value="RUNNING">
+                            <Localized id="championship-status-running" />
+                        </MenuItem>
+                        <MenuItem value="FINISHED">
+                            <Localized id="championship-status-finished" />
+                        </MenuItem>
+                        <MenuItem value="HIDDEN">
+                            <Localized id="championship-status-hidden" />
+                        </MenuItem>
+                    </Select>
+                </FormControl>
                 <FormControl fullWidth margin="normal" disabled={loadingRaces || isLoading}>
                     <InputLabel id="lsf-reveal-race-label">
                         <Localized id="admin-lsf-score-reveal-race-label" />

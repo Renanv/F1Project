@@ -15,7 +15,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import axiosInstance from '../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserStatusCard from './UserStatusCard'; // Import the new component
 import { bonusSourceOptions } from '../utils/bonusSourceOptions'; // Import from shared location
 
@@ -45,6 +45,7 @@ const dashboardItems = {
 // ];
 
 function Home({ isLoggedIn, isAdmin }) {
+  const queryClient = useQueryClient();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
@@ -81,24 +82,78 @@ function Home({ isLoggedIn, isAdmin }) {
     enabled: !!isLoggedIn,
   });
 
+  // Fetch running championships for homepage (all users can see these)
+  const { 
+    data: runningChampionshipsList = [],
+    isLoading: isLoadingRunningChampionships,
+    error: runningChampionshipsError
+  } = useQuery({
+    queryKey: ['runningChampionships'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/championships?forHomepage=true');
+      return response.data;
+    },
+    enabled: true, // Always enabled for homepage display
+  });
+
+  // Fetch registering championships for registration cards
+  const { 
+    data: registeringChampionships = [],
+    isLoading: isLoadingRegisteringChampionships,
+    error: registeringChampionshipsError
+  } = useQuery({
+    queryKey: ['registeringChampionships'],
+    queryFn: async () => {
+      const response = await axiosInstance.get('/api/homepage/registration-status');
+      return response.data.data || [];
+    },
+    enabled: true, // Always enabled to show registration opportunities
+  });
+
+  // Fetch user registration status for each registering championship
+  const { 
+    data: userRegistrationStatuses = {},
+    isLoading: isLoadingRegistrationStatuses,
+    error: registrationStatusesError
+  } = useQuery({
+    queryKey: ['userRegistrationStatuses', registeringChampionships.map(c => c.id)],
+    queryFn: async () => {
+      if (!isLoggedIn || registeringChampionships.length === 0) return {};
+      
+      const statusPromises = registeringChampionships.map(async (championship) => {
+        try {
+          const response = await axiosInstance.get(`/api/championships/${championship.id}/registration-status`);
+          return { [championship.id]: response.data };
+        } catch (error) {
+          console.error(`Error fetching registration status for championship ${championship.id}:`, error);
+          return { [championship.id]: { isRegistered: false, isReserve: false } };
+        }
+      });
+      
+      const statusResults = await Promise.all(statusPromises);
+      return statusResults.reduce((acc, status) => ({ ...acc, ...status }), {});
+    },
+    enabled: isLoggedIn && registeringChampionships.length > 0,
+  });
+
   useEffect(() => {
-    // This effect runs when the list of championships is successfully fetched or changes.
-    if (championshipsList && championshipsList.length > 0) {
+    // This effect runs when the list of running championships is successfully fetched or changes.
+    if (runningChampionshipsList && runningChampionshipsList.length > 0) {
       // If no championship is currently selected, or if the selected one is no longer in the list,
       // default to the first available championship.
-      if (!selectedChampionshipId || !championshipsList.find(c => c.id === selectedChampionshipId)) {
-        setSelectedChampionshipId(championshipsList[0].id);
+      if (!selectedChampionshipId || !runningChampionshipsList.find(c => c.id === selectedChampionshipId)) {
+        setSelectedChampionshipId(runningChampionshipsList[0].id);
       }
-    } else if (!isLoadingChampionshipsList && (!championshipsList || championshipsList.length === 0)) {
+    } else if (!isLoadingRunningChampionships && (!runningChampionshipsList || runningChampionshipsList.length === 0)) {
       // If loading is finished and the list is empty, ensure no championship is selected.
       setSelectedChampionshipId('');
     }
-  }, [championshipsList, isLoadingChampionshipsList, selectedChampionshipId]);
+  }, [runningChampionshipsList, isLoadingRunningChampionships, selectedChampionshipId]);
 
   // Memoize the current championship data from the query result
   const currentChampionship = useMemo(() => 
-    championshipsList.find(c => c.id === selectedChampionshipId),
-    [championshipsList, selectedChampionshipId]
+    runningChampionshipsList.find(c => c.id === selectedChampionshipId),
+    [runningChampionshipsList, selectedChampionshipId]
   );
 
   const userId = useMemo(() => getUserIdFromToken(), [isLoggedIn]); // Memoize userId too
@@ -141,7 +196,7 @@ function Home({ isLoggedIn, isAdmin }) {
       }
 
       const lastRace = lastRaceResponse.data.success ? lastRaceResponse.data.lastRace : null;
-      const currentChampFromList = championshipsList.find(c => c.id === selectedChampionshipId); // Get current champ name from the list
+      const currentChampFromList = runningChampionshipsList.find(c => c.id === selectedChampionshipId); // Get current champ name from the list
 
       return {
         rank: rank,
@@ -153,10 +208,10 @@ function Home({ isLoggedIn, isAdmin }) {
         lastRace,
         championshipName: currentChampFromList?.name, // Use name from already fetched list
         teamName: teamName,
-        noChampionships: championshipsList.length === 0 && !isLoadingChampionshipsList && !championshipsListError // Indicate if no championships
+        noChampionships: runningChampionshipsList.length === 0 && !isLoadingRunningChampionships && !runningChampionshipsError // Indicate if no championships
       };
     },
-    enabled: !!isLoggedIn && !!selectedChampionshipId && !!userId && !isLoadingChampionshipsList, // Enable only when all dependencies are ready
+    enabled: !!isLoggedIn && !!selectedChampionshipId && !!userId && !isLoadingRunningChampionships, // Enable only when all dependencies are ready
   });
 
   // Memoize the user's team data from userStatus (which is now query data)
@@ -244,6 +299,28 @@ function Home({ isLoggedIn, isAdmin }) {
     // setUserBonusLogError(null); // Optional: clear error on close
   };
 
+  // Handle championship registration
+  const handleRegisterForChampionship = async (championshipId) => {
+    if (!isLoggedIn) {
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(`/api/championships/${championshipId}/register`);
+      if (response.data.success) {
+        // Show success message and refresh registration data
+        console.log(response.data.message);
+        
+        // Refresh the queries to update the UI
+        queryClient.invalidateQueries({ queryKey: ['registeringChampionships'] });
+        queryClient.invalidateQueries({ queryKey: ['userRegistrationStatuses'] });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      // Handle error (could add a toast notification here)
+    }
+  };
+
   const renderDashboardCard = (item) => (
     <Grid item xs={12} sm={6} md={4} key={item.id}>
       <Card sx={{ height: '100%' }}>
@@ -259,13 +336,97 @@ function Home({ isLoggedIn, isAdmin }) {
     </Grid>
   );
 
+  const renderRegistrationCard = (championship) => {
+    const registrationStatus = userRegistrationStatuses[championship.id];
+    const isRegistered = registrationStatus?.isRegistered || false;
+    const isReserve = registrationStatus?.isReserve || false;
+    
+    return (
+      <Grid item xs={12} key={`registration-${championship.id}`}>
+        <Card sx={{ 
+          background: 'linear-gradient(45deg, #FF6B6B 30%, #4ECDC4 90%)',
+          color: 'white',
+          mb: 2
+        }}>
+          <CardContent>
+            <Typography variant="h5" component="h2" gutterBottom>
+              <Localized id="championship-registration-open-portuguese" />
+            </Typography>
+            <Typography variant="h6" component="h3" gutterBottom>
+              {championship.name}
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+              <Box>
+                <Typography variant="body1">
+                  <Localized 
+                    id="championship-registered-drivers" 
+                    fallback="Registered Drivers"
+                  />: {championship.registered_drivers}/20
+                </Typography>
+                {championship.registered_drivers >= 20 && (
+                  <Typography variant="body2">
+                    <Localized 
+                      id="championship-reserve-drivers" 
+                      fallback="Reserve Drivers"
+                    />: {championship.reserve_drivers}
+                  </Typography>
+                )}
+              </Box>
+              {isLoggedIn && !isRegistered && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleRegisterForChampionship(championship.id)}
+                  sx={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    }
+                  }}
+                >
+                  <Localized id="championship-register-button" />
+                </Button>
+              )}
+              {isLoggedIn && isRegistered && (
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+                  px: 2, 
+                  py: 1, 
+                  borderRadius: 1,
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="body2">
+                    ✓ {isReserve ? (
+                      <Localized id="championship-register-success-reserve" fallback="Registered as reserve" />
+                    ) : (
+                      <Localized id="championship-register-success" fallback="Successfully registered" />
+                    )}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Grid>
+    );
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Registration Cards - Show at top for all users */}
+      {registeringChampionships.length > 0 && (
+        <Box mb={4}>
+          <Grid container spacing={2}>
+            {registeringChampionships.map(renderRegistrationCard)}
+          </Grid>
+        </Box>
+      )}
+
       {isLoggedIn && (
         <Box mb={4}>
-          {isLoadingChampionshipsList && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress size={24} /></Box>}
-          {championshipsListError && <Alert severity="error" sx={{my: 2}}><Localized id="fetch-championships-list-error" fallback="Failed to load championships list." /></Alert>}
-          {!isLoadingChampionshipsList && !championshipsListError && championshipsList.length > 0 && (
+          {isLoadingRunningChampionships && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress size={24} /></Box>}
+          {runningChampionshipsError && <Alert severity="error" sx={{my: 2}}><Localized id="fetch-championships-list-error" fallback="Failed to load championships list." /></Alert>}
+          {!isLoadingRunningChampionships && !runningChampionshipsError && runningChampionshipsList.length > 0 && (
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel id="championship-select-label"><Localized id="select-championship-label" /></InputLabel>
               <Select
@@ -276,7 +437,7 @@ function Home({ isLoggedIn, isAdmin }) {
                 onChange={handleChampionshipChange}
                 disabled={isLoadingUserStatus}
               >
-                {championshipsList.map((champ) => (
+                {runningChampionshipsList.map((champ) => (
                   <MenuItem key={champ.id} value={champ.id}>
                     {champ.name}
                   </MenuItem>
@@ -284,7 +445,7 @@ function Home({ isLoggedIn, isAdmin }) {
               </Select>
             </FormControl>
           )}
-          {!isLoadingChampionshipsList && !championshipsListError && championshipsList.length === 0 && isLoggedIn && (
+          {!isLoadingRunningChampionships && !runningChampionshipsError && runningChampionshipsList.length === 0 && isLoggedIn && (
              <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
                 <Localized id="no-participated-championships" />
             </Typography>
@@ -310,7 +471,7 @@ function Home({ isLoggedIn, isAdmin }) {
             </Typography>
           )}
            {/* Handle case where championships list is loaded, but nothing is selected (e.g. if list was empty initially) */}
-          {!selectedChampionshipId && !isLoadingChampionshipsList && championshipsList.length > 0 && !isLoadingUserStatus && (
+          {!selectedChampionshipId && !isLoadingRunningChampionships && runningChampionshipsList.length > 0 && !isLoadingUserStatus && (
              <Typography variant="subtitle1" color="text.secondary" sx={{textAlign: 'center', my: 2}}>
                 <Localized id="please-select-championship-status" />
             </Typography>
