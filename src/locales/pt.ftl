@@ -703,3 +703,13 @@ upload-not-available-finished = Upload não disponível para campeonatos finaliz
 
 # Labels de status do campeonato
 championship-status-label = Status
+
+# Links de Formulário de Inscrição
+admin-registration-form-link-label = Link do Formulário de Inscrição
+admin-registration-form-link-helper = Link do Google Forms para usuários inscritos (opcional)
+championship-fill-form-button = Preencher Formulário
+championship-fill-form-now-button = Preencher Agora
+championship-fill-form-later-button = Preencher Depois
+championship-registration-success-title = Inscrição Realizada com Sucesso!
+championship-form-urgent-title = URGENTE: Complete o Formulário de Inscrição
+championship-form-urgent-message = Para concluir, escolha 4 pistas para banir e 6 pistas que mais gosta no formulário abaixo.

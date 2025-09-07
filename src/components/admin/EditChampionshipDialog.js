@@ -10,7 +10,7 @@ function EditChampionshipDialog({
     open,
     onClose,
     onSubmit,
-    championshipData, // { id, name, lsf_score_reveal_race_id, status }
+    championshipData, // { id, name, lsf_score_reveal_race_id, status, registration_form_link }
     isLoading, // Parent loading state for submission
     // Pass a general error from parent if API call in parent fails
     // Or let dialog handle its own errors for race fetching, parent for submission error
@@ -19,6 +19,7 @@ function EditChampionshipDialog({
     const [editedName, setEditedName] = useState('');
     const [editedLsfRevealRaceId, setEditedLsfRevealRaceId] = useState('');
     const [editedStatus, setEditedStatus] = useState('');
+    const [editedRegistrationFormLink, setEditedRegistrationFormLink] = useState('');
     const [racesForDropdown, setRacesForDropdown] = useState([]);
     const [loadingRaces, setLoadingRaces] = useState(false);
     const [dialogError, setDialogError] = useState(null);
@@ -30,6 +31,7 @@ function EditChampionshipDialog({
                 ? '' 
                 : String(championshipData.lsf_score_reveal_race_id));
             setEditedStatus(championshipData.status || 'REGISTERING');
+            setEditedRegistrationFormLink(championshipData.registration_form_link || '');
             setDialogError(null); // Clear previous dialog-specific errors
             
             // Fetch races for this specific championship
@@ -53,6 +55,7 @@ function EditChampionshipDialog({
             setEditedName('');
             setEditedLsfRevealRaceId('');
             setEditedStatus('');
+            setEditedRegistrationFormLink('');
             setRacesForDropdown([]);
             setDialogError(null);
         }
@@ -68,7 +71,8 @@ function EditChampionshipDialog({
             id: championshipData.id,
             name: editedName,
             lsf_score_reveal_race_id: editedLsfRevealRaceId === '' ? null : parseInt(editedLsfRevealRaceId, 10),
-            status: editedStatus
+            status: editedStatus,
+            registration_form_link: editedRegistrationFormLink === '' ? null : editedRegistrationFormLink
         });
     };
 
@@ -142,6 +146,19 @@ function EditChampionshipDialog({
                         }
                     </Select>
                 </FormControl>
+                <TextField
+                    margin="normal"
+                    id="registration-form-link"
+                    label={<Localized id="admin-registration-form-link-label" />}
+                    type="url"
+                    fullWidth
+                    variant="standard"
+                    value={editedRegistrationFormLink}
+                    onChange={(e) => setEditedRegistrationFormLink(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="https://forms.google.com/..."
+                    helperText={<Localized id="admin-registration-form-link-helper" />}
+                />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} disabled={isLoading}><Localized id="admin-cancel-button" /></Button>

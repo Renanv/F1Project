@@ -715,3 +715,13 @@ upload-not-available-finished = Upload not available for finished championships
 
 # Championship status labels
 championship-status-label = Status
+
+# Registration Form Links
+admin-registration-form-link-label = Registration Form Link
+admin-registration-form-link-helper = Google Form link for registered users (optional)
+championship-fill-form-button = Fill Form
+championship-fill-form-now-button = Fill Form Now
+championship-fill-form-later-button = Fill Later
+championship-registration-success-title = Registration Successful!
+championship-form-urgent-title = URGENT: Complete Registration Form
+championship-form-urgent-message = Please fill out the required registration form to complete your championship registration.

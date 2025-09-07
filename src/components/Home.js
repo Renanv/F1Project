@@ -52,6 +52,10 @@ function Home({ isLoggedIn, isAdmin }) {
 
   // State for User's Bonus Log Modal
   const [openUserBonusLogDialog, setOpenUserBonusLogDialog] = useState(false);
+  
+  // State for Registration Success Dialog
+  const [openRegistrationSuccessDialog, setOpenRegistrationSuccessDialog] = useState(false);
+  const [registrationSuccessData, setRegistrationSuccessData] = useState(null);
   const [userBonusLogAttendeeName, setUserBonusLogAttendeeName] = useState(''); // For dialog title
 
   const getUserIdFromToken = () => {
@@ -314,6 +318,17 @@ function Home({ isLoggedIn, isAdmin }) {
         // Refresh the queries to update the UI
         queryClient.invalidateQueries({ queryKey: ['registeringChampionships'] });
         queryClient.invalidateQueries({ queryKey: ['userRegistrationStatuses'] });
+        
+        // Find the championship data to check if there's a form link
+        const championship = registeringChampionships.find(c => c.id === championshipId);
+        if (championship && championship.registration_form_link) {
+          setRegistrationSuccessData({
+            championshipName: championship.name,
+            formLink: championship.registration_form_link,
+            isReserve: response.data.isReserve
+          });
+          setOpenRegistrationSuccessDialog(true);
+        }
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -388,20 +403,38 @@ function Home({ isLoggedIn, isAdmin }) {
                 </Button>
               )}
               {isLoggedIn && isRegistered && (
-                <Box sx={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)', 
-                  px: 2, 
-                  py: 1, 
-                  borderRadius: 1,
-                  textAlign: 'center'
-                }}>
-                  <Typography variant="body2">
-                    ✓ {isReserve ? (
-                      <Localized id="championship-register-success-reserve" fallback="Registered as reserve" />
-                    ) : (
-                      <Localized id="championship-register-success" fallback="Successfully registered" />
-                    )}
-                  </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center' }}>
+                  <Box sx={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+                    px: 2, 
+                    py: 1, 
+                    borderRadius: 1,
+                    textAlign: 'center'
+                  }}>
+                    <Typography variant="body2">
+                      ✓ {isReserve ? (
+                        <Localized id="championship-register-success-reserve" fallback="Registered as reserve" />
+                      ) : (
+                        <Localized id="championship-register-success" fallback="Successfully registered" />
+                      )}
+                    </Typography>
+                  </Box>
+                  {championship.registration_form_link && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => window.open(championship.registration_form_link, '_blank')}
+                      sx={{ 
+                        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                        color: 'white',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 255, 255, 0.4)',
+                        }
+                      }}
+                    >
+                      <Localized id="championship-fill-form-button" fallback="Fill Form" />
+                    </Button>
+                  )}
                 </Box>
               )}
             </Box>
@@ -593,6 +626,69 @@ function Home({ isLoggedIn, isAdmin }) {
           <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={handleCloseUserBonusLogDialog}>
               <Localized id="admin-close-button" fallback="Close"/>
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Registration Success Dialog with Form Link */}
+      {registrationSuccessData && (
+        <Dialog 
+          open={openRegistrationSuccessDialog} 
+          onClose={() => setOpenRegistrationSuccessDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ 
+            backgroundColor: 'success.main', 
+            color: 'success.contrastText',
+            textAlign: 'center'
+          }}>
+            <Typography variant="h5" component="h2">
+              🎉 <Localized id="championship-registration-success-title" fallback="Registration Successful!" />
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                {registrationSuccessData.championshipName}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2 }}>
+                {registrationSuccessData.isReserve ? (
+                  <Localized id="championship-register-success-reserve" fallback="You've been registered as a reserve driver." />
+                ) : (
+                  <Localized id="championship-register-success" fallback="You've been successfully registered!" />
+                )}
+              </Typography>
+            </Box>
+            
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                <Localized id="championship-form-urgent-title" fallback="URGENT: Complete Registration Form" />
+              </Typography>
+              <Typography variant="body2">
+                <Localized id="championship-form-urgent-message" fallback="Please fill out the required registration form to complete your championship registration." />
+              </Typography>
+            </Alert>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={() => {
+                window.open(registrationSuccessData.formLink, '_blank');
+                setOpenRegistrationSuccessDialog(false);
+              }}
+              sx={{ mr: 2 }}
+            >
+              <Localized id="championship-fill-form-now-button" fallback="Fill Form Now" />
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setOpenRegistrationSuccessDialog(false)}
+            >
+              <Localized id="championship-fill-form-later-button" fallback="Fill Later" />
             </Button>
           </DialogActions>
         </Dialog>
