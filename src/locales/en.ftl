@@ -713,6 +713,9 @@ championship-group-hidden = Hidden Championships
 # Upload restrictions
 upload-not-available-finished = Upload not available for finished championships
 
+# Race Points Multiplier
+race-points-multiplier-label = 2x Race Points Multiplier
+
 # Championship status labels
 championship-status-label = Status
 

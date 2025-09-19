@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Localized } from '@fluent/react';
-import { Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
+import { Button, Typography, Box, CircularProgress, Alert, FormControlLabel, Checkbox } from '@mui/material';
 import { handleFileUpload } from '../utils/fileUploadHandler';
 
 const FileUpload = ({ onSuccess, selectedRaceId, isAdmin }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [useMultiplier, setUseMultiplier] = useState(false);
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -33,10 +34,21 @@ const FileUpload = ({ onSuccess, selectedRaceId, isAdmin }) => {
           {file.name}
         </Typography>
       )}
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={useMultiplier}
+            onChange={(e) => setUseMultiplier(e.target.checked)}
+            color="primary"
+          />
+        }
+        label={<Localized id="race-points-multiplier-label" />}
+        sx={{ mb: 2, display: 'block' }}
+      />
       <Button
         variant="contained"
         color="primary"
-        onClick={() => handleFileUpload(file, setMessage, setLoading, onSuccess, selectedRaceId)}
+        onClick={() => handleFileUpload(file, setMessage, setLoading, onSuccess, selectedRaceId, useMultiplier)}
         disabled={loading || !file || !selectedRaceId}
         startIcon={loading && <CircularProgress size={20} />}
       >

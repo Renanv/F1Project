@@ -96,11 +96,19 @@ const PointsByRaceView = ({ championshipId }) => {
                             <TableCell component="th" scope="row">{index + 1}</TableCell>
                             <TableCell>{ranking.driverInfo.name}</TableCell>
                             <TableCell>{ranking.driverInfo.team_name || 'N/A'}</TableCell>
-                            {races.map(race => (
-                                <TableCell key={`${ranking.driverInfo.userId}-${race.id}`} align="center">
-                                    {ranking.racePoints[race.id] !== null ? ranking.racePoints[race.id] : '—'}
-                                </TableCell>
-                            ))}
+                            {races.map(race => {
+                                const raceData = ranking.racePoints[race.id];
+                                // Handle both old format (just points) and new format (object with points and position)
+                                const displayValue = raceData !== null ? 
+                                    (typeof raceData === 'object' && raceData !== null ? raceData.points : raceData) 
+                                    : '—';
+                                
+                                return (
+                                    <TableCell key={`${ranking.driverInfo.userId}-${race.id}`} align="center">
+                                        {displayValue}
+                                    </TableCell>
+                                );
+                            })}
                             <TableCell align="center">{ranking.totalPointsFromRaces}</TableCell>
                             <TableCell align="center">{ranking.bonusPoints}</TableCell>
                             <TableCell align="center">{ranking.totalPoints}</TableCell>

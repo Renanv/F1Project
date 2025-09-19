@@ -265,9 +265,12 @@ const DriverRankingsView = ({ drivers, isMobile, races = [], pointsByRaceData = 
                 <TableCell>{driver.name} #{driver.driver_number}</TableCell>
                 <TableCell>{teamName ? teamName : <Localized id="team-name-not-available" />}</TableCell>
                 {races.map(race => {
-                  const racePoints = driverRaceData?.racePoints?.[race.id];
+                  const raceData = driverRaceData?.racePoints?.[race.id];
                   const hasFastestLapInRace = driverRaceData?.raceFastestLaps?.[race.id];
-                  const isRacePodium = racePoints !== null && racePoints !== 'DNF' && racePoints >= 15; // Assuming 15+ points means podium finish
+                  
+                  // Handle both old format (just points) and new format (object with points and position)
+                  const racePoints = typeof raceData === 'object' && raceData !== null ? raceData.points : raceData;
+                  const racePosition = typeof raceData === 'object' && raceData !== null ? raceData.position : null;
                   
                   return (
                     <TableCell key={`${driver.user_id || driver.id}-${race.id}`} align="center">
@@ -276,8 +279,8 @@ const DriverRankingsView = ({ drivers, isMobile, races = [], pointsByRaceData = 
                           <span style={{ color: 'red', fontWeight: 'bold' }}>DNF</span> : 
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, position: 'relative' }}>
                             <Typography style={getPositionStyle(
-                              // Estimate position from points (this is approximate)
-                              racePoints >= 25 ? 1 : racePoints >= 18 ? 2 : racePoints >= 15 ? 3 : 99,
+                              // Use actual position if available, otherwise estimate from points
+                              racePosition || (racePoints >= 25 ? 1 : racePoints >= 18 ? 2 : racePoints >= 15 ? 3 : 99),
                               hasFastestLapInRace
                             )}>
                               {racePoints}

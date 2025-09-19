@@ -701,6 +701,9 @@ championship-group-hidden = Campeonatos Ocultos
 # Restrições de Upload
 upload-not-available-finished = Upload não disponível para campeonatos finalizados
 
+# Multiplicador de Pontos de Corrida
+race-points-multiplier-label = Multiplicador de Pontos 2x
+
 # Labels de status do campeonato
 championship-status-label = Status
 

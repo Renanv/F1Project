@@ -1,6 +1,6 @@
 import axiosInstance from './axiosInstance'; // Use standard axios
 
-export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, raceId) => {
+export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, raceId, useMultiplier = false) => {
   if (!file) {
     setMessage('select-file');
     return;
@@ -149,7 +149,10 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
       }
 
       // Send the array of driver race results to the backend
-      await axiosInstance.post('/api/log-race-results', { results: driverRaceResults });
+      await axiosInstance.post('/api/log-race-results', { 
+        results: driverRaceResults, 
+        pointsMultiplier: useMultiplier ? 2 : 1 
+      });
 
       setMessage('file-processed-success');
       if (onSuccess) onSuccess();
