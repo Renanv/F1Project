@@ -78,13 +78,21 @@ const TrophyIcon = ({ position, size = 'large' }) => {
 const PodiumCard = ({ race, podiumData, drivers }) => {
     const theme = useTheme();
     const countryCode = getCountryCodeForRace(race.title);
+    
+    console.log(`[PodiumCard] Rendering race ${race.title} with podiumData:`, podiumData);
 
     // Get driver info for each position
     const getDriverInfo = (position) => {
         const result = podiumData.find(r => r.position === position);
-        if (!result) return null;
+        if (!result) {
+            console.log(`[PodiumCard] No result found for position ${position} in race ${race.title}`);
+            return null;
+        }
         
         const driver = drivers.find(d => d.user_id === result.user_id);
+        if (!driver) {
+            console.log(`[PodiumCard] No driver found for user_id ${result.user_id} in race ${race.title}`, { availableDrivers: drivers.map(d => ({ user_id: d.user_id, name: d.name })) });
+        }
         return driver ? {
             name: driver.name,
             driverNumber: driver.driver_number,
@@ -337,20 +345,29 @@ const AwardsPage = () => {
                 if (resultsResponse.data.success) {
                     const { races: raceList, driverRankings } = resultsResponse.data.data;
                     const podiumByRace = {};
+                    
+                    console.log('[AwardsPage] Processing race results:', { raceList, driverRankings });
 
                     raceList.forEach(race => {
                         const raceResultsData = [];
                         
                         driverRankings.forEach(ranking => {
-                            const racePoints = ranking.racePoints[race.id];
-                            if (racePoints !== null && racePoints !== 'DNF') {
-                                // Estimate position from points (this is approximate)
-                                let position = null;
-                                if (racePoints >= 25) position = 1;
-                                else if (racePoints >= 18) position = 2;
-                                else if (racePoints >= 15) position = 3;
+                            const raceData = ranking.racePoints[race.id];
+                            if (raceData !== null && raceData !== 'DNF') {
+                                // Handle both old format (just points) and new format (object with points and position)
+                                const racePoints = typeof raceData === 'object' && raceData !== null ? raceData.points : raceData;
+                                const racePosition = typeof raceData === 'object' && raceData !== null ? raceData.position : null;
 
-                                if (position) {
+                                // Use actual position if available, otherwise estimate from points
+                                let position = racePosition;
+                                if (!position && racePoints !== null && racePoints !== 'DNF') {
+                                    // Estimate position from points (fallback for old data)
+                                    if (racePoints >= 25) position = 1;
+                                    else if (racePoints >= 18) position = 2;
+                                    else if (racePoints >= 15) position = 3;
+                                }
+
+                                if (position && position <= 3) {
                                     raceResultsData.push({
                                         user_id: ranking.driverInfo.userId,
                                         position: position,
@@ -363,6 +380,8 @@ const AwardsPage = () => {
                         // Sort by position to ensure correct podium order
                         raceResultsData.sort((a, b) => a.position - b.position);
                         podiumByRace[race.id] = raceResultsData;
+                        
+                        console.log(`[AwardsPage] Race ${race.title} (ID: ${race.id}) podium data:`, raceResultsData);
                     });
 
                     setRaceResults(podiumByRace);
