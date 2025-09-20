@@ -285,10 +285,25 @@ const AwardsPage = () => {
     useEffect(() => {
         const fetchChampionships = async () => {
             try {
-                const response = await axiosInstance.get('/api/championships');
-                setChampionships(response.data);
-                if (response.data.length > 0) {
-                    setSelectedChampionshipId(response.data[0].id);
+                // Use groupByStatus to get structured data and includeHidden for admin access
+                const response = await axiosInstance.get('/api/championships?groupByStatus=true&includeHidden=true');
+                
+                // Process grouped data into a flat list, prioritizing RUNNING championships
+                let championshipsList = [];
+                if (response.data.grouped) {
+                    const statusOrder = ['RUNNING', 'FINISHED', 'REGISTERING', 'HIDDEN'];
+                    statusOrder.forEach(status => {
+                        if (response.data.data[status]) {
+                            championshipsList.push(...response.data.data[status]);
+                        }
+                    });
+                } else {
+                    championshipsList = response.data;
+                }
+                
+                setChampionships(championshipsList);
+                if (championshipsList.length > 0) {
+                    setSelectedChampionshipId(championshipsList[0].id);
                 }
             } catch (err) {
                 setError('Failed to fetch championships');
