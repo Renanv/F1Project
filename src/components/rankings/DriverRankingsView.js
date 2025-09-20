@@ -157,8 +157,12 @@ const DriverRankingsView = ({ drivers, isMobile, races = [], pointsByRaceData = 
                     </TableHead>
                     <TableBody>
                       {races.map(race => {
-                        const racePoints = driverRaceData.racePoints[race.id];
+                        const raceData = driverRaceData.racePoints[race.id];
                         const hasFastestLapInRace = driverRaceData?.raceFastestLaps?.[race.id];
+                        
+                        // Handle both old format (just points) and new format (object with points and position)
+                        const racePoints = typeof raceData === 'object' && raceData !== null ? raceData.points : raceData;
+                        const racePosition = typeof raceData === 'object' && raceData !== null ? raceData.position : null;
                         const isRacePodium = racePoints !== null && racePoints !== 'DNF' && racePoints >= 15;
                         
                         return (
@@ -175,8 +179,8 @@ const DriverRankingsView = ({ drivers, isMobile, races = [], pointsByRaceData = 
                                   <span style={{ color: 'red', fontWeight: 'bold' }}>DNF</span> : 
                                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, position: 'relative' }}>
                                     <Typography style={getPositionStyle(
-                                      // Estimate position from points
-                                      racePoints >= 25 ? 1 : racePoints >= 18 ? 2 : racePoints >= 15 ? 3 : 99,
+                                      // Use actual position if available, otherwise estimate from points
+                                      racePosition || (racePoints >= 25 ? 1 : racePoints >= 18 ? 2 : racePoints >= 15 ? 3 : 99),
                                       hasFastestLapInRace
                                     )}>
                                       {racePoints}
