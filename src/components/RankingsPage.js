@@ -114,6 +114,14 @@ function RankingsPage({ isAdmin }) {
     return championshipsList.find(c => c.id === selectedChampionshipId) || null;
   }, [championshipsList, selectedChampionshipId]);
 
+  // Get championship configuration for constructors ranking
+  const championshipConfig = useMemo(() => {
+    return selectedChampionshipObject ? {
+      constructors_ranking_mode: selectedChampionshipObject.constructors_ranking_mode || 'individual',
+      constructors_livery_order: selectedChampionshipObject.constructors_livery_order || 'normal'
+    } : null;
+  }, [selectedChampionshipObject]);
+
   // Fetch driver rankings using React Query
   const {
     data: drivers = [],
@@ -269,7 +277,7 @@ function RankingsPage({ isAdmin }) {
     } else if (rankingType === 'team') {
         return <TeamRankingsView teamRankings={teamRankings} isMobile={isMobile} />;
     } else if (rankingType === 'constructors') {
-        return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} constructorTiers={constructorTiers} />;
+        return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} championshipConfig={championshipConfig} />;
     } else if (rankingType === 'clashes') {
         return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} />;
     } else if (rankingType === 'beautiful-play') {

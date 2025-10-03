@@ -689,6 +689,15 @@ championship-register-success = Successfully registered for championship!
 championship-register-success-reserve = Registered as reserve driver.
 championship-already-registered = You are already registered for this championship.
 championship-registration-closed = Championship is not open for registration.
+
+# Constructor Rankings Configuration
+constructors-ranking-mode-label = Constructor Rankings Mode
+constructors-mode-individual = Individual (F1 Constructor Tiers)
+constructors-mode-team-average = Team Average Scores
+constructors-livery-order-label = Livery Display Order
+livery-order-normal = Normal (Best to Worst)
+livery-order-reverse = Reverse (Worst to Best)
+average-score-label = Avg
 championship-registration-error = Error during registration. Please try again.
 
 # Championship Winners

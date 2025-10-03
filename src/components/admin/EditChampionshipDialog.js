@@ -20,6 +20,8 @@ function EditChampionshipDialog({
     const [editedLsfRevealRaceId, setEditedLsfRevealRaceId] = useState('');
     const [editedStatus, setEditedStatus] = useState('');
     const [editedRegistrationFormLink, setEditedRegistrationFormLink] = useState('');
+    const [editedConstructorsMode, setEditedConstructorsMode] = useState('individual');
+    const [editedLiveryOrder, setEditedLiveryOrder] = useState('normal');
     const [racesForDropdown, setRacesForDropdown] = useState([]);
     const [loadingRaces, setLoadingRaces] = useState(false);
     const [dialogError, setDialogError] = useState(null);
@@ -32,6 +34,8 @@ function EditChampionshipDialog({
                 : String(championshipData.lsf_score_reveal_race_id));
             setEditedStatus(championshipData.status || 'REGISTERING');
             setEditedRegistrationFormLink(championshipData.registration_form_link || '');
+            setEditedConstructorsMode(championshipData.constructors_ranking_mode || 'individual');
+            setEditedLiveryOrder(championshipData.constructors_livery_order || 'normal');
             setDialogError(null); // Clear previous dialog-specific errors
             
             // Fetch races for this specific championship
@@ -56,6 +60,8 @@ function EditChampionshipDialog({
             setEditedLsfRevealRaceId('');
             setEditedStatus('');
             setEditedRegistrationFormLink('');
+            setEditedConstructorsMode('individual');
+            setEditedLiveryOrder('normal');
             setRacesForDropdown([]);
             setDialogError(null);
         }
@@ -67,13 +73,18 @@ function EditChampionshipDialog({
             setDialogError('championship-name-required'); // Example local validation
             return;
         }
-        onSubmit({
+        
+        const submitData = {
             id: championshipData.id,
             name: editedName,
             lsf_score_reveal_race_id: editedLsfRevealRaceId === '' ? null : parseInt(editedLsfRevealRaceId, 10),
             status: editedStatus,
-            registration_form_link: editedRegistrationFormLink === '' ? null : editedRegistrationFormLink
-        });
+            registration_form_link: editedRegistrationFormLink === '' ? null : editedRegistrationFormLink,
+            constructors_ranking_mode: editedConstructorsMode,
+            constructors_livery_order: editedLiveryOrder
+        };
+        
+        onSubmit(submitData);
     };
 
     // Use parentError if provided (e.g., for submission failure), otherwise use dialogError
@@ -159,6 +170,42 @@ function EditChampionshipDialog({
                     placeholder="https://forms.google.com/..."
                     helperText={<Localized id="admin-registration-form-link-helper" />}
                 />
+                <FormControl fullWidth margin="normal" disabled={isLoading}>
+                    <InputLabel id="constructors-mode-label">
+                        <Localized id="constructors-ranking-mode-label" />
+                    </InputLabel>
+                    <Select
+                        labelId="constructors-mode-label"
+                        value={editedConstructorsMode}
+                        label={<Localized id="constructors-ranking-mode-label" />}
+                        onChange={(e) => setEditedConstructorsMode(e.target.value)}
+                    >
+                        <MenuItem value="individual">
+                            <Localized id="constructors-mode-individual" />
+                        </MenuItem>
+                        <MenuItem value="team_average">
+                            <Localized id="constructors-mode-team-average" />
+                        </MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl fullWidth margin="normal" disabled={isLoading}>
+                    <InputLabel id="livery-order-label">
+                        <Localized id="constructors-livery-order-label" />
+                    </InputLabel>
+                    <Select
+                        labelId="livery-order-label"
+                        value={editedLiveryOrder}
+                        label={<Localized id="constructors-livery-order-label" />}
+                        onChange={(e) => setEditedLiveryOrder(e.target.value)}
+                    >
+                        <MenuItem value="normal">
+                            <Localized id="livery-order-normal" />
+                        </MenuItem>
+                        <MenuItem value="reverse">
+                            <Localized id="livery-order-reverse" />
+                        </MenuItem>
+                    </Select>
+                </FormControl>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
                 <Button onClick={onClose} disabled={isLoading}><Localized id="admin-cancel-button" /></Button>

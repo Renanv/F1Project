@@ -284,12 +284,14 @@ function ChampionshipManager() {
     
     // --- React Query Mutation for editing a championship ---
     const editChampionshipMutation = useMutation({
-        mutationFn: async (champData) => { // champData: { id, name, lsf_score_reveal_race_id, status, registration_form_link }
+        mutationFn: async (champData) => { // champData: { id, name, lsf_score_reveal_race_id, status, registration_form_link, constructors_ranking_mode, constructors_livery_order }
             const payload = {
                 name: champData.name,
                 lsf_score_reveal_race_id: champData.lsf_score_reveal_race_id,
                 status: champData.status,
-                registration_form_link: champData.registration_form_link
+                registration_form_link: champData.registration_form_link,
+                constructors_ranking_mode: champData.constructors_ranking_mode,
+                constructors_livery_order: champData.constructors_livery_order
             };
             const response = await axiosInstance.put(`/api/championships/${champData.id}`, payload);
             return response.data.championship; // Return the updated championship

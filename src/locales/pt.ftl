@@ -679,6 +679,15 @@ championship-already-registered = Você já está inscrito neste campeonato.
 championship-registration-closed = Campeonato não está aberto para inscrições.
 championship-registration-error = Erro durante a inscrição. Tente novamente.
 
+# Constructor Rankings Configuration
+constructors-ranking-mode-label = Modo de Classificação de Construtores
+constructors-mode-individual = Individual (Níveis de Construtores F1)
+constructors-mode-team-average = Pontuação Média das Equipes
+constructors-livery-order-label = Ordem de Exibição das Cores
+livery-order-normal = Normal (Melhor para Pior)
+livery-order-reverse = Reverso (Pior para Melhor)
+average-score-label = Média
+
 # Vencedores do Campeonato
 championship-winners-title = Vencedores do Campeonato
 championship-drivers-champion = Campeão de Pilotos

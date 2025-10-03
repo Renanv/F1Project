@@ -7,7 +7,7 @@ const raceToCodeMap = {
     'spain': 'es', 'espanha': 'es',
     'canada': 'ca',
     'austria': 'at',
-    'hungary': 'hu',
+    'hungary': 'hu', 'hungria': 'hu',
     'belgium': 'be', 'bélgica': 'be',
     'netherlands': 'nl', 'holanda': 'nl',
     'italy': 'it', 'itália': 'it',
