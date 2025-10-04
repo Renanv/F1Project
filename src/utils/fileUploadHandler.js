@@ -119,7 +119,7 @@ export const handleFileUpload = async (file, setMessage, setLoading, onSuccess, 
         
         // --- Calculate total score adjustment FOR THIS RACE ---
         // Uses the final determined score_delta_leader, excludes separate log values
-        const raceScoreAdjustment = score_penalties + score_grid_position + score_delta_leader + score_overtakes;
+        const raceScoreAdjustment = score_penalties + score_delta_leader + score_overtakes;
         
         // Apply team multiplier
         const teamMultiplier = teamConfigs[teamName] || 1;
