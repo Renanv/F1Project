@@ -311,7 +311,7 @@ function ClashPairRow({
                      categories.map(cat => (
                         <Box key={cat.key} sx={{ display: 'flex', alignItems: 'center', height: '30px' }}>
                             <Typography sx={{ mr: 1, width: '20px' }}>{cat.winner === selectedTeamId ? '✔️' : '❌'}</Typography>
-                            <Localized id={cat.labelId}><Typography variant="body2"></Typography></Localized>}
+                            <Localized id={cat.labelId} />
                         </Box>
                     ))
                 )}
