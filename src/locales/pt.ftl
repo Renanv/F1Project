@@ -688,6 +688,11 @@ livery-order-normal = Normal (Melhor para Pior)
 livery-order-reverse = Reverso (Pior para Melhor)
 average-score-label = Média
 
+# Clashes
+clashes-team-label = Equipe {$number}
+clashes-select-team = Selecionar Equipe
+clashes-select-team-first = Selecione a equipe primeiro
+
 # Vencedores do Campeonato
 championship-winners-title = Vencedores do Campeonato
 championship-drivers-champion = Campeão de Pilotos

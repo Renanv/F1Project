@@ -279,7 +279,7 @@ function RankingsPage({ isAdmin }) {
     } else if (rankingType === 'constructors') {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} championshipConfig={championshipConfig} />;
     } else if (rankingType === 'clashes') {
-        return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} />;
+        return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} championshipConfig={championshipConfig} />;
     } else if (rankingType === 'beautiful-play') {
         return <BeautifulPlayRankingsView beautifulPlayData={beautifulPlayRankings} isMobile={isMobile} />;
     }

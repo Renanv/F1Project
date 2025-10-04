@@ -698,6 +698,11 @@ constructors-livery-order-label = Livery Display Order
 livery-order-normal = Normal (Best to Worst)
 livery-order-reverse = Reverse (Worst to Best)
 average-score-label = Avg
+
+# Clashes
+clashes-team-label = Team {$number}
+clashes-select-team = Select Team
+clashes-select-team-first = Select team first
 championship-registration-error = Error during registration. Please try again.
 
 # Championship Winners
