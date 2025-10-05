@@ -300,6 +300,7 @@ rankings-page-title = Classificações
 ranking-type-driver = Pilotos
 ranking-type-team = Equipes
 ranking-type-constructors = Lastro
+ranking-type-rivals = Rivais
 
 # Classificação de Equipes
 fetch-team-rankings-error = Erro ao buscar classificação de equipes.
@@ -692,6 +693,21 @@ average-score-label = Média
 clashes-team-label = Equipe {$number}
 clashes-select-team = Selecionar Equipe
 clashes-select-team-first = Selecione a equipe primeiro
+clashes-qualy = Q
+clashes-fastest-lap = FL
+clashes-race-finish = P
+
+# Rivals
+rivals-select-race = Selecionar Corrida
+rivals-championship-wide = Estatísticas de Rivalidade do Campeonato
+rivals-championship-title = Estatísticas de Rivalidade do Campeonato
+rivals-race-title = Rivalidades da {$raceName}
+rivals-championship-description = Mostra quem lidera cada rivalidade de construtor em todas as corridas do campeonato
+rivals-legend-title = Legenda
+rivals-legend-drivers = • Os pilotos mostrados são a dupla mais comum para cada construtor
+rivals-legend-winners = • As marcações mostram quem lidera em cada categoria em todas as corridas
+rivals-legend-edit = • Selecione uma corrida específica para visualizar/editar confrontos individuais
+error-loading-rivalry-data = Erro ao carregar dados de rivalidade
 
 # Vencedores do Campeonato
 championship-winners-title = Vencedores do Campeonato

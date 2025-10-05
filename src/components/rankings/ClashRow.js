@@ -21,7 +21,8 @@ function ClashRow({
     attendees, // List of all possible drivers in the championship
     allSelectedDriverIds,
     isAdmin,
-    onUpdate // Callback to parent to save changes
+    onUpdate, // Callback to parent to save changes
+    hideConstructorName = false // Hide constructor name for RivalsView
 }) {
     const [driver1, setDriver1] = useState(raceData?.driver1_user_id || '');
     const [driver2, setDriver2] = useState(raceData?.driver2_user_id || '');
@@ -39,8 +40,14 @@ function ClashRow({
     }, [raceData]);
 
     const handleUpdate = (field, value) => {
+        // For RivalsView (hideConstructorName = true), use simple P1 x P2 format
+        const constructorName = hideConstructorName ? 
+            `P${constructorTiers.findIndex(t => t.name === constructorTeam.name) * 2 + 1} x P${constructorTiers.findIndex(t => t.name === constructorTeam.name) * 2 + 2}` : 
+            constructorTeam.name;
+            
+            
         const payload = {
-            clash_constructor_name: constructorTeam.name,
+            clash_constructor_name: constructorName,
             driver1_user_id: field === 'driver1' ? value : driver1,
             driver2_user_id: field === 'driver2' ? value : driver2,
             qualy_winner_user_id: field === 'qualy' ? value : qualyWinner,
@@ -142,9 +149,11 @@ function ClashRow({
     
     return (
         <Paper sx={{ p: 2, mb: 2 }}>
-            <Typography variant="h6" sx={{ color: constructorTeam.color, textShadow: constructorTeam.textColor ? `1px 1px 2px ${constructorTeam.textColor}`: 'none', mb: 1 }}>
-                {constructorTeam.name}
-            </Typography>
+            {!hideConstructorName && (
+                <Typography variant="h6" sx={{ color: constructorTeam.color, textShadow: constructorTeam.textColor ? `1px 1px 2px ${constructorTeam.textColor}`: 'none', mb: 1 }}>
+                    {constructorTeam.name}
+                </Typography>
+            )}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box sx={{ flex: 1 }}>
                     {driverSelect(1, driver1, (e) => {

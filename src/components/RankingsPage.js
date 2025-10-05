@@ -6,6 +6,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import SportsMmaIcon from '@mui/icons-material/SportsMma';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ import DriverRankingsView from './rankings/DriverRankingsView';
 import TeamRankingsView from './rankings/TeamRankingsView';
 import ConstructorsRankingsView from './rankings/ConstructorsRankingsView';
 import ClashesView from './rankings/ClashesView';
+import RivalsView from './rankings/RivalsView';
 import BeautifulPlayRankingsView from './rankings/BeautifulPlayRankingsView';
 
 // Define Constructor Tiers for Score-based ranking
@@ -280,6 +282,8 @@ function RankingsPage({ isAdmin }) {
         return <ConstructorsRankingsView drivers={drivers} isMobile={isMobile} championshipConfig={championshipConfig} />;
     } else if (rankingType === 'clashes') {
         return <ClashesView championshipId={selectedChampionshipId} isAdmin={isAdmin} championshipConfig={championshipConfig} />;
+    } else if (rankingType === 'rivals') {
+        return <RivalsView championshipId={selectedChampionshipId} isAdmin={isAdmin} championshipConfig={championshipConfig} />;
     } else if (rankingType === 'beautiful-play') {
         return <BeautifulPlayRankingsView beautifulPlayData={beautifulPlayRankings} isMobile={isMobile} />;
     }
@@ -323,6 +327,10 @@ function RankingsPage({ isAdmin }) {
           <ToggleButton value="clashes" aria-label="Clashes Rankings">
             <GroupWorkIcon sx={{ mr: isMobile ? 0 : 1}} /> 
             {!isMobile && <Localized id="rankings-clashes-tab" />}
+          </ToggleButton>
+          <ToggleButton value="rivals" aria-label="Rivals Rankings">
+            <SportsMmaIcon sx={{ mr: isMobile ? 0 : 1}} /> 
+            {!isMobile && <Localized id="ranking-type-rivals" fallback="Rivals"/>}
           </ToggleButton>
           <ToggleButton value="beautiful-play" aria-label="Beautiful Play Rankings">
             <EmojiEventsIcon sx={{ mr: isMobile ? 0 : 1}} /> 

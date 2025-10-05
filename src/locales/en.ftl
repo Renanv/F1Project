@@ -299,6 +299,7 @@ rankings-page-title = Rankings
 ranking-type-driver = Drivers
 ranking-type-team = Teams
 ranking-type-constructors = Constructors
+ranking-type-rivals = Rivals
 
 # Team Rankings
 fetch-team-rankings-error = Error fetching team rankings.
@@ -703,6 +704,22 @@ average-score-label = Avg
 clashes-team-label = Team {$number}
 clashes-select-team = Select Team
 clashes-select-team-first = Select team first
+clashes-qualy = Q
+clashes-fastest-lap = FL
+clashes-race-finish = P
+
+# Rivals
+rivals-select-race = Select Race
+rivals-championship-wide = Championship-Wide Rivalry Stats
+rivals-championship-title = Championship Rivalry Statistics
+rivals-race-title = {$raceName} Rivalries
+rivals-championship-description = Shows who leads each constructor rivalry across all races in the championship
+rivals-legend-title = Legend
+rivals-legend-drivers = • Drivers shown are the most common pairing for each constructor
+rivals-legend-winners = • Checkmarks show who leads in each category across all races
+rivals-legend-edit = • Select a specific race to view/edit individual race clashes
+error-loading-rivalry-data = Error loading rivalry data
+
 championship-registration-error = Error during registration. Please try again.
 
 # Championship Winners
