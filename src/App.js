@@ -1,8 +1,20 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { LocalizationProvider, ReactLocalization } from '@fluent/react';
+import { LocalizationProvider, ReactLocalization, Localized } from '@fluent/react';
 import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
 import { ThemeProvider, createTheme, responsiveFontSizes } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
+import Paper from '@mui/material/Paper';
+import HomeIcon from '@mui/icons-material/Home';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import GavelIcon from '@mui/icons-material/Gavel';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import { jwtDecode } from 'jwt-decode';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axiosInstance from './utils/axiosInstance';
@@ -40,6 +52,10 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [bottomNavValue, setBottomNavValue] = useState(0);
+  const [updateSnackbar, setUpdateSnackbar] = useState({ open: false, registration: null });
 
   const l10n = useMemo(() => {
     return new ReactLocalization(bundles.filter(bundle => bundle.locales.includes(activeLocale)));
@@ -90,6 +106,23 @@ function App() {
     };
   }, [checkAuthStatus]);
 
+  // Listen for SW update events and show snackbar
+  useEffect(() => {
+    const handler = (e) => {
+      setUpdateSnackbar({ open: true, registration: e.detail.registration });
+    };
+    window.addEventListener('sw-update-available', handler);
+    return () => window.removeEventListener('sw-update-available', handler);
+  }, []);
+
+  const handleApplyUpdate = () => {
+    const reg = updateSnackbar.registration;
+    if (reg && reg.waiting) {
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+    }
+  };
+
   const toggleLocale = () => {
     const newLocale = activeLocale === 'en' ? 'pt' : 'en';
     setActiveLocale(newLocale);
@@ -138,7 +171,18 @@ function App() {
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            backgroundImage: 'radial-gradient(1200px 800px at 100% -10%, rgba(225,6,0,0.12), transparent 60%), radial-gradient(1000px 600px at -20% 120%, rgba(0,210,190,0.10), transparent 60%)'
+            backgroundImage: 'radial-gradient(1200px 800px at 100% -10%, rgba(225,6,0,0.12), transparent 60%), radial-gradient(1000px 600px at -20% 120%, rgba(0,210,190,0.10), transparent 60%)',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed',
+          },
+          '@media (max-width:600px)': {
+            body: {
+              // Simpler, uniform gradient for mobile
+              backgroundImage: 'linear-gradient(180deg, rgba(225,6,0,0.10) 0%, rgba(0,210,190,0.10) 100%)',
+              backgroundRepeat: 'no-repeat',
+              backgroundAttachment: 'fixed',
+              backgroundSize: 'cover'
+            }
           }
         }
       },
@@ -230,6 +274,49 @@ function App() {
               <Route path="/admin/awards" element={<AwardsPage />} />
             </Route>
           </Routes>
+
+          {/* Bottom Navigation - Mobile only */}
+          {isMobile && (
+            <Paper elevation={3} sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <BottomNavigation
+                value={bottomNavValue}
+                onChange={(e, newValue) => {
+                  setBottomNavValue(newValue);
+                  if (newValue === 0) navigate('/');
+                  if (newValue === 1) navigate('/drivers');
+                  if (newValue === 2) navigate('/penalties');
+                  if (newValue === 3) navigate('/account');
+                }}
+                showLabels
+              >
+                <BottomNavigationAction label={<Localized id="home"><span /></Localized>} icon={<HomeIcon />} />
+                <BottomNavigationAction label={<Localized id="rankings-page-title"><span /></Localized>} icon={<LeaderboardIcon />} />
+                <BottomNavigationAction label={<Localized id="penalties-page-title"><span /></Localized>} icon={<GavelIcon />} />
+                <BottomNavigationAction label={<Localized id="account-link"><span /></Localized>} icon={<AccountCircleIcon />} />
+              </BottomNavigation>
+            </Paper>
+          )}
+
+          {/* Update Available Snackbar */}
+          <Snackbar
+            open={updateSnackbar.open}
+            onClose={() => setUpdateSnackbar({ open: false, registration: null })}
+            autoHideDuration={8000}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert
+              severity="info"
+              variant="filled"
+              onClose={() => setUpdateSnackbar({ open: false, registration: null })}
+              action={
+                <Button color="inherit" size="small" onClick={handleApplyUpdate}>
+                  Refresh
+                </Button>
+              }
+            >
+              <Localized id="pwa-update-available" fallback="A new version is available. Refresh to update." />
+            </Alert>
+          </Snackbar>
         </QueryClientProvider>
       </LocalizationProvider>
     </ThemeProvider>

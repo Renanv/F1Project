@@ -31,18 +31,8 @@ root.render(
 reportWebVitals();
 
 serviceWorkerRegistration.register({
-  onUpdate: registration => {
-    const waitingServiceWorker = registration.waiting;
-    if (waitingServiceWorker) {
-      if (window.confirm("A new version of the app is available. Refresh to update?")) {
-        waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-        // Optional: Listen for controller change to reload once the new SW is active
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          window.location.reload();
-        });
-      } else {
-        console.log("User declined to update to the new version immediately.");
-      }
-    }
+  onUpdate: (registration) => {
+    // Notify app that an update is available; UI decides when to activate
+    window.dispatchEvent(new CustomEvent('sw-update-available', { detail: { registration } }));
   }
 });

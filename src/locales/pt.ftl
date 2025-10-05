@@ -235,6 +235,7 @@ selected-team-label = Equipe Selecionada
 
 # PWA / Instalação
 install-app-button = Instalar App
+pwa-update-available = Uma nova versão está disponível. Atualize para aplicar.
 
 # Seção do Cartão Meu Status
 my-status-title = Meu Status
