@@ -21,8 +21,13 @@ import {
   Button,
   TablePagination,
   Grid,
-  Chip
+  Chip,
+  Card,
+  CardContent,
+  Skeleton,
+  useMediaQuery
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import axiosInstance from '../../utils/axiosInstance';
 import { useQuery } from '@tanstack/react-query';
 import { getJudgmentDisplay } from '../../utils/penaltyUtils';
@@ -60,7 +65,9 @@ const getStatusChip = (status) => {
 
 
 export default function PenaltiesListPage() {
-  const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState(() => localStorage.getItem('penalties:selectedChampionshipId') || '');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -105,6 +112,13 @@ export default function PenaltiesListPage() {
       setSelectedChampionshipId('');
     }
   }, [championships, isLoadingChampionships, selectedChampionshipId]);
+
+  // Persist selection
+  useEffect(() => {
+    if (selectedChampionshipId) {
+      localStorage.setItem('penalties:selectedChampionshipId', selectedChampionshipId);
+    }
+  }, [selectedChampionshipId]);
 
   // Fetch penalties based on selected championship and pagination
   const {
@@ -156,13 +170,57 @@ export default function PenaltiesListPage() {
     setPage(0); // Reset page when championship changes
   };
 
+  const renderMobileCard = (penalty) => (
+    <Grid item xs={12} key={penalty.id}>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle2">#{penalty.id}</Typography>
+            {getStatusChip(penalty.status)}
+          </Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mb: 1 }}>
+            <Typography variant="body2" color="text.secondary"><Localized id="penalty-header-race" fallback="Race" />:</Typography>
+            <Typography variant="body2">{penalty.race_title || 'N/A'}</Typography>
+            <Typography variant="body2" color="text.secondary"><Localized id="penalty-header-submitted-by" fallback="Submitted By" />:</Typography>
+            <Typography variant="body2">{penalty.submitter_usertag || 'N/A'}</Typography>
+            <Typography variant="body2" color="text.secondary"><Localized id="penalty-header-accused" fallback="Accused" />:</Typography>
+            <Typography variant="body2">{penalty.accused_usertag || 'N/A'}</Typography>
+            <Typography variant="body2" color="text.secondary"><Localized id="penalty-header-submitted-at" fallback="Submitted At" />:</Typography>
+            <Typography variant="body2">{(() => {
+              const date = new Date(penalty.submission_timestamp);
+              const day = String(date.getDate()).padStart(2, '0');
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const year = date.getFullYear();
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+              const seconds = String(date.getSeconds()).padStart(2, '0');
+              return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+            })()}</Typography>
+            <Typography variant="body2" color="text.secondary"><Localized id="penalty-header-final-outcome" fallback="Final Outcome" />:</Typography>
+            <Typography variant="body2">{getJudgmentDisplay(penalty.final_outcome) || '-'}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="contained"
+              size="small"
+              component={RouterLink}
+              to={`/penalties/${penalty.id}`}
+            >
+              <Localized id="view-details-button" fallback="View Details" />
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         <Localized id="penalties-list-title" fallback="Penalty Submissions" />
       </Typography>
 
-      {isLoadingChampionships && <CircularProgress />}
+      {isLoadingChampionships && <Skeleton variant="rounded" height={56} />}
       {championshipsError && (
         <Alert severity="error">
           <Localized id="fetch-championships-error" />
@@ -196,7 +254,21 @@ export default function PenaltiesListPage() {
 
       {selectedChampionshipId && (
         <>
-          {isLoadingPenalties && !penaltiesData && <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}><CircularProgress /></Box>}
+          {isLoadingPenalties && !penaltiesData && (
+            <Box sx={{ my: 2 }}>
+              {isMobile ? (
+                <Grid container spacing={2}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Grid item xs={12} key={i}>
+                      <Skeleton variant="rounded" height={120} />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Skeleton variant="rounded" height={320} />
+              )}
+            </Box>
+          )}
           {penaltiesError && (
             <Alert severity="error" sx={{ my: 2 }}>
               <Localized id="fetch-penalties-error" fallback="Error fetching penalties for this championship." />
@@ -210,6 +282,11 @@ export default function PenaltiesListPage() {
           )}
 
           {penalties.length > 0 && (
+            isMobile ? (
+              <Grid container spacing={2}>
+                {penalties.map(renderMobileCard)}
+              </Grid>
+            ) : (
             <Paper sx={{ width: '100%', overflow: 'hidden' }}>
               <TableContainer>
                 <Table stickyHeader aria-label="penalties table">
@@ -282,6 +359,7 @@ export default function PenaltiesListPage() {
                 }}
               />
             </Paper>
+            )
           )}
         </>
       )}

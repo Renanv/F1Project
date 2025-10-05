@@ -6,6 +6,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import SportsScoreIcon from '@mui/icons-material/SportsScore';
+import Tooltip from '@mui/material/Tooltip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -77,11 +78,11 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
   };
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" color="transparent">
       <Toolbar>
-        <SportsScoreIcon sx={{ mr: 2 }} />
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          {/* Removed Localized app-title */}
+        <SportsScoreIcon sx={{ mr: 1, color: 'primary.main' }} />
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
+          LSF F1
         </Typography>
 
         {isMobile ? (
@@ -90,7 +91,7 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
               size="large"
               edge="start"
               color="inherit"
-              aria-label="menu"
+              aria-label="open menu"
               sx={{ mr: 1 }} // Adjusted margin for mobile
               onClick={handleMenu}
             >
@@ -198,14 +199,16 @@ const NavigationBar = ({ isLoggedIn, isAdmin, handleLogout, toggleLocale, active
                 <Localized id="logout" />
               </Button>
             )}
-            <Button color="inherit" onClick={clearCacheAndReload} title="Clear Cache & Reload">
-              <RefreshIcon sx={{ mr: 0.5 }} />
-            </Button>
+            <Tooltip title="Clear cache and reload">
+              <IconButton color="inherit" onClick={clearCacheAndReload} aria-label="clear cache and reload">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
           </>
         )}
 
         {/* Language toggle button remains outside the hamburger menu */}
-        <Button color="inherit" onClick={toggleLocale} sx={{ ml: isMobile ? 'auto' : 1 }}>
+        <Button color="inherit" onClick={toggleLocale} sx={{ ml: isMobile ? 'auto' : 1 }} aria-label="toggle language">
           {isMobile ? (
             activeLocale === 'en' ? <BrazilFlagIcon width="24" height="24" /> : <USFlagIcon width="24" height="24" />
           ) : activeLocale === 'en' ? (

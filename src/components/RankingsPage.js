@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText } from '@mui/material';
+import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Skeleton } from '@mui/material';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -39,7 +39,7 @@ function RankingsPage({ isAdmin }) {
   const queryClient = useQueryClient();
   const [selectedRaceId, setSelectedRaceId] = useState('');
 
-  const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState(() => localStorage.getItem('rankings:selectedChampionshipId') || '');
 
   const [rankingType, setRankingType] = useState('driver');
 
@@ -92,6 +92,13 @@ function RankingsPage({ isAdmin }) {
       setSelectedChampionshipId('');
     }
   }, [championshipsList, isLoadingChampionships, selectedChampionshipId]);
+
+  // Persist selection
+  useEffect(() => {
+    if (selectedChampionshipId) {
+      localStorage.setItem('rankings:selectedChampionshipId', selectedChampionshipId);
+    }
+  }, [selectedChampionshipId]);
 
   // Fetch championship winners for finished championships using React Query
   const {
@@ -340,7 +347,10 @@ function RankingsPage({ isAdmin }) {
       </Box>
 
       <Box sx={{ mb: 3 }}>
-        <FormControl fullWidth disabled={isLoadingChampionships || isLoadingDriverRankings || isLoadingTeamRankings}>
+        {isLoadingChampionships ? (
+          <Skeleton variant="rounded" height={56} />
+        ) : (
+        <FormControl fullWidth disabled={isLoadingDriverRankings || isLoadingTeamRankings}>
             <InputLabel id="championship-select-label"><Localized id="select-championship-label" /></InputLabel>
             <Select
                 labelId="championship-select-label"
@@ -393,6 +403,7 @@ function RankingsPage({ isAdmin }) {
                 ))}
             </Select>
         </FormControl>
+        )}
       </Box>
 
       {/* Winner Cards for Finished Championships */}

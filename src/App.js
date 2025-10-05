@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LocalizationProvider, ReactLocalization } from '@fluent/react';
 import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme, responsiveFontSizes } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { jwtDecode } from 'jwt-decode';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -105,11 +105,79 @@ function App() {
     navigate('/login');
   };
 
-  const darkTheme = createTheme({
+  const darkTheme = responsiveFontSizes(createTheme({
     palette: {
       mode: 'dark',
+      primary: { main: '#E10600' }, // Ferrari red accent
+      secondary: { main: '#00D2BE' }, // Mercedes teal accent
+      background: {
+        default: '#0B0D10',
+        paper: '#14181F'
+      },
+      text: {
+        primary: '#E6E8EB',
+        secondary: '#A9B1BA'
+      },
+      success: { main: '#2ECC71' },
+      warning: { main: '#F39C12' },
+      error:   { main: '#FF4D4F' },
+      info:    { main: '#3498DB' }
     },
-  });
+    shape: {
+      borderRadius: 12
+    },
+    typography: {
+      fontFamily: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif`,
+      h1: { fontWeight: 700, letterSpacing: 0.3 },
+      h2: { fontWeight: 700, letterSpacing: 0.2 },
+      h3: { fontWeight: 600 },
+      h4: { fontWeight: 600 },
+      button: { textTransform: 'none', fontWeight: 600 }
+    },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: {
+            backgroundImage: 'radial-gradient(1200px 800px at 100% -10%, rgba(225,6,0,0.12), transparent 60%), radial-gradient(1000px 600px at -20% 120%, rgba(0,210,190,0.10), transparent 60%)'
+          }
+        }
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: '#0F1115',
+            borderBottom: '1px solid rgba(255,255,255,0.06)'
+          }
+        }
+      },
+      MuiCard: {
+        defaultProps: { elevation: 2 },
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none'
+          }
+        }
+      },
+      MuiPaper: {
+        styleOverrides: {
+          rounded: { borderRadius: 12 }
+        }
+      },
+      MuiButton: {
+        defaultProps: { disableElevation: true },
+        styleOverrides: {
+          root: { borderRadius: 10 }
+        }
+      },
+      MuiTableHead: {
+        styleOverrides: {
+          root: {
+            backgroundColor: 'rgba(255,255,255,0.02)'
+          }
+        }
+      }
+    }
+  }));
 
   // Callback for Login component
   const handleLoginSuccess = () => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
 import {
   Container, Typography, Button, Grid, Card, CardContent, CardActionArea, Box, CircularProgress, Alert, Avatar, List, ListItem, ListItemText, ListItemIcon, FormControl, InputLabel, Select, MenuItem,
-  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton
+  Dialog, DialogTitle, DialogContent, DialogActions, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Skeleton
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -48,7 +48,7 @@ function Home({ isLoggedIn, isAdmin }) {
   const queryClient = useQueryClient();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
-  const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
+  const [selectedChampionshipId, setSelectedChampionshipId] = useState(() => localStorage.getItem('home:selectedChampionshipId') || '');
 
   // State for User's Bonus Log Modal
   const [openUserBonusLogDialog, setOpenUserBonusLogDialog] = useState(false);
@@ -153,6 +153,13 @@ function Home({ isLoggedIn, isAdmin }) {
       setSelectedChampionshipId('');
     }
   }, [runningChampionshipsList, isLoadingRunningChampionships, selectedChampionshipId]);
+
+  // Persist selection
+  useEffect(() => {
+    if (selectedChampionshipId) {
+      localStorage.setItem('home:selectedChampionshipId', selectedChampionshipId);
+    }
+  }, [selectedChampionshipId]);
 
   // Memoize the current championship data from the query result
   const currentChampionship = useMemo(() => 
@@ -446,6 +453,21 @@ function Home({ isLoggedIn, isAdmin }) {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* Hero */}
+      <Box sx={{
+        mb: 4,
+        p: 3,
+        borderRadius: 2,
+        background: 'linear-gradient(90deg, rgba(225,6,0,0.18) 0%, rgba(0,210,190,0.12) 100%)',
+        border: '1px solid rgba(255,255,255,0.06)'
+      }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
+          {currentChampionship ? currentChampionship.name : <Skeleton width={220} />}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          <Localized id="dashboard-title" />
+        </Typography>
+      </Box>
       {/* Registration Cards - Show at top for all users */}
       {registeringChampionships.length > 0 && (
         <Box mb={4}>
@@ -457,7 +479,11 @@ function Home({ isLoggedIn, isAdmin }) {
 
       {isLoggedIn && (
         <Box mb={4}>
-          {isLoadingRunningChampionships && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress size={24} /></Box>}
+          {isLoadingRunningChampionships && (
+            <Box sx={{ my: 2 }}>
+              <Skeleton variant="rounded" height={56} />
+            </Box>
+          )}
           {runningChampionshipsError && <Alert severity="error" sx={{my: 2}}><Localized id="fetch-championships-list-error" fallback="Failed to load championships list." /></Alert>}
           {!isLoadingRunningChampionships && !runningChampionshipsError && runningChampionshipsList.length > 0 && (
             <FormControl fullWidth sx={{ mb: 2 }}>
@@ -485,7 +511,11 @@ function Home({ isLoggedIn, isAdmin }) {
           )}
 
           {/* User Status Section */}
-          {isLoadingUserStatus && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
+          {isLoadingUserStatus && (
+            <Box sx={{ my: 2 }}>
+              <Skeleton variant="rounded" height={140} />
+            </Box>
+          )}
           {userStatusError && <Alert severity="error" sx={{ my: 2 }}><Localized id="fetch-user-status-error" fallback="Failed to load user status."/></Alert>}
           
           {/* Display UserStatusCard when data is available, not loading, no error, and a championship is selected */}
