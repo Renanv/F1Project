@@ -11,6 +11,7 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GavelIcon from '@mui/icons-material/Gavel';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import axiosInstance from '../utils/axiosInstance';
@@ -18,6 +19,7 @@ import { jwtDecode } from 'jwt-decode';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserStatusCard from './UserStatusCard'; // Import the new component
 import { bonusSourceOptions } from '../utils/bonusSourceOptions'; // Import from shared location
+import { getCountryCodeForRace } from '../utils/raceToCountryCode';
 
 // Define dashboard items
 const dashboardItems = {
@@ -246,6 +248,45 @@ function Home({ isLoggedIn, isAdmin }) {
     };
   }, [userStatus?.lastRace]);
 
+  // Fetch races for selected championship to determine next race
+  const { data: racesForChampionship = [], isLoading: isLoadingRaces } = useQuery({
+    queryKey: ['homeRaces', selectedChampionshipId],
+    queryFn: async () => {
+      if (!selectedChampionshipId) return [];
+      const res = await axiosInstance.get(`/api/championships/${selectedChampionshipId}/races`);
+      return res.data || [];
+    },
+    enabled: !!selectedChampionshipId
+  });
+
+  const nextRace = useMemo(() => {
+    if (!racesForChampionship || racesForChampionship.length === 0) return null;
+    const now = new Date();
+    const future = racesForChampionship
+      .map(r => ({ ...r, dateObj: r.date ? new Date(r.date) : null }))
+      .filter(r => r.dateObj && r.dateObj.getTime() >= now.getTime())
+      .sort((a, b) => a.dateObj - b.dateObj);
+    return future[0] || null;
+  }, [racesForChampionship]);
+
+  const nextRaceCountry = useMemo(() => {
+    if (!nextRace?.title) return { flag: null, name: null };
+    const code = getCountryCodeForRace(nextRace.title);
+    if (!code) return { flag: null, name: null };
+    const toFlagEmoji = (cc) => cc
+      .toUpperCase()
+      .replace(/./g, ch => String.fromCodePoint(127397 + ch.charCodeAt()));
+    const flag = toFlagEmoji(code);
+    let name = null;
+    try {
+      const regionNames = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' });
+      name = regionNames.of(code.toUpperCase());
+    } catch (e) {
+      name = code.toUpperCase();
+    }
+    return { flag, name };
+  }, [nextRace?.title]);
+
   // --- User Bonus Log Query ---
   const {
     data: userBonusLogEntries = [], // Default to empty array
@@ -467,6 +508,38 @@ function Home({ isLoggedIn, isAdmin }) {
         <Typography variant="body1" color="text.secondary">
           <Localized id="dashboard-title" />
         </Typography>
+
+        {/* Next Race mini panel */}
+        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <CalendarMonthIcon color="primary" />
+          <Box>
+            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+              <Localized id="next-race-title" />
+            </Typography>
+            {isLoadingRaces ? (
+              <Skeleton width={180} />
+            ) : nextRace ? (
+              <Typography variant="body2" color="text.secondary">
+                {/* Country flag image like ClashesView + race name */}
+                {getCountryCodeForRace(nextRace.title) && (
+                  <img 
+                    src={`https://flagcdn.com/w20/${getCountryCodeForRace(nextRace.title)}.png`} 
+                    width="20" 
+                    height="15"
+                    alt={nextRace.title}
+                    style={{ verticalAlign: 'text-bottom', marginRight: 6 }}
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                )}
+                {nextRace.title} • <Localized id="race-date-label" />: {new Date(nextRace.date).toLocaleDateString()}
+              </Typography>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                <Localized id="next-race-not-scheduled" />
+              </Typography>
+            )}
+          </Box>
+        </Box>
       </Box>
       {/* Registration Cards - Show at top for all users */}
       {registeringChampionships.length > 0 && (

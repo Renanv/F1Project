@@ -29,6 +29,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import axiosInstance from '../../utils/axiosInstance';
+import EmptyState from '../EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { getJudgmentDisplay } from '../../utils/penaltyUtils';
 
@@ -276,9 +277,12 @@ export default function PenaltiesListPage() {
           )}
 
           {!isLoadingPenalties && !penaltiesError && penalties.length === 0 && (
-            <Alert severity="info" sx={{ my: 2 }}>
-              <Localized id="no-penalties-found-for-championship" fallback="No penalties found for the selected championship." />
-            </Alert>
+            <EmptyState
+              titleId="penalties-page-title"
+              messageId="no-penalties-found-for-championship"
+              actionLabelId="submit-new-penalty-button"
+              onAction={() => {}}
+            />
           )}
 
           {penalties.length > 0 && (

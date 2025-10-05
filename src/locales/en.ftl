@@ -231,6 +231,8 @@ selected-team-label = Selected Team
 # PWA / Install
 install-app-button = Install App
 pwa-update-available = A new version is available. Refresh to update.
+next-race-title = Next Race
+next-race-not-scheduled = No upcoming race scheduled.
 
 # My Status Card Section
 my-status-title = My Status

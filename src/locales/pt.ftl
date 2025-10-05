@@ -236,6 +236,8 @@ selected-team-label = Equipe Selecionada
 # PWA / Instalação
 install-app-button = Instalar App
 pwa-update-available = Uma nova versão está disponível. Atualize para aplicar.
+next-race-title = Próxima Corrida
+next-race-not-scheduled = Nenhuma próxima corrida agendada.
 
 # Seção do Cartão Meu Status
 my-status-title = Meu Status

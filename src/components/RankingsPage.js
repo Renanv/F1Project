@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Skeleton } from '@mui/material';
+import EmptyState from './EmptyState';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -297,10 +298,14 @@ function RankingsPage({ isAdmin }) {
 
     if ((rankingType === 'driver' && drivers.length === 0 && !isLoadingDriverRankings) || 
         (rankingType === 'team' && teamRankings.length === 0 && !isLoadingTeamRankings) ||
-        (rankingType === 'constructors' && drivers.length === 0 && !isLoadingDriverRankings) || // Also check for constructors
-        (rankingType === 'beautiful-play' && beautifulPlayRankings.length === 0 && !isLoadingBeautifulPlayRankings)
-        ) {
-        return <Typography sx={{mt: 2}}><Localized id="no-data-for-ranking" fallback="No data available for the selected ranking type."/></Typography>;
+        (rankingType === 'constructors' && drivers.length === 0 && !isLoadingDriverRankings) ||
+        (rankingType === 'beautiful-play' && beautifulPlayRankings.length === 0 && !isLoadingBeautifulPlayRankings)) {
+        return (
+          <EmptyState
+            titleId="rankings-page-title"
+            messageId="no-data-for-ranking"
+          />
+        );
     }
     
     return null; 
