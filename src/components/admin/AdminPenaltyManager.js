@@ -27,6 +27,9 @@ import {
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import axiosInstance from '../../utils/axiosInstance';
 import { useQuery } from '@tanstack/react-query';
+import AdminHero from '../AdminHero';
+import EmptyState from '../EmptyState';
+import { useToast } from '../ToastProvider';
 
 // Reusing the getStatusChip helper - consider moving to a shared utils file
 const getStatusChip = (status) => {
@@ -58,6 +61,7 @@ const penaltyStatuses = [
 ];
 
 export default function AdminPenaltyManager() {
+  const toast = useToast();
   const [selectedChampionshipId, setSelectedChampionshipId] = useState('');
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUSES_KEY);
   const [page, setPage] = useState(0);
@@ -136,12 +140,7 @@ export default function AdminPenaltyManager() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}> {/* Wider container for admin */} 
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <AdminPanelSettingsIcon sx={{ mr: 1, fontSize: '2rem' }} color="primary" />
-        <Typography variant="h4" component="h1">
-          <Localized id="admin-penalty-manager-title" fallback="Penalty Management" />
-        </Typography>
-      </Box>
+      <AdminHero titleId="admin-penalty-manager-title" />
 
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" gutterBottom><Localized id="filters-label" fallback="Filters" /></Typography>
@@ -163,7 +162,7 @@ export default function AdminPenaltyManager() {
                 ))}
               </Select>
             </FormControl>
-            {championshipsError && <Alert severity="error" sx={{mt:1}}><Localized id="fetch-championships-error" /></Alert>}
+            {championshipsError && (() => { toast.show('error', <Localized id="fetch-championships-error" />); return null; })()}
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <FormControl fullWidth disabled={isFetchingPenalties || !selectedChampionshipId}>
@@ -187,22 +186,18 @@ export default function AdminPenaltyManager() {
       </Paper>
 
       {isLoadingPenalties && !penaltiesData && <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}><CircularProgress /></Box>}
-      {penaltiesError && (
-        <Alert severity="error" sx={{ my: 2 }}>
-          <Localized id="fetch-admin-penalties-error" fallback="Error fetching penalties." />
-        </Alert>
-      )}
+      {penaltiesError && (() => { toast.show('error', <Localized id="fetch-admin-penalties-error" />); return null; })()}
 
       {!selectedChampionshipId && !isLoadingChampionships && (
-         <Alert severity="info" sx={{ my: 2 }}>
-             <Localized id="admin-select-championship-prompt" fallback="Please select a championship to view penalties." />
-        </Alert>
+        <Box sx={{ my: 2 }}>
+          <EmptyState titleId="filters-label" messageId="admin-select-championship-prompt" />
+        </Box>
       )}
 
       {selectedChampionshipId && !isLoadingPenalties && !penaltiesError && penalties.length === 0 && (
-        <Alert severity="info" sx={{ my: 2 }}>
-          <Localized id="no-penalties-found-filters" fallback="No penalties found matching the current filters." />
-        </Alert>
+        <Box sx={{ my: 2 }}>
+          <EmptyState titleId="admin-penalty-manager-title" messageId="no-penalties-found-filters" />
+        </Box>
       )}
 
       {penalties.length > 0 && selectedChampionshipId && (

@@ -37,6 +37,7 @@ import AdminUploadedFilesPage from './components/admin/AdminUploadedFilesPage';
 import AwardsPage from './components/admin/AwardsPage';
 import { bundles } from './i18n';
 import ToastProvider from './components/ToastProvider';
+import OnlineToastController from './components/OnlineToastController';
 
 // Penalty System Components
 import PenaltySubmissionForm from './components/penalties/PenaltySubmissionForm';
@@ -60,6 +61,7 @@ function App() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [bottomNavValue, setBottomNavValue] = useState(0);
   const [updateSnackbar, setUpdateSnackbar] = useState({ open: false, registration: null });
+  const [offline, setOffline] = useState(!navigator.onLine);
 
   const l10n = useMemo(() => {
     return new ReactLocalization(bundles.filter(bundle => bundle.locales.includes(activeLocale)));
@@ -97,6 +99,15 @@ function App() {
   useEffect(() => {
     checkAuthStatus();
   }, [checkAuthStatus]);
+  // Listen to online/offline to show banner
+  useEffect(() => {
+    const onOffline = () => setOffline(true);
+    const onOnline = () => { setOffline(false); try { const event = new CustomEvent('app-back-online'); window.dispatchEvent(event);} catch(_){} };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    return () => { window.removeEventListener('offline', onOffline); window.removeEventListener('online', onOnline); };
+  }, []);
+
 
   useEffect(() => {
     const handleStorageChange = (event) => {
@@ -289,6 +300,14 @@ function App() {
             toggleLocale={toggleLocale}
             activeLocale={activeLocale}
           />
+          {offline && (
+            <Alert severity="warning" variant="filled" sx={{ borderRadius: 0 }}>
+              <Localized id="offline-banner" fallback="You're offline. Some features may be unavailable." />
+            </Alert>
+          )}
+          {/* Back online toast */}
+          {/* Back online toast (one-shot on event) */}
+          <OnlineToastController />
           <Routes>
             <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} />} />
             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />

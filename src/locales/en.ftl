@@ -235,6 +235,8 @@ pwa-refresh-now = Refresh Now
 next-race-title = Next Race
 next-race-not-scheduled = No upcoming race scheduled.
 add-to-calendar = Add to Calendar
+offline-banner = You're offline. Some features may be unavailable.
+back-online = Back online
 
 # My Status Card Section
 my-status-title = My Status

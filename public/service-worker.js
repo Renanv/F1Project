@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.1.0'; // Increment this with each app update that needs cache busting
+const CACHE_VERSION = 'v1.1.2'; // Increment this with each app update that needs cache busting
 const CURRENT_CACHE_NAME = `f1project-cache-${CACHE_VERSION}`;
 
 // Add main application shell files here.
@@ -9,6 +9,7 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/offline.html',
   // Consider adding essential icons if they are not referenced with hashes
   // and you want them available offline immediately.
   '/android-chrome-192x192.png', // Adjusted to match existing files
@@ -87,27 +88,21 @@ self.addEventListener('fetch', (event) => {
               if (cachedResponse) {
                 return cachedResponse;
               }
-              // If nothing in cache and network failed, you might want a generic offline page.
-              // For now, let it fail as the browser would normally.
-              // return caches.match('/offline.html'); // Example
+          // If nothing in cache and network failed, return offline fallback
+          return caches.match('/offline.html');
               // If response was not ok and not in cache, return original non-ok response
               return response || new Response("Network error and not in cache", { status: 500, statusText: "Network error and not in cache" });
 
             });
         })
         .catch(() => {
-          // Network totally failed (e.g., offline), try cache.
+          // Network totally failed (e.g., offline), try cache or offline page.
           return caches.match(event.request)
             .then(cachedResponse => {
               if (cachedResponse) {
                 return cachedResponse;
               }
-              // Optional: return a generic offline fallback page
-              // if (!url.pathname.startsWith('/api/')) { // Don't show offline page for API calls
-              //   return caches.match('/offline.html');
-              // }
-              // Let the browser handle the error for non-HTML assets or if no offline page
-              return new Response("Offline and not in cache", { status: 503, statusText: "Offline and not in cache" });
+              return caches.match('/offline.html');
             });
         })
     );
