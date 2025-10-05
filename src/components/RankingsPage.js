@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Localized } from '@fluent/react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Skeleton } from '@mui/material';
 import EmptyState from './EmptyState';
+import { useToast } from './ToastProvider';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
@@ -37,6 +38,7 @@ import BeautifulPlayRankingsView from './rankings/BeautifulPlayRankingsView';
 // ];
 
 function RankingsPage({ isAdmin }) {
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [selectedRaceId, setSelectedRaceId] = useState('');
 
@@ -252,24 +254,29 @@ function RankingsPage({ isAdmin }) {
     
     // Handle championships loading error first
     if (championshipsError) {
-      return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['championships'] })}><Localized id={'fetch-championships-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+      toast.show('error', <Localized id={'fetch-championships-error'} />);
+      return null;
     }
 
     // Handle rankings-specific errors
     if (rankingType === 'driver' || rankingType === 'constructors') {
       if (driverRankingsError) {
-        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['driverRankings', selectedChampionshipId] })}><Localized id={'fetch-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+        toast.show('error', <Localized id={'fetch-rankings-error'} />);
+        return null;
       }
       if (rankingType === 'driver' && pointsByRaceError) {
-        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['pointsByRace', selectedChampionshipId] })}><Localized id={'fetch-points-by-race-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+        toast.show('error', <Localized id={'fetch-points-by-race-error'} />);
+        return null;
       }
     } else if (rankingType === 'team') {
       if (teamRankingsError) {
-        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['teamRankings', selectedChampionshipId] })}><Localized id={'fetch-team-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+        toast.show('error', <Localized id={'fetch-team-rankings-error'} />);
+        return null;
       }
     } else if (rankingType === 'beautiful-play') {
       if (beautifulPlayRankingsError) {
-        return <Alert severity="error" sx={{mt: 2}} onClose={() => queryClient.resetQueries({ queryKey: ['beautifulPlayRankings', selectedChampionshipId] })}><Localized id={'fetch-beautiful-play-rankings-error'} fallback={<Localized id='generic-error-fallback' />} /></Alert>;
+        toast.show('error', <Localized id={'fetch-beautiful-play-rankings-error'} />);
+        return null;
       }
     }
     

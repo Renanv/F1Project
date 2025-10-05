@@ -231,6 +231,7 @@ selected-team-label = Selected Team
 # PWA / Install
 install-app-button = Install App
 pwa-update-available = A new version is available. Refresh to update.
+pwa-refresh-now = Refresh Now
 next-race-title = Next Race
 next-race-not-scheduled = No upcoming race scheduled.
 add-to-calendar = Add to Calendar

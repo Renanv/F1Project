@@ -5,6 +5,7 @@ import { Container, Typography, TextField, Button, Box, Alert, CircularProgress,
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import axiosInstance from '../utils/axiosInstance';
 import RecoveryCodesDisplay from './RecoveryCodesDisplay';
+import { useToast } from './ToastProvider';
 
 // Simple debounce function
 const debounce = (func, delay) => {
@@ -18,6 +19,7 @@ const debounce = (func, delay) => {
 };
 
 function Register() {
+  const toast = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -123,6 +125,7 @@ function Register() {
       if (response.data.success) {
         setMessage(response.data.message || 'register-success'); // Use success message from backend
         setSuccess(true);
+        toast.show('success', <Localized id={response.data.message || 'register-success'} />);
         // Assuming the backend now returns recovery codes on successful registration
         if (response.data.recoveryCodes) {
             setRecoveryCodes(response.data.recoveryCodes);
@@ -132,12 +135,15 @@ function Register() {
         }
       } else {
         // Use error message from backend if available
-        setMessage(response.data.message || 'registration-failed'); 
+        setMessage(response.data.message || 'registration-failed');
+        toast.show('error', <Localized id={response.data.message || 'registration-failed'} />);
       }
     } catch (error) {
       console.error('Registration error:', error);
       // Use error message from backend if available, otherwise generic
-      setMessage(error.response?.data?.message || 'registration-failed'); 
+      const msg = error.response?.data?.message || 'registration-failed';
+      setMessage(msg);
+      toast.show('error', <Localized id={msg} />);
     } finally {
       setIsLoading(false);
     }

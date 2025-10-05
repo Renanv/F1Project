@@ -34,6 +34,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Collapse from '@mui/material/Collapse';
 import Fab from '@mui/material/Fab';
 import axiosInstance from '../../utils/axiosInstance';
+import { useToast } from '../ToastProvider';
 import EmptyState from '../EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { getJudgmentDisplay } from '../../utils/penaltyUtils';
@@ -71,6 +72,7 @@ const getStatusChip = (status) => {
 
 
 export default function PenaltiesListPage() {
+  const toast = useToast();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedChampionshipId, setSelectedChampionshipId] = useState(() => localStorage.getItem('penalties:selectedChampionshipId') || '');
@@ -303,9 +305,7 @@ export default function PenaltiesListPage() {
             </Box>
           )}
           {penaltiesError && (
-            <Alert severity="error" sx={{ my: 2 }}>
-              <Localized id="fetch-penalties-error" fallback="Error fetching penalties for this championship." />
-            </Alert>
+            (() => { toast.show('error', <Localized id="fetch-penalties-error" />); return null; })()
           )}
 
           {!isLoadingPenalties && !penaltiesError && penalties.length === 0 && (

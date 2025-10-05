@@ -13,6 +13,8 @@ import HomeIcon from '@mui/icons-material/Home';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import GavelIcon from '@mui/icons-material/Gavel';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LoginIcon from '@mui/icons-material/Login';
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import { jwtDecode } from 'jwt-decode';
@@ -34,6 +36,7 @@ import AdminPanel from './components/admin/AdminPanel';
 import AdminUploadedFilesPage from './components/admin/AdminUploadedFilesPage';
 import AwardsPage from './components/admin/AwardsPage';
 import { bundles } from './i18n';
+import ToastProvider from './components/ToastProvider';
 
 // Penalty System Components
 import PenaltySubmissionForm from './components/penalties/PenaltySubmissionForm';
@@ -48,6 +51,7 @@ const queryClient = new QueryClient();
 
 function App() {
   const [activeLocale, setActiveLocale] = useState('pt');
+  const [density] = useState('compact');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -186,6 +190,50 @@ function App() {
           }
         }
       },
+      MuiButtonBase: {
+        defaultProps: {
+          disableRipple: density === 'compact'
+        }
+      },
+      MuiListItem: {
+        styleOverrides: {
+          root: {
+            paddingTop: density === 'compact' ? 4 : undefined,
+            paddingBottom: density === 'compact' ? 4 : undefined
+          }
+        }
+      },
+      MuiTextField: {
+        defaultProps: {
+          size: density === 'compact' ? 'small' : 'medium'
+        }
+      },
+      MuiFormControl: {
+        defaultProps: {
+          margin: density === 'compact' ? 'dense' : 'normal'
+        }
+      },
+      MuiTableCell: {
+        styleOverrides: {
+          root: {
+            padding: density === 'compact' ? '8px 12px' : undefined
+          }
+        }
+      },
+      MuiPaginationItem: {
+        styleOverrides: {
+          root: {
+            minWidth: density === 'compact' ? 28 : undefined,
+            height: density === 'compact' ? 28 : undefined
+          }
+        }
+      },
+      MuiButton: {
+        defaultProps: { disableElevation: true },
+        styleOverrides: {
+          root: { borderRadius: 10, padding: density === 'compact' ? '6px 10px' : undefined }
+        }
+      },
       MuiAppBar: {
         styleOverrides: {
           root: {
@@ -205,12 +253,6 @@ function App() {
       MuiPaper: {
         styleOverrides: {
           rounded: { borderRadius: 12 }
-        }
-      },
-      MuiButton: {
-        defaultProps: { disableElevation: true },
-        styleOverrides: {
-          root: { borderRadius: 10 }
         }
       },
       MuiTableHead: {
@@ -239,6 +281,7 @@ function App() {
       <CssBaseline />
       <LocalizationProvider l10n={l10n}>
         <QueryClientProvider client={queryClient}>
+          <ToastProvider>
           <NavigationBar
             isLoggedIn={isLoggedIn}
             isAdmin={isAdmin}
@@ -278,22 +321,38 @@ function App() {
           {/* Bottom Navigation - Mobile only */}
           {isMobile && (
             <Paper elevation={3} sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-              <BottomNavigation
-                value={bottomNavValue}
-                onChange={(e, newValue) => {
-                  setBottomNavValue(newValue);
-                  if (newValue === 0) navigate('/');
-                  if (newValue === 1) navigate('/drivers');
-                  if (newValue === 2) navigate('/penalties');
-                  if (newValue === 3) navigate('/account');
-                }}
-                showLabels
-              >
-                <BottomNavigationAction label={<Localized id="home"><span /></Localized>} icon={<HomeIcon />} />
-                <BottomNavigationAction label={<Localized id="rankings-page-title"><span /></Localized>} icon={<LeaderboardIcon />} />
-                <BottomNavigationAction label={<Localized id="penalties-page-title"><span /></Localized>} icon={<GavelIcon />} />
-                <BottomNavigationAction label={<Localized id="account-link"><span /></Localized>} icon={<AccountCircleIcon />} />
-              </BottomNavigation>
+              {(() => {
+                const actions = isLoggedIn
+                  ? [
+                      { id: 'home', icon: <HomeIcon />, to: '/' },
+                      { id: 'rankings-page-title', icon: <LeaderboardIcon />, to: '/drivers' },
+                      { id: 'penalties-page-title', icon: <GavelIcon />, to: '/penalties' },
+                      { id: 'account-link', icon: <AccountCircleIcon />, to: '/account' }
+                    ]
+                  : [
+                      { id: 'login', icon: <LoginIcon />, to: '/login' },
+                      { id: 'register', icon: <AppRegistrationIcon />, to: '/register' }
+                    ];
+
+                // Clamp selected index within available range
+                const value = Math.min(bottomNavValue, actions.length - 1);
+
+                return (
+                  <BottomNavigation
+                    value={value}
+                    onChange={(e, newValue) => {
+                      setBottomNavValue(newValue);
+                      const target = actions[newValue];
+                      if (target) navigate(target.to);
+                    }}
+                    showLabels
+                  >
+                    {actions.map((a, idx) => (
+                      <BottomNavigationAction key={idx} label={<Localized id={a.id}><span /></Localized>} icon={a.icon} />
+                    ))}
+                  </BottomNavigation>
+                );
+              })()}
             </Paper>
           )}
 
@@ -310,13 +369,14 @@ function App() {
               onClose={() => setUpdateSnackbar({ open: false, registration: null })}
               action={
                 <Button color="inherit" size="small" onClick={handleApplyUpdate}>
-                  Refresh
+                  <Localized id="pwa-refresh-now"><span /></Localized>
                 </Button>
               }
             >
               <Localized id="pwa-update-available" fallback="A new version is available. Refresh to update." />
             </Alert>
           </Snackbar>
+          </ToastProvider>
         </QueryClientProvider>
       </LocalizationProvider>
     </ThemeProvider>

@@ -5,8 +5,10 @@ import { Localized } from '@fluent/react';
 import { Avatar } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import axiosInstance from '../utils/axiosInstance';
+import { useToast } from './ToastProvider';
 
 function Login({ onLoginSuccess }) {
+  const toast = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,12 +22,14 @@ function Login({ onLoginSuccess }) {
       const response = await axiosInstance.post('/api/auth/login', { username, password });
       localStorage.setItem('authToken', response.data.token);
       console.log('Token stored, calling onLoginSuccess');
+      toast.show('success', <Localized id="login-success" />);
       onLoginSuccess(); // Call the callback passed from App
     } catch (err) {
       console.error('Login error:', err);
       // Use error message from response or a generic one
       const errorKey = err.response?.data?.message || 'login-failed-generic'; 
-      setError(errorKey); 
+      setError(errorKey);
+      toast.show('error', <Localized id={errorKey} />);
     } finally {
       setIsLoading(false);
     }

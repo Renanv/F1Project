@@ -4,8 +4,12 @@ import { Container, Typography, Grid, Paper, CircularProgress, Alert, Card, Card
 import { Localized } from '@fluent/react';
 import ImageIcon from '@mui/icons-material/Image';
 import DescriptionIcon from '@mui/icons-material/Description'; // For payment confirmations
+import AdminHero from '../AdminHero';
+import EmptyState from '../EmptyState';
+import { useToast } from '../ToastProvider';
 
 function AdminUploadedFilesPage() {
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [driverPictures, setDriverPictures] = useState([]);
@@ -38,11 +42,9 @@ function AdminUploadedFilesPage() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
-        <Localized id="admin-uploaded-files-title" />
-      </Typography>
+      <AdminHero titleId="admin-uploaded-files-title" />
 
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}><Localized id={error} /></Alert>}
+      {error && (() => { toast.show('error', <Localized id={error} />); return null; })()}
 
       <Grid container spacing={4}>
         {/* Driver Pictures Grid */}
@@ -52,7 +54,7 @@ function AdminUploadedFilesPage() {
               <Localized id="admin-driver-pictures-heading" />
             </Typography>
             {driverPictures.length === 0 && !loading && (
-              <Typography><Localized id="admin-no-driver-pictures" /></Typography>
+              <EmptyState titleId="admin-driver-pictures-heading" messageId="admin-no-driver-pictures" />
             )}
             <Grid container spacing={2}>
               {driverPictures.map((user) => (
@@ -89,7 +91,7 @@ function AdminUploadedFilesPage() {
               <Localized id="admin-payment-confirmations-heading" />
             </Typography>
             {paymentConfirmations.length === 0 && !loading && (
-              <Typography><Localized id="admin-no-payment-confirmations" /></Typography>
+              <EmptyState titleId="admin-payment-confirmations-heading" messageId="admin-no-payment-confirmations" />
             )}
             <Grid container spacing={2}>
               {paymentConfirmations.map((user) => (

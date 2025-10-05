@@ -4,8 +4,10 @@ import { Localized } from '@fluent/react';
 import SubmissionForm from './SubmissionForm';
 import SubmissionsList from './SubmissionsList'; // Import the real list
 import EmptyState from './EmptyState';
+import { useToast } from './ToastProvider';
 
 function CommunityPage({ isAdmin }) {
+    const toast = useToast();
     const [currentTab, setCurrentTab] = useState('channels');
     const [submissionCount, setSubmissionCount] = useState(0);
 
@@ -15,6 +17,7 @@ function CommunityPage({ isAdmin }) {
 
     const handleSubmissionSuccess = () => {
         setSubmissionCount(prev => prev + 1);
+        toast.show('success', <Localized id="submission-success-message" />);
     };
 
     return (

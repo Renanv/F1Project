@@ -17,6 +17,9 @@ import PersonRemoveIcon from '@mui/icons-material/PersonRemove'; // Icon for rem
 import StarsIcon from '@mui/icons-material/Stars'; // Icon for bonus points
 import ListAltIcon from '@mui/icons-material/ListAlt'; // Icon for bonus points log
 import { Localized } from '@fluent/react';
+import AdminHero from '../AdminHero';
+import EmptyState from '../EmptyState';
+import { useToast } from '../ToastProvider';
 import { bonusSourceOptions } from '../../utils/bonusSourceOptions'; // Import from shared location
 import AddBonusPointsDialog from './AddBonusPointsDialog'; // Import the new dialog component
 import BonusPointsLogDialog from './BonusPointsLogDialog'; // Import the Bonus Points Log dialog
@@ -43,6 +46,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; /
 // -------------------------------------
 
 function ChampionshipManager() {
+    const toast = useToast();
     const queryClient = useQueryClient();
 
     // const [championships, setChampionships] = useState([]); // Replaced by useQuery
@@ -531,16 +535,9 @@ function ChampionshipManager() {
 
     return (
         <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-                <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-                    <EmojiEventsIcon />
-                </Avatar>
-                <Typography component="h1" variant="h4">
-                    <Localized id="admin-championship-manager-title" />
-                </Typography>
-            </Box>
-            {displayError && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}><Localized id={typeof displayError === 'string' ? displayError : 'generic-error-fallback'} fallback={<Localized id='generic-error-fallback' />} /></Alert>}
-            {successMessage && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage(null)}><Localized id={successMessage} fallback={successMessage} /></Alert>}
+            <AdminHero titleId="admin-championship-manager-title" />
+            {displayError && (() => { toast.show('error', <Localized id={typeof displayError === 'string' ? displayError : 'generic-error-fallback'} />); return null; })()}
+            {successMessage && (() => { toast.show('success', <Localized id={successMessage} />); return null; })()}
 
             <Grid container spacing={4}>
                 {/* Championships Column */}
@@ -579,7 +576,7 @@ function ChampionshipManager() {
                                     </React.Fragment>
                                 ))}
                                 {championships.length === 0 && !isLoadingChampionships && (
-                                    <ListItem><ListItemText primary={<Localized id="admin-no-championships" />} /></ListItem>
+                                    <ListItem><EmptyState titleId="admin-championships-heading" messageId="admin-no-championships" /></ListItem>
                                 )}
                             </List>
                         )}
@@ -624,14 +621,12 @@ function ChampionshipManager() {
                         {selectedChampionship && isLoadingRaces && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
                         )}
-                        {selectedChampionship && !isLoadingRaces && racesError && (
-                            <Alert severity="error" sx={{ my: 2 }}><Localized id='fetch-races-error' fallback="Could not load races." /></Alert>
-                        )}
+                        {selectedChampionship && !isLoadingRaces && racesError && (() => { toast.show('error', <Localized id='fetch-races-error' />); return null; })()}
                         {selectedChampionship && !isLoadingRaces && !racesError ? (
                             <Box>
                                 <List dense sx={{ maxHeight: 300, overflow: 'auto' }}>
                                     {races.length === 0 ? (
-                                        <ListItem><ListItemText primary={<Localized id="admin-no-races" />} /></ListItem>
+                                        <ListItem><EmptyState titleId="admin-races-heading" messageId="admin-no-races" /></ListItem>
                                     ) : (
                                         races.map((race, index) => (
                                             <React.Fragment key={race.id}>
@@ -698,7 +693,7 @@ function ChampionshipManager() {
                             {(isLoadingUsers || isLoadingAttendees) ? (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>
                             ) : attendeesError ? (
-                                <Alert severity="error" sx={{ my: 2 }}><Localized id='fetch-attendees-error' fallback="Could not load attendees." /></Alert>
+                            (() => { toast.show('error', <Localized id='fetch-attendees-error' />); return null; })()
                             ) : (
                                 <List dense sx={{ maxHeight: 300, overflow: 'auto' }}>
                                     {attendees.length === 0 

@@ -10,6 +10,9 @@ import GroupIcon from '@mui/icons-material/Group'; // For title
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'; // Assign icon
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Unassign icon
 import { Localized } from '@fluent/react';
+import AdminHero from '../AdminHero';
+import EmptyState from '../EmptyState';
+import { useToast } from '../ToastProvider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // --- Expected Backend Endpoints (use axiosInstance for all) --- 
@@ -24,6 +27,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // -------------------------------------
 
 function TeamManager() {
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   // --- Base State ---
@@ -309,17 +313,10 @@ function TeamManager() {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-            <Avatar sx={{ m: 1, bgcolor: 'primary.main' }}>
-                <GroupIcon />
-            </Avatar>
-            <Typography component="h1" variant="h4">
-                <Localized id="admin-team-manager-title" />
-            </Typography>
-        </Box>
+        <AdminHero titleId="admin-team-manager-title" />
 
         {/* Use localized generic fallback */} 
-        {error && <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}><Localized id={error} fallback={<Localized id='generic-error-fallback' />} /></Alert>}
+        {error && (() => { toast.show('error', <Localized id={error} />); return null; })()}
 
         <Grid container spacing={4}>
              {/* Teams Column */} 
@@ -356,7 +353,7 @@ function TeamManager() {
                                 </React.Fragment>
                             ))}
                             {teams.length === 0 && !isLoadingTeams && (
-                                <ListItem><ListItemText primary={<Localized id="admin-no-teams" />} /></ListItem>
+                                <ListItem><EmptyState titleId="admin-teams-heading" messageId="admin-no-teams" /></ListItem>
                             )}
                         </List>
                     )}

@@ -292,10 +292,15 @@ function Home({ isLoggedIn, isAdmin }) {
   const [countdown, setCountdown] = useState(null);
   useEffect(() => {
     if (!nextRace?.date) { setCountdown(null); return; }
-    const target = new Date(nextRace.date).getTime();
+    // Countdown to 22:00 BRT (America/Sao_Paulo) on race date
+    const base = new Date(nextRace.date);
+    const year = base.getUTCFullYear();
+    const month = base.getUTCMonth();
+    const day = base.getUTCDate();
+    const targetDateUTC = new Date(Date.UTC(year, month, day, 22 + 3, 0, 0));
     const update = () => {
       const now = Date.now();
-      const delta = Math.max(0, target - now);
+      const delta = Math.max(0, targetDateUTC.getTime() - now);
       const days = Math.floor(delta / (1000 * 60 * 60 * 24));
       const hours = Math.floor((delta % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((delta % (1000 * 60 * 60)) / (1000 * 60));
@@ -308,13 +313,19 @@ function Home({ isLoggedIn, isAdmin }) {
 
   const calendarHref = useMemo(() => {
     if (!nextRace?.date) return null;
-    const start = new Date(nextRace.date);
-    // Assume 2 hours duration
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    // Ensure start time is 22:00 America/Sao_Paulo (UTC-03:00, no DST at present)
+    // Build a UTC instant corresponding to 22:00 BRT on the race date
+    const base = new Date(nextRace.date);
+    const year = base.getUTCFullYear();
+    const month = base.getUTCMonth();
+    const day = base.getUTCDate();
+    // 22:00 BRT == 01:00 UTC next day when offset is -03:00
+    const startUTC = new Date(Date.UTC(year, month, day, 22 + 3, 0, 0));
+    const endUTC = new Date(startUTC.getTime() + 2 * 60 * 60 * 1000); // 2h duration
     const fmt = (d) => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
     const text = encodeURIComponent(nextRace.title);
     const details = encodeURIComponent('LSF F1 race');
-    const dates = `${fmt(start)}/${fmt(end)}`;
+    const dates = `${fmt(startUTC)}/${fmt(endUTC)}`;
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
   }, [nextRace?.date, nextRace?.title]);
 

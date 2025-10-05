@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Localized } from '@fluent/react';
 import { Button, Typography, Box, CircularProgress, Alert, FormControlLabel, Checkbox } from '@mui/material';
 import { handleFileUpload } from '../utils/fileUploadHandler';
+import { useToast } from './ToastProvider';
 
 const FileUpload = ({ onSuccess, selectedRaceId, isAdmin }) => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [useMultiplier, setUseMultiplier] = useState(false);
+  const toast = useToast();
 
   const handleFileChange = (event) => {
     setFile(event.target.files[0]);
@@ -54,11 +56,7 @@ const FileUpload = ({ onSuccess, selectedRaceId, isAdmin }) => {
       >
         <Localized id={loading ? "processing" : "upload-and-process"} />
       </Button>
-      {message && (
-        <Alert severity={message === 'file-processed-success' ? 'success' : 'error'} sx={{ mt: 2 }}>
-          <Localized id={message} />
-        </Alert>
-      )}
+      {message && (() => { toast.show(message === 'file-processed-success' ? 'success' : 'error', <Localized id={message} />); return null; })()}
     </Box>
   );
 };

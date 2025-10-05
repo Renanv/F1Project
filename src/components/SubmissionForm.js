@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, FormControl, InputLabel, Select, MenuItem, Typography, CircularProgress, Alert, Grid } from '@mui/material';
 import { Localized } from '@fluent/react';
 import axiosInstance from '../utils/axiosInstance';
+import { useToast } from './ToastProvider';
 
 function SubmissionForm({ onSubmissionSuccess }) {
+    const toast = useToast();
     const [type, setType] = useState('CHANNEL');
     const [url, setUrl] = useState('');
     const [category, setCategory] = useState('');
@@ -37,6 +39,7 @@ function SubmissionForm({ onSubmissionSuccess }) {
             };
             await axiosInstance.post('/api/community-submissions', payload);
             setSuccess('submission-success-message');
+            toast.show('success', <Localized id="submission-success-message" />);
             setUrl('');
             setCategory('');
             setType('CHANNEL');
@@ -44,7 +47,9 @@ function SubmissionForm({ onSubmissionSuccess }) {
                 onSubmissionSuccess();
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'submission-error-message');
+            const msg = err.response?.data?.message || 'submission-error-message';
+            setError(msg);
+            toast.show('error', <Localized id={msg} />);
         } finally {
             setIsLoading(false);
         }
