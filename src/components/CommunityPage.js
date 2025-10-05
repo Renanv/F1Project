@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, Typography, Container, Tabs, Tab, Paper } from '@mui/material';
+import { Box, Typography, Container, Tabs, Tab, Paper, Button } from '@mui/material';
 import { Localized } from '@fluent/react';
 import SubmissionForm from './SubmissionForm';
 import SubmissionsList from './SubmissionsList'; // Import the real list
+import EmptyState from './EmptyState';
 
 function CommunityPage({ isAdmin }) {
     const [currentTab, setCurrentTab] = useState('channels');
@@ -19,12 +20,20 @@ function CommunityPage({ isAdmin }) {
     return (
         <Container maxWidth="lg" sx={{ mt: 4 }}>
             <Paper elevation={3} sx={{ p: { xs: 2, md: 4 } }}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    <Localized id="community-page-title" />
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                    <Localized id="community-page-description" />
-                </Typography>
+                <Box sx={{
+                    mb: 3,
+                    p: 2,
+                    borderRadius: 2,
+                    background: 'linear-gradient(90deg, rgba(225,6,0,0.18) 0%, rgba(0,210,190,0.12) 100%)',
+                    border: '1px solid rgba(255,255,255,0.06)'
+                }}>
+                    <Typography variant="h4" component="h1" gutterBottom>
+                        <Localized id="community-page-title" />
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        <Localized id="community-page-description" />
+                    </Typography>
+                </Box>
 
                 <SubmissionForm onSubmissionSuccess={handleSubmissionSuccess} />
 

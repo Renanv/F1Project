@@ -233,6 +233,7 @@ install-app-button = Install App
 pwa-update-available = A new version is available. Refresh to update.
 next-race-title = Next Race
 next-race-not-scheduled = No upcoming race scheduled.
+add-to-calendar = Add to Calendar
 
 # My Status Card Section
 my-status-title = My Status

@@ -12,6 +12,7 @@ import LoginIcon from '@mui/icons-material/Login';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import AddToHomeScreenIcon from '@mui/icons-material/AddToHomeScreen';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import GavelIcon from '@mui/icons-material/Gavel';
 import OndemandVideoIcon from '@mui/icons-material/OndemandVideo';
 import axiosInstance from '../utils/axiosInstance';
@@ -287,6 +288,36 @@ function Home({ isLoggedIn, isAdmin }) {
     return { flag, name };
   }, [nextRace?.title]);
 
+  // Countdown to next race
+  const [countdown, setCountdown] = useState(null);
+  useEffect(() => {
+    if (!nextRace?.date) { setCountdown(null); return; }
+    const target = new Date(nextRace.date).getTime();
+    const update = () => {
+      const now = Date.now();
+      const delta = Math.max(0, target - now);
+      const days = Math.floor(delta / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((delta % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((delta % (1000 * 60 * 60)) / (1000 * 60));
+      setCountdown(`${days}d ${hours}h ${minutes}m`);
+    };
+    update();
+    const id = setInterval(update, 60000); // update every minute
+    return () => clearInterval(id);
+  }, [nextRace?.date]);
+
+  const calendarHref = useMemo(() => {
+    if (!nextRace?.date) return null;
+    const start = new Date(nextRace.date);
+    // Assume 2 hours duration
+    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const fmt = (d) => d.toISOString().replace(/[-:]|\.\d{3}/g, '');
+    const text = encodeURIComponent(nextRace.title);
+    const details = encodeURIComponent('LSF F1 race');
+    const dates = `${fmt(start)}/${fmt(end)}`;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
+  }, [nextRace?.date, nextRace?.title]);
+
   // --- User Bonus Log Query ---
   const {
     data: userBonusLogEntries = [], // Default to empty array
@@ -517,28 +548,47 @@ function Home({ isLoggedIn, isAdmin }) {
               <Localized id="next-race-title" />
             </Typography>
             {isLoadingRaces ? (
-              <Skeleton width={180} />
+              <Skeleton width={220} />
             ) : nextRace ? (
-              <Typography variant="body2" color="text.secondary">
-                {/* Country flag image like ClashesView + race name */}
-                {getCountryCodeForRace(nextRace.title) && (
-                  <img 
-                    src={`https://flagcdn.com/w20/${getCountryCodeForRace(nextRace.title)}.png`} 
-                    width="20" 
-                    height="15"
-                    alt={nextRace.title}
-                    style={{ verticalAlign: 'text-bottom', marginRight: 6 }}
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  {/* Country flag image like ClashesView + race name */}
+                  {getCountryCodeForRace(nextRace.title) && (
+                    <img 
+                      src={`https://flagcdn.com/w20/${getCountryCodeForRace(nextRace.title)}.png`} 
+                      width="20" 
+                      height="15"
+                      alt={nextRace.title}
+                      style={{ verticalAlign: 'text-bottom', marginRight: 6 }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  )}
+                  {nextRace.title} • <Localized id="race-date-label" />: {new Date(nextRace.date).toLocaleDateString()}
+                </Typography>
+                {countdown && (
+                  <Typography variant="body2" color="text.secondary">
+                    {countdown}
+                  </Typography>
                 )}
-                {nextRace.title} • <Localized id="race-date-label" />: {new Date(nextRace.date).toLocaleDateString()}
-              </Typography>
+              </>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 <Localized id="next-race-not-scheduled" />
               </Typography>
             )}
           </Box>
+          {nextRace && calendarHref && (
+            <Button
+              size="small"
+              variant="outlined"
+              color="primary"
+              startIcon={<EventAvailableIcon />}
+              onClick={() => window.open(calendarHref, '_blank')}
+              sx={{ ml: 2 }}
+            >
+              <Localized id="add-to-calendar" />
+            </Button>
+          )}
         </Box>
       </Box>
       {/* Registration Cards - Show at top for all users */}

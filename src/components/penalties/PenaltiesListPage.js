@@ -28,6 +28,11 @@ import {
   useMediaQuery
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import AddIcon from '@mui/icons-material/Add';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Collapse from '@mui/material/Collapse';
+import Fab from '@mui/material/Fab';
 import axiosInstance from '../../utils/axiosInstance';
 import EmptyState from '../EmptyState';
 import { useQuery } from '@tanstack/react-query';
@@ -71,6 +76,8 @@ export default function PenaltiesListPage() {
   const [selectedChampionshipId, setSelectedChampionshipId] = useState(() => localStorage.getItem('penalties:selectedChampionshipId') || '');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [expandedRow, setExpandedRow] = useState(null);
 
   // Fetch championships for the selector
   const {
@@ -128,7 +135,7 @@ export default function PenaltiesListPage() {
     error: penaltiesError,
     isFetching: isFetchingPenalties,
   } = useQuery({
-    queryKey: ['penalties', selectedChampionshipId, page, rowsPerPage],
+    queryKey: ['penalties', selectedChampionshipId, page, rowsPerPage, statusFilter],
     queryFn: async () => {
       console.log('[PenaltiesListPage] Fetching penalties with params:', {
         championshipId: selectedChampionshipId,
@@ -145,6 +152,7 @@ export default function PenaltiesListPage() {
           championshipId: selectedChampionshipId,
           page: page + 1, // API is 1-indexed
           limit: rowsPerPage,
+          ...(statusFilter !== 'ALL' ? { status: statusFilter } : {})
         },
       });
       console.log('[PenaltiesListPage] Received penalties response:', response.data);
@@ -170,6 +178,16 @@ export default function PenaltiesListPage() {
     setSelectedChampionshipId(event.target.value);
     setPage(0); // Reset page when championship changes
   };
+
+  const statusChips = [
+    { value: 'ALL', labelId: 'filter-all' },
+    { value: 'PENDING_REVIEW', labelId: 'penalty-status-pending-review' },
+    { value: 'UNDER_JURY_REVIEW', labelId: 'penalty-status-under-jury-review' },
+    { value: 'AWAITING_FINAL_DECISION', labelId: 'penalty-status-awaiting-final-decision' },
+    { value: 'CLOSED_APPROVED', labelId: 'penalty-status-closed-approved' },
+    { value: 'CLOSED_REJECTED', labelId: 'penalty-status-closed-rejected' },
+    { value: 'CLOSED_NO_ACTION', labelId: 'penalty-status-closed-no-action' },
+  ];
 
   const renderMobileCard = (penalty) => (
     <Grid item xs={12} key={penalty.id}>
@@ -255,6 +273,20 @@ export default function PenaltiesListPage() {
 
       {selectedChampionshipId && (
         <>
+          {/* Filter chips */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', my: 2 }}>
+            <FilterAltIcon sx={{ color: 'text.secondary' }} />
+            {statusChips.map(chip => (
+              <Chip
+                key={chip.value}
+                label={<Localized id={chip.labelId} />}
+                color={statusFilter === chip.value ? 'primary' : 'default'}
+                variant={statusFilter === chip.value ? 'filled' : 'outlined'}
+                size="small"
+                onClick={() => { setStatusFilter(chip.value); setPage(0); }}
+              />
+            ))}
+          </Box>
           {isLoadingPenalties && !penaltiesData && (
             <Box sx={{ my: 2 }}>
               {isMobile ? (
@@ -281,7 +313,7 @@ export default function PenaltiesListPage() {
               titleId="penalties-page-title"
               messageId="no-penalties-found-for-championship"
               actionLabelId="submit-new-penalty-button"
-              onAction={() => {}}
+              onAction={() => { window.location.assign('/penalties/submit'); }}
             />
           )}
 
@@ -308,7 +340,8 @@ export default function PenaltiesListPage() {
                   </TableHead>
                   <TableBody>
                     {penalties.map((penalty) => (
-                      <TableRow hover key={penalty.id}>
+                      <React.Fragment key={penalty.id}>
+                      <TableRow hover onClick={() => setExpandedRow(expandedRow === penalty.id ? null : penalty.id)} sx={{ cursor: 'pointer' }}>
                         <TableCell>{penalty.id}</TableCell>
                         <TableCell>{penalty.race_title || 'N/A'}</TableCell>
                         <TableCell>{penalty.submitter_usertag || 'N/A'}</TableCell>
@@ -338,6 +371,18 @@ export default function PenaltiesListPage() {
                           </Button>
                         </TableCell>
                       </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={8} sx={{ py: 0 }}>
+                          <Collapse in={expandedRow === penalty.id} timeout="auto" unmountOnExit>
+                            <Box sx={{ p: 2, bgcolor: 'background.default' }}>
+                              <Typography variant="body2" color="text.secondary">
+                                {penalty.description || '—'}
+                              </Typography>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -367,18 +412,28 @@ export default function PenaltiesListPage() {
           )}
         </>
       )}
-       <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
-            <Grid item>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    component={RouterLink}
-                    to="/penalties/submit"
-                >
-                    <Localized id="submit-new-penalty-button" fallback="Submit New Penalty" />
-                </Button>
-            </Grid>
-        </Grid>
+       {/* Desktop submit button */}
+       {!isMobile && (
+         <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
+              <Grid item>
+                  <Button
+                      variant="contained"
+                      color="primary"
+                      component={RouterLink}
+                      to="/penalties/submit"
+                  >
+                      <Localized id="submit-new-penalty-button" fallback="Submit New Penalty" />
+                  </Button>
+              </Grid>
+          </Grid>
+       )}
+
+       {/* Mobile FAB */}
+       {isMobile && (
+         <Fab color="primary" aria-label="add" component={RouterLink} to="/penalties/submit" sx={{ position: 'fixed', bottom: 80, right: 20 }}>
+           <AddIcon />
+         </Fab>
+       )}
     </Container>
   );
 } 

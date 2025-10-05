@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup, Stack, Grid } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup, Stack, Grid, Button } from '@mui/material';
 import { Localized } from '@fluent/react';
 import axiosInstance from '../utils/axiosInstance';
 import SubmissionCard from './SubmissionCard';
+import EmptyState from './EmptyState';
 
 function SubmissionsList({ type, isAdmin, category = null }) {
     const [statusFilter, setStatusFilter] = useState(() => {
@@ -97,9 +98,12 @@ function SubmissionsList({ type, isAdmin, category = null }) {
                     ))}
                 </Grid>
             ) : (
-                <Typography variant="subtitle1" align="center" sx={{ p: 3 }}>
-                    <Localized id="no-submissions-found" />
-                </Typography>
+                <EmptyState
+                  titleId="community-page-title"
+                  messageId="no-submissions-found"
+                  actionLabelId="submission-submit-button"
+                  onAction={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                />
             )}
         </Box>
     );
