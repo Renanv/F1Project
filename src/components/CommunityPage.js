@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Container, Tabs, Tab, Paper, Button } from '@mui/material';
+import { Box, Typography, Container, Tabs, Tab, Paper } from '@mui/material';
 import { Localized } from '@fluent/react';
 import SubmissionForm from './SubmissionForm';
 import SubmissionsList from './SubmissionsList'; // Import the real list

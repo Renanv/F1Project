@@ -3,16 +3,16 @@ import { Localized } from '@fluent/react';
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Skeleton } from '@mui/material';
 import EmptyState from './EmptyState';
 import { useToast } from './ToastProvider';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SportsMmaIcon from '@mui/icons-material/SportsMma';
+import SportsMotorsportsIcon from '@mui/icons-material/SportsMotorsports';
 import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import GroupWorkIcon from '@mui/icons-material/GroupWork';
+import BoltIcon from '@mui/icons-material/Bolt';
 import { constructorTiers } from '../utils/constructors'; // Import from new location
 
 // Import the new view components
@@ -330,30 +330,72 @@ function RankingsPage({ isAdmin }) {
           onChange={handleRankingTypeChange}
           aria-label="Ranking Type"
           size={isMobile ? "small" : "medium"}
+          sx={{
+            ...(isMobile ? {
+              '& .MuiToggleButtonGroup-grouped': { border: 'none' },
+              '& .MuiToggleButtonGroup-grouped:not(:last-of-type)': { border: 'none' }
+            } : {})
+          }}
         >
-          <ToggleButton value="driver" aria-label="Driver Rankings">
+          <ToggleButton 
+            value="driver" 
+            aria-label="Driver Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
             <PersonIcon sx={{ mr: isMobile ? 0 : 1}} />
-            {!isMobile && <Localized id="ranking-type-driver" fallback="Drivers"/>}
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="ranking-type-driver" fallback="Drivers"/>
+            </Box>
           </ToggleButton>
-          <ToggleButton value="team" aria-label="Team Rankings">
+          <ToggleButton 
+            value="team" 
+            aria-label="Team Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
             <GroupIcon sx={{ mr: isMobile ? 0 : 1}} />
-            {!isMobile && <Localized id="ranking-type-team" fallback="Teams"/>}
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="ranking-type-team" fallback="Teams"/>
+            </Box>
           </ToggleButton>
-          <ToggleButton value="constructors" aria-label="Constructors Rankings">
-            <AssignmentIcon sx={{ mr: isMobile ? 0 : 1}} />
-            {!isMobile && <Localized id="ranking-type-constructors" fallback="Constructors"/>}
+          <ToggleButton 
+            value="constructors" 
+            aria-label="Constructors Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
+            <SportsMotorsportsIcon sx={{ mr: isMobile ? 0 : 1 }} />
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="ranking-type-constructors" fallback="Constructors"/>
+            </Box>
           </ToggleButton>
-          <ToggleButton value="clashes" aria-label="Clashes Rankings">
-            <GroupWorkIcon sx={{ mr: isMobile ? 0 : 1}} /> 
-            {!isMobile && <Localized id="rankings-clashes-tab" />}
+          <ToggleButton 
+            value="clashes" 
+            aria-label="Clashes Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
+            <BoltIcon sx={{ mr: isMobile ? 0 : 1}} /> 
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="rankings-clashes-tab" />
+            </Box>
           </ToggleButton>
-          <ToggleButton value="rivals" aria-label="Rivals Rankings">
+          <ToggleButton 
+            value="rivals" 
+            aria-label="Rivals Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
             <SportsMmaIcon sx={{ mr: isMobile ? 0 : 1}} /> 
-            {!isMobile && <Localized id="ranking-type-rivals" fallback="Rivals"/>}
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="ranking-type-rivals" fallback="Rivals"/>
+            </Box>
           </ToggleButton>
-          <ToggleButton value="beautiful-play" aria-label="Beautiful Play Rankings">
+          <ToggleButton 
+            value="beautiful-play" 
+            aria-label="Beautiful Play Rankings"
+            sx={{ flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 0.5 : 1, py: isMobile ? 0.75 : undefined, '&.Mui-selected': { color: 'common.white' } }}
+          >
             <EmojiEventsIcon sx={{ mr: isMobile ? 0 : 1}} /> 
-            {!isMobile && <Localized id="ranking-type-beautiful-play" fallback="Beautiful Play"/>}
+            <Box component="span" sx={{ display: 'block', lineHeight: 1, mt: isMobile ? 0.5 : 0, mb: isMobile ? 0.25 : 0, fontSize: isMobile ? '0.70rem' : '0.875rem', fontWeight: isMobile ? 600 : 500 }}>
+              <Localized id="ranking-type-beautiful-play" fallback="Beautiful Play"/>
+            </Box>
           </ToggleButton>
         </ToggleButtonGroup>
       </Box>

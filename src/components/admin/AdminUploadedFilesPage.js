@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
-import { Container, Typography, Grid, Paper, CircularProgress, Alert, Card, CardMedia, Link, Box, Avatar } from '@mui/material';
+import { Container, Typography, Grid, Paper, CircularProgress, Card, CardMedia, Link, Box, Avatar } from '@mui/material';
 import { Localized } from '@fluent/react';
 import ImageIcon from '@mui/icons-material/Image';
 import DescriptionIcon from '@mui/icons-material/Description'; // For payment confirmations
