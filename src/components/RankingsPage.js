@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Localized } from '@fluent/react';
-import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Grid, CircularProgress, Alert, Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, List, ListItem, ListItemText, Skeleton } from '@mui/material';
+import { Container, Typography, Paper, Grid, CircularProgress,  Select, MenuItem, FormControl, InputLabel, Box, Card, CardContent, useTheme, useMediaQuery, ToggleButtonGroup, ToggleButton, Skeleton } from '@mui/material';
 import EmptyState from './EmptyState';
 import { useToast } from './ToastProvider';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
-import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SportsMmaIcon from '@mui/icons-material/SportsMma';
 import SportsMotorsportsIcon from '@mui/icons-material/SportsMotorsports';
@@ -13,7 +12,6 @@ import FileUpload from './FileUpload';
 import axiosInstance from '../utils/axiosInstance';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import BoltIcon from '@mui/icons-material/Bolt';
-import { constructorTiers } from '../utils/constructors'; // Import from new location
 
 // Import the new view components
 import DriverRankingsView from './rankings/DriverRankingsView';
