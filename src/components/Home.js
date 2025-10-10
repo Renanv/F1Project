@@ -260,13 +260,29 @@ function Home({ isLoggedIn, isAdmin }) {
     enabled: !!selectedChampionshipId
   });
 
+  // Compute the UTC timestamp corresponding to 22:00 BRT (UTC-03:00) on the given race date
+  const getRaceCutoffUtc = (dateStr) => {
+    if (!dateStr) return null;
+    const base = new Date(dateStr);
+    const year = base.getUTCFullYear();
+    const month = base.getUTCMonth();
+    const day = base.getUTCDate();
+    // 22:00 BRT == 01:00 UTC next day when offset is -03:00
+    return Date.UTC(year, month, day, 22 + 3, 0, 0);
+  };
+
   const nextRace = useMemo(() => {
     if (!racesForChampionship || racesForChampionship.length === 0) return null;
-    const now = new Date();
+    const nowMs = Date.now();
     const future = racesForChampionship
-      .map(r => ({ ...r, dateObj: r.date ? new Date(r.date) : null }))
-      .filter(r => r.dateObj && r.dateObj.getTime() >= now.getTime())
-      .sort((a, b) => a.dateObj - b.dateObj);
+      .map((race) => {
+        const cutoffMs = getRaceCutoffUtc(race.date);
+        return cutoffMs ? { ...race, cutoffMs } : null;
+      })
+      .filter(Boolean)
+      // Keep races whose 22:00 BRT cutoff is still in the future
+      .filter((race) => race.cutoffMs > nowMs)
+      .sort((a, b) => a.cutoffMs - b.cutoffMs);
     return future[0] || null;
   }, [racesForChampionship]);
 
