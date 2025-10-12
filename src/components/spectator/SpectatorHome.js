@@ -133,7 +133,7 @@ function SpectatorHome({ handleLogout }) {
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )}
-                  {nextRace.title} • <Localized id="race-date-label" />: {new Date(nextRace.date).toLocaleDateString()}
+                  {nextRace.title} • <Localized id="race-date-label" />: {new Date(nextRace.date).toLocaleDateString('en-GB')}
                 </Typography>
                 {countdown && (
                   <Typography variant="body2" color="text.secondary">{countdown}</Typography>
