@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { LocalizationProvider, ReactLocalization, Localized } from '@fluent/react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider, createTheme, responsiveFontSizes } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Snackbar from '@mui/material/Snackbar';
@@ -38,6 +38,8 @@ import AwardsPage from './components/admin/AwardsPage';
 import { bundles } from './i18n';
 import ToastProvider from './components/ToastProvider';
 import OnlineToastController from './components/OnlineToastController';
+import SpectatorHome from './components/spectator/SpectatorHome';
+import SpectatorRankingsPage from './components/spectator/SpectatorRankingsPage';
 
 // Penalty System Components
 import PenaltySubmissionForm from './components/penalties/PenaltySubmissionForm';
@@ -56,6 +58,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [isSpectator, setIsSpectator] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -82,6 +85,7 @@ function App() {
         } else {
           setIsLoggedIn(true);
           setIsAdmin(!!decodedToken.isAdmin);
+          setIsSpectator(!!decodedToken.isSpectator);
         }
       } catch (error) {
         console.error("Invalid token:", error);
@@ -92,6 +96,7 @@ function App() {
     } else {
       setIsLoggedIn(false);
       setIsAdmin(false);
+      setIsSpectator(false);
     }
     setIsLoadingAuth(false);
   }, []);
@@ -150,7 +155,23 @@ function App() {
     localStorage.removeItem('userId');
     setIsLoggedIn(false);
     setIsAdmin(false);
+    setIsSpectator(false);
     navigate('/login');
+  };
+
+  // Route guards for users and spectators
+  const UserRoute = ({ isLoggedIn, isSpectator, redirectPath = '/spectator' }) => {
+    if (!isLoggedIn || isSpectator) {
+      return <Navigate to={redirectPath} replace />;
+    }
+    return <Outlet />;
+  };
+
+  const SpectatorRoute = ({ isLoggedIn, isSpectator, isAdmin, redirectPath = '/' }) => {
+    if (!isLoggedIn || !isSpectator || isAdmin) {
+      return <Navigate to={redirectPath} replace />;
+    }
+    return <Outlet />;
   };
 
   const darkTheme = responsiveFontSizes(createTheme({
@@ -280,6 +301,16 @@ function App() {
   const handleLoginSuccess = () => {
     console.log('Login success callback triggered. Re-checking auth status...');
     checkAuthStatus();
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const decoded = jwtDecode(token);
+        if (decoded && decoded.isSpectator) {
+          navigate('/spectator');
+          return;
+        }
+      }
+    } catch (_) {}
     navigate('/');
   };
 
@@ -293,13 +324,15 @@ function App() {
       <LocalizationProvider l10n={l10n}>
         <QueryClientProvider client={queryClient}>
           <ToastProvider>
-          <NavigationBar
-            isLoggedIn={isLoggedIn}
-            isAdmin={isAdmin}
-            handleLogout={handleLogout}
-            toggleLocale={toggleLocale}
-            activeLocale={activeLocale}
-          />
+          {!isSpectator && (
+            <NavigationBar
+              isLoggedIn={isLoggedIn}
+              isAdmin={isAdmin}
+              handleLogout={handleLogout}
+              toggleLocale={toggleLocale}
+              activeLocale={activeLocale}
+            />
+          )}
           {offline && (
             <Alert severity="warning" variant="filled" sx={{ borderRadius: 0 }}>
               <Localized id="offline-banner" fallback="You're offline. Some features may be unavailable." />
@@ -309,11 +342,12 @@ function App() {
           {/* Back online toast (one-shot on event) */}
           <OnlineToastController />
           <Routes>
-            <Route path="/" element={<Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} />} />
+            <Route path="/" element={isSpectator ? <Navigate to="/spectator" replace /> : <Home isLoggedIn={isLoggedIn} isAdmin={isAdmin} />} />
             <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route element={<ProtectedRoute isLoggedIn={isLoggedIn} />}>
+            {/* Normal user routes (block spectators) */}
+            <Route element={<UserRoute isLoggedIn={isLoggedIn} isSpectator={isSpectator} />}>
               <Route path="/drivers" element={<DriverRankings isAdmin={isAdmin} />} />
               <Route path="/account" element={<AccountPage />} />
               {/* Penalty System Routes for authenticated users */}
@@ -322,6 +356,12 @@ function App() {
               <Route path="/penalties/:penaltyId" element={<PenaltyDetailPage />} />
               <Route path="/jury/tasks" element={<MyJuryTasksPage />} />
               <Route path="/community" element={<CommunityPage isAdmin={isAdmin} />} />
+            </Route>
+            {/* Spectator-only routes */}
+            <Route element={<SpectatorRoute isLoggedIn={isLoggedIn} isSpectator={isSpectator} isAdmin={isAdmin} />}>
+              <Route path="/spectator" element={<SpectatorHome handleLogout={handleLogout} />} />
+              <Route path="/spectator/rankings" element={<SpectatorRankingsPage />} />
+              <Route path="/spectator/community" element={<CommunityPage isAdmin={false} isSpectator={true} />} />
             </Route>
             <Route element={<AdminRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin} />}>
               <Route path="/admin" element={<AdminPanel />} />

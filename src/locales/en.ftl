@@ -748,6 +748,12 @@ championship-group-running = Running Championships
 championship-group-finished = Finished Championships
 championship-group-hidden = Hidden Championships
 
+# Driver Stats Labels
+wins-label = Wins
+poles-label = Poles
+podiums-label = Podiums
+dnf-label = DNF
+
 # Upload restrictions
 upload-not-available-finished = Upload not available for finished championships
 

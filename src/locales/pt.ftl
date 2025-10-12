@@ -735,6 +735,12 @@ championship-group-running = Campeonatos Em Andamento
 championship-group-finished = Campeonatos Finalizados
 championship-group-hidden = Campeonatos Ocultos
 
+# Labels de Estatísticas do Piloto
+wins-label = Vitórias
+poles-label = Poles
+podiums-label = Pódios
+dnf-label = DNFs
+
 # Restrições de Upload
 upload-not-available-finished = Upload não disponível para campeonatos finalizados
 

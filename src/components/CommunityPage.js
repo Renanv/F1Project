@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Box, Typography, Container, Tabs, Tab, Paper } from '@mui/material';
+import { Box, Typography, Container, Tabs, Tab, Paper, Button } from '@mui/material';
 import { Localized } from '@fluent/react';
+import HomeIcon from '@mui/icons-material/Home';
+import { Link as RouterLink } from 'react-router-dom';
 import SubmissionForm from './SubmissionForm';
 import SubmissionsList from './SubmissionsList'; // Import the real list
 import EmptyState from './EmptyState';
 import { useToast } from './ToastProvider';
 
-function CommunityPage({ isAdmin }) {
+function CommunityPage({ isAdmin, isSpectator }) {
     const toast = useToast();
     const [currentTab, setCurrentTab] = useState('channels');
     const [submissionCount, setSubmissionCount] = useState(0);
@@ -28,14 +30,30 @@ function CommunityPage({ isAdmin }) {
                     p: 2,
                     borderRadius: 2,
                     background: 'linear-gradient(90deg, rgba(225,6,0,0.18) 0%, rgba(0,210,190,0.12) 100%)',
-                    border: '1px solid rgba(255,255,255,0.06)'
+                    border: '1px solid rgba(255,255,255,0.06)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start'
                 }}>
-                    <Typography variant="h4" component="h1" gutterBottom>
-                        <Localized id="community-page-title" />
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                        <Localized id="community-page-description" />
-                    </Typography>
+                    <Box>
+                        <Typography variant="h4" component="h1" gutterBottom>
+                            <Localized id="community-page-title" />
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary">
+                            <Localized id="community-page-description" />
+                        </Typography>
+                    </Box>
+                    {isSpectator && (
+                        <Button 
+                            component={RouterLink} 
+                            to="/spectator" 
+                            variant="outlined" 
+                            size="small" 
+                            startIcon={<HomeIcon />}
+                        >
+                            <Localized id="home" />
+                        </Button>
+                    )}
                 </Box>
 
                 <SubmissionForm onSubmissionSuccess={handleSubmissionSuccess} />
