@@ -232,7 +232,8 @@ export default function SpectatorClashesView({ championshipId, championshipConfi
           reqs.push(axiosInstance.get(`/api/championship-attendees?championshipId=${championshipId}`));
         }
         const [racesRes, attendeesRes, statsRes, champAttRes] = await Promise.all(reqs);
-        setRaces(racesRes.data || []);
+        const racesData = racesRes.data || [];
+        setRaces(racesData);
         setAttendees(attendeesRes.data || []);
         setDriverStats(statsRes.data || []);
         if (isTeamAverageMode && champAttRes) {
@@ -244,7 +245,32 @@ export default function SpectatorClashesView({ championshipId, championshipConfi
           });
           setTeams(teamsData);
         }
-        setCurrentRaceIndex(0);
+        
+        // Find next race index using same logic as Home.js
+        if (racesData.length > 0) {
+          const nowMs = Date.now();
+          const toCutoff = (dateStr) => {
+            const base = new Date(dateStr);
+            // 22:00 BRT is UTC-03:00, so 22:00 BRT is 01:00 UTC the next day
+            return Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 22 + 3, 0, 0);
+          };
+          
+          const racesWithCutoff = racesData.map((r, idx) => ({ 
+            ...r, 
+            cutoffMs: r.date ? toCutoff(r.date) : null,
+            originalIndex: idx 
+          }));
+          
+          const futureRaces = racesWithCutoff
+            .filter(r => r.cutoffMs && r.cutoffMs > nowMs)
+            .sort((a, b) => a.cutoffMs - b.cutoffMs);
+          
+          const nextRaceIndex = futureRaces.length > 0 ? futureRaces[0].originalIndex : 0;
+          setCurrentRaceIndex(nextRaceIndex);
+        } else {
+          setCurrentRaceIndex(0);
+        }
+        
         setCurrentItemIndex(0);
       } catch (e) {
         console.error(e);

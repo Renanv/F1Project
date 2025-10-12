@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import axiosInstance from '../../utils/axiosInstance';
 import { getCountryCodeForRace } from '../../utils/raceToCountryCode';
 import { Box, Typography, CircularProgress, Alert, IconButton, Avatar, Paper } from '@mui/material';
@@ -90,9 +90,16 @@ export default function SpectatorRivalsView({ championshipId }) {
   const [clashResults, setClashResults] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const hasCalculatedNextRace = useRef(false);
 
   const selectedRace = races.length > 0 ? races[currentRaceIndex] : null;
   const selectedItem = items.length > 0 ? items[currentItemIndex] : null;
+
+  // Reset when championship changes
+  useEffect(() => {
+    hasCalculatedNextRace.current = false;
+    setCurrentRaceIndex(0);
+  }, [championshipId]);
 
   useEffect(() => {
     if (!championshipId) return;
@@ -103,10 +110,38 @@ export default function SpectatorRivalsView({ championshipId }) {
           axiosInstance.get(`/api/drivers?championshipId=${championshipId}`),
           axiosInstance.get(`/api/championships/${championshipId}/driver-stats`)
         ]);
-        setRaces(racesRes.data || []);
+        const racesData = racesRes.data || [];
+        setRaces(racesData);
         setAttendees(attendeesRes.data || []);
         setDriverStats(statsRes.data || []);
-        setCurrentRaceIndex(0);
+        
+        // Find next race index using same logic as Home.js (only if not already calculated)
+        if (!hasCalculatedNextRace.current && racesData.length > 0) {
+          const nowMs = Date.now();
+          const toCutoff = (dateStr) => {
+            const base = new Date(dateStr);
+            // 22:00 BRT is UTC-03:00, so 22:00 BRT is 01:00 UTC the next day
+            return Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 22 + 3, 0, 0);
+          };
+          
+          const racesWithCutoff = racesData.map((r, idx) => ({ 
+            ...r, 
+            cutoffMs: r.date ? toCutoff(r.date) : null,
+            originalIndex: idx 
+          }));
+          
+          const futureRaces = racesWithCutoff
+            .filter(r => r.cutoffMs && r.cutoffMs > nowMs)
+            .sort((a, b) => a.cutoffMs - b.cutoffMs);
+          
+          const nextRaceIndex = futureRaces.length > 0 ? futureRaces[0].originalIndex : 0;
+          setCurrentRaceIndex(nextRaceIndex);
+          hasCalculatedNextRace.current = true;
+        } else if (!hasCalculatedNextRace.current) {
+          setCurrentRaceIndex(0);
+          hasCalculatedNextRace.current = true;
+        }
+        
         setCurrentItemIndex(0);
       } catch (e) {
         console.error(e);
@@ -117,7 +152,7 @@ export default function SpectatorRivalsView({ championshipId }) {
   }, [championshipId]);
 
   useEffect(() => {
-    if (!selectedRace) { setClashResults({}); return; }
+    if (!selectedRace) { setClashResults({}); setItems([]); return; }
     const load = async () => {
       setLoading(true);
       setError(null);
@@ -141,7 +176,7 @@ export default function SpectatorRivalsView({ championshipId }) {
       }
     };
     load();
-  }, [selectedRace, championshipId]);
+  }, [selectedRace, championshipId, currentRaceIndex]);
 
   const handlePrevRace = () => setCurrentRaceIndex(i => (i - 1 + races.length) % races.length);
   const handleNextRace = () => setCurrentRaceIndex(i => (i + 1) % races.length);

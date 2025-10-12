@@ -416,7 +416,30 @@ function ClashesView({ championshipId, isAdmin, championshipConfig }) {
                     setTeams(teamsData);
                 }
                 
-                setCurrentRaceIndex(0); // Reset index
+                // Find next race index using same logic as Home.js
+                if (fetchedRaces.length > 0) {
+                    const nowMs = Date.now();
+                    const toCutoff = (dateStr) => {
+                        const base = new Date(dateStr);
+                        // 22:00 BRT is UTC-03:00, so 22:00 BRT is 01:00 UTC the next day
+                        return Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 22 + 3, 0, 0);
+                    };
+                    
+                    const racesWithCutoff = fetchedRaces.map((r, idx) => ({ 
+                        ...r, 
+                        cutoffMs: r.date ? toCutoff(r.date) : null,
+                        originalIndex: idx 
+                    }));
+                    
+                    const futureRaces = racesWithCutoff
+                        .filter(r => r.cutoffMs && r.cutoffMs > nowMs)
+                        .sort((a, b) => a.cutoffMs - b.cutoffMs);
+                    
+                    const nextRaceIndex = futureRaces.length > 0 ? futureRaces[0].originalIndex : 0;
+                    setCurrentRaceIndex(nextRaceIndex);
+                } else {
+                    setCurrentRaceIndex(0);
+                }
             } catch (err) {
                 console.error("Error fetching prerequisites:", err);
                 setError("Failed to load races, drivers, or teams.");

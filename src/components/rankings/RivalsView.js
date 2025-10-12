@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
     Box, 
@@ -21,6 +21,13 @@ function RivalsView({ championshipId, isAdmin }) {
     const [clashResults, setClashResults] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const hasCalculatedNextRace = useRef(false);
+
+    // Reset when championship changes
+    useEffect(() => {
+        hasCalculatedNextRace.current = false;
+        setCurrentRaceIndex(0);
+    }, [championshipId]);
 
     // Fetch races for the championship
     const { data: races } = useQuery({
@@ -41,6 +48,32 @@ function RivalsView({ championshipId, isAdmin }) {
         },
         enabled: !!championshipId
     });
+
+    // Set initial race index to next race when races are loaded
+    useEffect(() => {
+        if (!races || races.length === 0 || hasCalculatedNextRace.current) return;
+        
+        const nowMs = Date.now();
+        const toCutoff = (dateStr) => {
+            const base = new Date(dateStr);
+            // 22:00 BRT is UTC-03:00, so 22:00 BRT is 01:00 UTC the next day
+            return Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 22 + 3, 0, 0);
+        };
+        
+        const racesWithCutoff = races.map((r, idx) => ({ 
+            ...r, 
+            cutoffMs: r.date ? toCutoff(r.date) : null,
+            originalIndex: idx 
+        }));
+        
+        const futureRaces = racesWithCutoff
+            .filter(r => r.cutoffMs && r.cutoffMs > nowMs)
+            .sort((a, b) => a.cutoffMs - b.cutoffMs);
+        
+        const nextRaceIndex = futureRaces.length > 0 ? futureRaces[0].originalIndex : 0;
+        setCurrentRaceIndex(nextRaceIndex);
+        hasCalculatedNextRace.current = true;
+    }, [races]);
 
     // Fetch rivalry clash data for current race
     useEffect(() => {
